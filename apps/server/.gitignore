@@ -2,7 +2,8 @@
 dist/
 /build
 /out/
-api/
+# api/index.mjs is a committed build artifact so Vercel's function
+# scanner always sees it — build.ts overwrites it each run.
 
 # dev
 .yarn/

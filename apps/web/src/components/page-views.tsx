@@ -35,7 +35,7 @@ export function PageViews({ serverUrl }: { serverUrl: string }) {
   if (views == null || !Number.isFinite(views)) return null;
 
   return (
-    <span className="text-xs text-muted-foreground/40 tabular-nums">
+    <span className="text-xs text-muted-foreground tabular-nums">
       {views.toLocaleString()} visit{views !== 1 ? "s" : ""}
     </span>
   );

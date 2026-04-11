@@ -1,6 +1,8 @@
 import { cn } from "@my-better-t-app/ui/lib/utils";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { unlock } from "@/lib/achievements";
+
 type CommandGroup = "Navigate" | "Links" | "Projects";
 
 interface CommandItem {
@@ -224,7 +226,10 @@ export function CommandPalette() {
     function handleKeyDown(e: KeyboardEvent) {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
-        setOpen((prev) => !prev);
+        setOpen((prev) => {
+          if (!prev) unlock("palette");
+          return !prev;
+        });
         setQuery("");
         setSelectedIndex(0);
       } else if (e.key === "Escape") {

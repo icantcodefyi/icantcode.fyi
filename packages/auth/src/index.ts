@@ -14,8 +14,17 @@ export function createAuth() {
       schema: schema,
     }),
     trustedOrigins: env.CORS_ORIGIN,
+    // Email/password sign-up is disabled — the only supported flow is
+    // Google OAuth, which gates the guestbook so each Google account
+    // maps to a single signature via a DB-level unique constraint.
     emailAndPassword: {
-      enabled: true,
+      enabled: false,
+    },
+    socialProviders: {
+      google: {
+        clientId: env.GOOGLE_CLIENT_ID,
+        clientSecret: env.GOOGLE_CLIENT_SECRET,
+      },
     },
     secret: env.BETTER_AUTH_SECRET,
     baseURL: env.BETTER_AUTH_URL,

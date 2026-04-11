@@ -1,11 +1,15 @@
 import type { Route } from "./+types/_index";
+import { AchievementTrophy } from "@/components/achievement-trophy";
 import { CommandPalette } from "@/components/command-palette";
 import { GalleryImage } from "@/components/gallery-image";
 import { GitHubHeatmap } from "@/components/github-heatmap";
+import { GuestbookWall } from "@/components/guestbook-wall";
 import { LocalTime } from "@/components/local-time";
 import { PageViews } from "@/components/page-views";
 import { Reveal } from "@/components/reveal";
 import { SpotifyNowPlaying } from "@/components/spotify-now-playing";
+import { WeatherTint } from "@/components/weather-tint";
+import { YearBar } from "@/components/year-bar";
 
 const SERVER_URL = import.meta.env.VITE_SERVER_URL || "http://localhost:3000";
 
@@ -72,12 +76,62 @@ const PROJECTS = [
   },
 ] as const;
 
-const TOYS = [
-  { name: "linkedin alignment chart", desc: "D&D-style charts for LinkedIn using AI" },
-  { name: "citronics", desc: "College fest event website" },
-  { name: "glanza labs", desc: "Landing page and app" },
-  { name: "nexus visualize", desc: "AI dashboard generator for data tables" },
-] as const;
+/** Precomputed hostname labels for the editorial project listing. */
+const PROJECT_HOSTS: string[] = PROJECTS.map((p) => {
+  try {
+    return new URL(p.url).hostname.replace(/^www\./, "");
+  } catch {
+    return "";
+  }
+});
+
+interface Toy {
+  name: string;
+  desc: string;
+  /** Optional external URL. If omitted the chip renders as plain text. */
+  url?: string;
+}
+
+const TOYS: Toy[] = [
+  {
+    name: "linkedin alignment chart",
+    desc: "D&D alignment charts from LinkedIn profiles",
+    url: "https://linkedin-alignment-chart.vercel.app/",
+  },
+  {
+    name: "nexus visualize",
+    desc: "AI dashboard generator for data tables",
+    url: "https://dashboard.aniruddh.tech/",
+  },
+  {
+    name: "glanza labs",
+    desc: "Landing page + internal app",
+    url: "https://www.glanza.org/",
+  },
+  {
+    name: "citronics",
+    desc: "College fest event website",
+    url: "https://citronics.netlify.app/",
+  },
+];
+
+/**
+ * Toy chips are intentionally different from the real Projects grid —
+ * mismatched tilts, cycling pastel bgs, display-italic name. Feels like
+ * scrapbook paper scraps stuck to the page.
+ */
+const TOY_BG = [
+  "bg-pastel-butter/60",
+  "bg-pastel-sage/55",
+  "bg-pastel-blush/55",
+  "bg-pastel-sky/55",
+];
+const TOY_TILT = [
+  "-rotate-[1.2deg]",
+  "rotate-[0.9deg]",
+  "-rotate-[0.5deg]",
+  "rotate-[1.4deg]",
+];
 
 const EXPERIENCE = [
   {
@@ -133,6 +187,19 @@ const HACKATHON_HEIGHTS: Record<number, number> = {
 };
 
 /* ── Components ── */
+
+/**
+ * Small keycap-style <kbd> chip used in the footer shortcut row.
+ * Border + soft card fill + a 1px bottom shadow so it reads as a
+ * pressable key rather than a badge.
+ */
+function Kbd({ children }: { children: React.ReactNode }) {
+  return (
+    <kbd className="inline-flex items-center rounded-md border border-border/80 bg-card/90 px-1.5 py-[3px] font-mono text-[11px] leading-none text-foreground/85 shadow-[0_1px_0_oklch(0.86_0.01_60)]">
+      {children}
+    </kbd>
+  );
+}
 
 function ArrowIcon({ className }: { className?: string }) {
   return (
@@ -246,7 +313,7 @@ export default function Home() {
             </SocialLink>
           </div>
 
-          {/* Status row: time + now-playing */}
+          {/* Status row: clock + now-playing + weather */}
           <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-border/60 pt-4">
             <LocalTime />
             <span
@@ -254,7 +321,14 @@ export default function Home() {
               aria-hidden="true"
             />
             <SpotifyNowPlaying serverUrl={SERVER_URL} />
+            <span
+              className="hidden h-3 w-px bg-border sm:inline-block"
+              aria-hidden="true"
+            />
+            <WeatherTint serverUrl={SERVER_URL} />
           </div>
+
+          <YearBar />
         </header>
 
         {/* ── Experience ── */}
@@ -295,49 +369,108 @@ export default function Home() {
         {/* ── Projects ── */}
         <Reveal className="mt-14" delay={50}>
           <section id="projects">
-            <h2 className="font-display text-lg font-medium text-foreground tracking-tight">
-              Projects
-            </h2>
-            <div className="mt-5 grid gap-3 sm:grid-cols-2">
-              {PROJECTS.map((project) => (
-                <a
-                  key={project.name}
-                  href={project.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group flex items-start justify-between gap-3 rounded-xl bg-card/60 px-4 py-3.5 transition-all duration-200 hover:bg-pastel-lavender/30"
-                >
-                  <div className="min-w-0">
-                    <h3 className="font-medium text-foreground">
-                      {project.name}
-                    </h3>
-                    <p className="mt-0.5 text-sm text-muted-foreground line-clamp-2">
-                      {project.desc}
-                    </p>
-                  </div>
-                  <ArrowIcon className="mt-1 shrink-0 text-muted-foreground/40 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-muted-foreground" />
-                </a>
-              ))}
+            <div className="flex items-baseline justify-between gap-4">
+              <h2 className="font-display text-lg font-medium tracking-tight text-foreground">
+                Projects
+              </h2>
+              <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground/80 tabular-nums">
+                {PROJECTS.length.toString().padStart(2, "0")} shipped
+              </span>
             </div>
+
+            {/* Editorial directory — numbered index, no cards.
+                Hairline dividers via divide-y; hover wash via negative-margin
+                trick so the background extends past the text columns. */}
+            <ol className="mt-6 list-none divide-y divide-border/60">
+              {PROJECTS.map((project, i) => (
+                <li key={project.name} className="first:border-t first:border-border/60">
+                  <a
+                    href={project.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group -mx-3 flex items-start gap-5 rounded-lg px-3 py-4 transition-colors duration-300 hover:bg-pastel-lavender/25"
+                  >
+                    <span
+                      aria-hidden="true"
+                      className="w-6 shrink-0 pt-[7px] font-mono text-[10px] tabular-nums text-muted-foreground/60 transition-colors duration-300 group-hover:text-foreground/80"
+                    >
+                      {(i + 1).toString().padStart(2, "0")}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5">
+                        <h3 className="font-display text-[17px] font-medium tracking-tight text-foreground">
+                          {project.name}
+                        </h3>
+                        <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground/70">
+                          {PROJECT_HOSTS[i]}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-sm leading-snug text-muted-foreground">
+                        {project.desc}
+                      </p>
+                    </div>
+                    <ArrowIcon className="mt-[9px] shrink-0 text-muted-foreground/40 transition-all duration-300 ease-out group-hover:-translate-y-1 group-hover:translate-x-1 group-hover:text-foreground" />
+                  </a>
+                </li>
+              ))}
+            </ol>
           </section>
         </Reveal>
 
         {/* ── Toys ── */}
-        <Reveal className="mt-8" delay={50}>
+        <Reveal className="mt-10" delay={50}>
           <div>
-            <h3 className="text-sm font-medium uppercase tracking-widest text-muted-foreground/60">
-              Fun experiments
-            </h3>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {TOYS.map((toy) => (
-                <span
-                  key={toy.name}
-                  className="inline-block rounded-full bg-pastel-butter/40 px-3 py-1 text-sm text-foreground/70"
-                  title={toy.desc}
-                >
-                  {toy.name}
-                </span>
-              ))}
+            <div className="flex items-baseline gap-3">
+              <h3 className="text-sm font-medium uppercase tracking-[0.14em] text-muted-foreground/80">
+                Fun experiments
+              </h3>
+              <span className="font-display text-[13px] italic text-muted-foreground/70">
+                — things I made on weekends
+              </span>
+            </div>
+            <div className="mt-4 flex flex-wrap gap-3">
+              {TOYS.map((toy, i) => {
+                const bg = TOY_BG[i % TOY_BG.length];
+                const tilt = TOY_TILT[i % TOY_TILT.length];
+                const chipClass = `group relative inline-flex max-w-full items-baseline gap-2 rounded-[10px] px-3.5 py-2 shadow-[0_1px_0_oklch(0.85_0.01_60),0_8px_16px_-12px_oklch(0.2_0.02_60/0.25)] transition-[transform,box-shadow] duration-300 ease-out ${bg} ${tilt} hover:rotate-0 hover:-translate-y-0.5 hover:shadow-[0_1px_0_oklch(0.82_0.01_60),0_14px_22px_-14px_oklch(0.2_0.02_60/0.3)]`;
+                const content = (
+                  <>
+                    <span className="font-display text-[15px] font-medium italic text-foreground/90 leading-none">
+                      {toy.name}
+                    </span>
+                    <span
+                      aria-hidden="true"
+                      className="h-1 w-1 shrink-0 translate-y-[-2px] rounded-full bg-foreground/25"
+                    />
+                    <span className="text-[12px] leading-tight text-foreground/65">
+                      {toy.desc}
+                    </span>
+                    {toy.url ? (
+                      <span
+                        aria-hidden="true"
+                        className="ml-0.5 text-[11px] text-foreground/35 transition-all duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-foreground/75"
+                      >
+                        ↗
+                      </span>
+                    ) : null}
+                  </>
+                );
+                return toy.url ? (
+                  <a
+                    key={toy.name}
+                    href={toy.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={chipClass}
+                  >
+                    {content}
+                  </a>
+                ) : (
+                  <div key={toy.name} className={chipClass}>
+                    {content}
+                  </div>
+                );
+              })}
             </div>
           </div>
         </Reveal>
@@ -358,13 +491,19 @@ export default function Home() {
 
             <div className="mt-5 space-y-6">
               <div>
-                <h3 className="text-sm font-medium uppercase tracking-widest text-muted-foreground/60 mb-3">
+                <h3 className="mb-3 text-sm font-medium uppercase tracking-[0.14em] text-muted-foreground/80">
                   13 Wins
                 </h3>
                 <div className="space-y-2.5">
                   {HACKATHON_WINS.map((h) => (
                     <div key={h.name} className="flex items-start gap-3">
-                      <span className="mt-1.5 block h-1.5 w-1.5 shrink-0 rounded-full bg-pastel-sage" />
+                      {/* 24px tall flex cell so the dot sits on the title's optical center */}
+                      <span
+                        aria-hidden="true"
+                        className="flex h-6 shrink-0 items-center"
+                      >
+                        <span className="block h-1.5 w-1.5 rounded-full bg-pastel-sage" />
+                      </span>
                       <div className="min-w-0">
                         <p className="font-medium text-foreground">
                           {h.name}
@@ -383,13 +522,18 @@ export default function Home() {
               </div>
 
               <div>
-                <h3 className="text-sm font-medium uppercase tracking-widest text-muted-foreground/60 mb-3">
+                <h3 className="mb-3 text-sm font-medium uppercase tracking-[0.14em] text-muted-foreground/80">
                   Organized
                 </h3>
                 <div className="space-y-2.5">
                   {HACKATHONS_ORGANIZED.map((h) => (
                     <div key={h.name} className="flex items-start gap-3">
-                      <span className="mt-1.5 block h-1.5 w-1.5 shrink-0 rounded-full bg-pastel-blush" />
+                      <span
+                        aria-hidden="true"
+                        className="flex h-6 shrink-0 items-center"
+                      >
+                        <span className="block h-1.5 w-1.5 rounded-full bg-pastel-blush" />
+                      </span>
                       <div className="min-w-0">
                         <p className="font-medium text-foreground">{h.name}</p>
                         <p className="text-sm text-muted-foreground">
@@ -426,19 +570,58 @@ export default function Home() {
           </div>
         </section>
 
+        {/* ── Guestbook ── */}
+        <Reveal className="mt-16" delay={50}>
+          <GuestbookWall />
+        </Reveal>
+
         {/* ── Footer ── */}
         <Reveal className="mt-24">
           <footer className="border-t border-border pt-6 pb-8">
             <div className="flex flex-col items-center gap-2 text-center sm:flex-row sm:justify-between sm:text-left">
-              <p className="text-sm text-muted-foreground">Aniruddh Dubge</p>
+              <p className="text-sm font-medium text-foreground/80">
+                Aniruddh Dubge
+              </p>
               <div className="flex items-center gap-3">
                 <PageViews serverUrl={SERVER_URL} />
-                <span className="text-xs text-muted-foreground/30">&middot;</span>
-                <p className="text-xs text-muted-foreground/40">
+                <span
+                  aria-hidden="true"
+                  className="h-1 w-1 rounded-full bg-border"
+                />
+                <p className="text-xs text-muted-foreground">
                   Built with care from India
                 </p>
               </div>
             </div>
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-x-5 gap-y-2.5 text-[11px] text-muted-foreground">
+              <span className="inline-flex items-baseline gap-1.5">
+                <Kbd>⌘K</Kbd>
+                palette
+              </span>
+              <span className="inline-flex items-baseline gap-1.5">
+                <Kbd>`</Kbd>
+                terminal
+              </span>
+              <span className="inline-flex items-baseline gap-1.5">
+                <Kbd>↑↑↓↓</Kbd>
+                konami
+              </span>
+              <span className="inline-flex items-baseline gap-1.5">
+                hold
+                <Kbd>S</Kbd>
+              </span>
+              <span className="inline-flex items-baseline gap-1.5">
+                hold
+                <Kbd>G</Kbd>
+                grid
+              </span>
+              <span className="inline-flex items-baseline gap-1.5">
+                hold
+                <Kbd>D</Kbd>
+                debug
+              </span>
+            </div>
+            <AchievementTrophy />
           </footer>
         </Reveal>
       </div>

@@ -230,3 +230,254 @@
   0%, 100% { height: 4px; }
   50% { height: 14px; }
 }
+
+/* ──────────────────────────────────────────────────────────────────────
+ * Weather-driven background tint.
+ * `WeatherTint` sets `data-weather` on <html>; we shift --background
+ * and --card subtly so rainy / foggy days feel cooler.
+ * ──────────────────────────────────────────────────────────────── */
+html {
+  transition:
+    background-color 1.2s cubic-bezier(0.16, 1, 0.3, 1),
+    color 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+html[data-weather="rain"],
+html[data-weather="drizzle"],
+html[data-weather="storm"] {
+  --background: oklch(0.968 0.012 240);
+  --card: oklch(0.982 0.010 240);
+}
+html[data-weather="fog"] {
+  --background: oklch(0.975 0.006 60);
+}
+html[data-weather="snow"] {
+  --background: oklch(0.985 0.005 220);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { transition: none; }
+}
+
+/* ──────────────────────────────────────────────────────────────────────
+ * Year progress bar
+ * ──────────────────────────────────────────────────────────────────── */
+.year-bar {
+  position: relative;
+  height: 1px;
+  width: 100%;
+  background: color-mix(in oklch, var(--border) 70%, transparent);
+  overflow: hidden;
+}
+.year-bar::after {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: var(--year-progress, 0%);
+  background: oklch(0.65 0.09 155);
+}
+
+/* ──────────────────────────────────────────────────────────────────────
+ * Hidden terminal
+ * ──────────────────────────────────────────────────────────────────── */
+.terminal-scroll::-webkit-scrollbar { width: 0; }
+
+/* ──────────────────────────────────────────────────────────────────────
+ * Loader — rotating message fade
+ * ──────────────────────────────────────────────────────────────────── */
+@keyframes loader-msg-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes loader-bar {
+  0%   { transform: translateX(-100%); }
+  50%  { transform: translateX(100%); }
+  100% { transform: translateX(100%); }
+}
+.loader-msg {
+  animation: loader-msg-in 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.loader-bar {
+  animation: loader-bar 1.4s cubic-bezier(0.65, 0.05, 0.36, 1) infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .loader-msg, .loader-bar { animation: none; }
+}
+
+/* ──────────────────────────────────────────────────────────────────────
+ * URL-driven themes. WeatherTint sets data-weather; UrlTheme sets
+ * data-theme. data-theme wins because it's the more deliberate signal
+ * (user typed ?theme=... on purpose).
+ * ──────────────────────────────────────────────────────────────────── */
+html[data-theme="re-zero"] {
+  /* witch-cult indigo, cool moonlit pink — subtle shift, still legible */
+  --background: oklch(0.965 0.012 310);
+  --card: oklch(0.980 0.010 310);
+  --accent: oklch(0.72 0.14 340);
+  --ring: oklch(0.60 0.12 340);
+  --pastel-blush: oklch(0.86 0.08 345);
+  --pastel-lavender: oklch(0.82 0.09 300);
+  --pastel-sage: oklch(0.85 0.045 180);
+  --pastel-sky: oklch(0.87 0.055 260);
+  --pastel-butter: oklch(0.90 0.05 60);
+}
+html[data-theme="frieren"] {
+  /* elven-forest greens, soft ink skies */
+  --background: oklch(0.975 0.010 170);
+  --card: oklch(0.985 0.008 170);
+  --accent: oklch(0.72 0.10 175);
+  --ring: oklch(0.58 0.10 175);
+  --pastel-blush: oklch(0.88 0.04 20);
+  --pastel-lavender: oklch(0.86 0.05 260);
+  --pastel-sage: oklch(0.87 0.06 155);
+  --pastel-sky: oklch(0.89 0.05 220);
+  --pastel-butter: oklch(0.93 0.05 100);
+}
+html[data-theme="storm"] {
+  /* quieter ink variant, for when you want the footer gradient to hit */
+  --background: oklch(0.955 0.008 240);
+  --card: oklch(0.975 0.006 240);
+  --accent: oklch(0.60 0.14 255);
+}
+
+/* ──────────────────────────────────────────────────────────────────────
+ * Debug overlays — hold G (grid) / hold D (tailwind class labels).
+ * ──────────────────────────────────────────────────────────────────── */
+.debug-grid {
+  position: fixed;
+  inset: 0;
+  z-index: 9990;
+  pointer-events: none;
+  background-image:
+    linear-gradient(to right, oklch(0.65 0.12 330 / 0.14) 1px, transparent 1px),
+    linear-gradient(to bottom, oklch(0.65 0.12 330 / 0.14) 1px, transparent 1px);
+  background-size: 8px 8px;
+  opacity: 0;
+  transition: opacity 180ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.debug-grid.is-on { opacity: 1; }
+.debug-grid::before,
+.debug-grid::after {
+  content: "";
+  position: absolute;
+  background: oklch(0.65 0.15 330 / 0.35);
+}
+.debug-grid::before { top: 0; bottom: 0; left: 50%; width: 1px; }
+.debug-grid::after  { left: 0; right: 0; top: 50%; height: 1px; }
+
+html[data-debug-classes="true"] [class]:hover {
+  outline: 1px dashed oklch(0.70 0.14 240 / 0.75);
+  outline-offset: 1px;
+}
+.debug-classes-pill {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  z-index: 9991;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: oklch(0.985 0.006 60);
+  border: 1px solid oklch(0.90 0.012 60);
+  box-shadow: 0 1px 0 oklch(0.85 0.01 60), 0 12px 24px -16px oklch(0.2 0.02 60 / 0.25);
+  font: 500 11px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: oklch(0.30 0.015 60);
+  opacity: 0;
+  transition: opacity 180ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.debug-classes-pill.is-on { opacity: 1; }
+
+/* ──────────────────────────────────────────────────────────────────────
+ * CRT reboot — used by `sudo rm -rf portfolio/` in the terminal.
+ * Kept transform/opacity only so it's cheap on GPU.
+ * ──────────────────────────────────────────────────────────────────── */
+@keyframes crt-flicker {
+  0%   { opacity: 1; }
+  45%  { opacity: 0.92; }
+  50%  { opacity: 0.2; }
+  55%  { opacity: 0.95; }
+  70%  { opacity: 0.88; }
+  100% { opacity: 1; }
+}
+@keyframes crt-collapse {
+  0%   { transform: scaleY(1) scaleX(1); opacity: 1; }
+  55%  { transform: scaleY(0.004) scaleX(1); opacity: 1; }
+  100% { transform: scaleY(0.004) scaleX(0); opacity: 0; }
+}
+@keyframes crt-boot {
+  0%   { transform: scaleY(0.004) scaleX(0); opacity: 0; }
+  18%  { transform: scaleY(0.004) scaleX(1); opacity: 1; }
+  100% { transform: scaleY(1) scaleX(1); opacity: 1; }
+}
+.crt-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: oklch(0.08 0.01 60);
+  color: oklch(0.88 0.10 145);
+  font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+  padding: 24px 28px;
+  overflow: hidden;
+  transform-origin: center center;
+  animation: crt-flicker 2.4s steps(12) infinite;
+}
+.crt-overlay.is-collapsing {
+  animation: crt-collapse 700ms cubic-bezier(0.7, 0, 0.3, 1) forwards;
+}
+.crt-overlay.is-booting {
+  animation: crt-boot 900ms cubic-bezier(0.16, 1, 0.3, 1) both,
+             crt-flicker 2.4s steps(12) infinite 900ms;
+}
+.crt-overlay::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    oklch(0.08 0.01 60 / 0) 0,
+    oklch(0.08 0.01 60 / 0) 2px,
+    oklch(0.04 0.01 60 / 0.35) 3px,
+    oklch(0.08 0.01 60 / 0) 4px
+  );
+}
+.crt-overlay pre {
+  white-space: pre-wrap;
+  margin: 0;
+}
+.crt-overlay .crt-line {
+  opacity: 0;
+  animation: loader-msg-in 180ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* ──────────────────────────────────────────────────────────────────────
+ * Snake — playable 404 mini-game
+ * ──────────────────────────────────────────────────────────────────── */
+.snake-board {
+  display: grid;
+  grid-template-columns: repeat(var(--snake-size, 16), 1fr);
+  gap: 2px;
+  aspect-ratio: 1 / 1;
+  padding: 10px;
+  background: oklch(0.96 0.008 60);
+  border-radius: 12px;
+  border: 1px solid oklch(0.90 0.012 60);
+  box-shadow: 0 1px 0 oklch(0.85 0.01 60), 0 24px 40px -28px oklch(0.2 0.02 60 / 0.25);
+}
+.snake-cell {
+  border-radius: 2px;
+  background: oklch(0.94 0.01 60);
+}
+.snake-cell[data-type="snake"]   { background: oklch(0.55 0.10 155); }
+.snake-cell[data-type="head"]    { background: oklch(0.45 0.12 155); }
+.snake-cell[data-type="apple"]   { background: oklch(0.68 0.16 25); }
+
+@media (prefers-reduced-motion: reduce) {
+  .crt-overlay,
+  .crt-overlay.is-collapsing,
+  .crt-overlay.is-booting { animation: none !important; }
+}
+
+/* ──────────────────────────────────────────────────────────────────────
+ * Signature canvas
+ * ──────────────────────────────────────────────────────────────────── */
+.signature-canvas { touch-action: none; }

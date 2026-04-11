@@ -1,6 +1,10 @@
 import type { RouterClient } from "@orpc/server";
 import { db } from "@my-better-t-app/db";
-import { pageViews, guestbookEntries } from "@my-better-t-app/db/schema/portfolio";
+import {
+  pageViews,
+  guestbookEntries,
+  guestbookSignatures,
+} from "@my-better-t-app/db/schema/portfolio";
 import { desc, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 
@@ -76,13 +80,6 @@ async function getSpotifyAccessToken(): Promise<string | null> {
 export const appRouter = {
   healthCheck: publicProcedure.handler(() => {
     return "OK";
-  }),
-
-  privateData: protectedProcedure.handler(({ context }) => {
-    return {
-      message: "This is private",
-      user: context.session?.user,
-    };
   }),
 
   nowPlaying: publicProcedure.handler(async () => {
@@ -197,7 +194,149 @@ export const appRouter = {
         .returning();
       return entry[0];
     }),
+
+  /* ── Weather in Bengaluru ──────────────────────────────────────────
+   *
+   * Open-Meteo public API. Returns current temperature and WMO
+   * weather code so the client can tint the palette.
+   * ────────────────────────────────────────────────────────────────── */
+  weather: publicProcedure.handler(async () => {
+    const cached = weatherCache;
+    if (cached && Date.now() - cached.at < 10 * 60_000) return cached.value;
+    try {
+      const url =
+        "https://api.open-meteo.com/v1/forecast?latitude=12.9716&longitude=77.5946&current=temperature_2m,weather_code,is_day";
+      const res = await fetch(url, { signal: AbortSignal.timeout(6000) });
+      if (!res.ok) throw new Error(`status ${res.status}`);
+      const data = (await res.json()) as {
+        current?: {
+          temperature_2m?: number;
+          weather_code?: number;
+          is_day?: number;
+        };
+      };
+      const value = {
+        temperatureC: data.current?.temperature_2m ?? null,
+        weatherCode: data.current?.weather_code ?? null,
+        isDay: data.current?.is_day === 1,
+      };
+      weatherCache = { value, at: Date.now() };
+      return value;
+    } catch {
+      return {
+        temperatureC: null as number | null,
+        weatherCode: null as number | null,
+        isDay: null as boolean | null,
+      };
+    }
+  }),
+
+  /* ── Handwriting guestbook ────────────────────────────────────────
+   *
+   * Auth-gated via Google OAuth. One signature per user is enforced
+   * by a unique constraint on `guestbook_signatures.user_id`, so the
+   * "no spam" guarantee lives at the DB layer — not in app code.
+   * ─────────────────────────────────────────────────────────────── */
+
+  /**
+   * Returns everything the guestbook UI needs in a single round trip:
+   *
+   *  • totalCount       — honest count of rows, not a loaded subset
+   *  • userHasSigned    — whether the viewer has already signed (null if anon)
+   *  • userSignature    — the viewer's own signature (null if not signed / anon)
+   *  • recent           — most recent signatures, ordered newest first
+   *
+   * Everything is public except the two `user-*` fields, which require
+   * a session to compute. Anonymous viewers still see the wall.
+   */
+  getGuestbookState: publicProcedure.handler(async ({ context }) => {
+    const userId = context.session?.user?.id ?? null;
+
+    const [countRow] = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(guestbookSignatures);
+
+    const recent = await db
+      .select({
+        id: guestbookSignatures.id,
+        svgPath: guestbookSignatures.svgPath,
+        width: guestbookSignatures.width,
+        height: guestbookSignatures.height,
+        createdAt: guestbookSignatures.createdAt,
+      })
+      .from(guestbookSignatures)
+      .orderBy(desc(guestbookSignatures.createdAt))
+      .limit(40);
+
+    let userSignature: (typeof recent)[number] | null = null;
+    if (userId) {
+      const [own] = await db
+        .select({
+          id: guestbookSignatures.id,
+          svgPath: guestbookSignatures.svgPath,
+          width: guestbookSignatures.width,
+          height: guestbookSignatures.height,
+          createdAt: guestbookSignatures.createdAt,
+        })
+        .from(guestbookSignatures)
+        .where(eq(guestbookSignatures.userId, userId))
+        .limit(1);
+      userSignature = own ?? null;
+    }
+
+    return {
+      totalCount: countRow?.count ?? 0,
+      userHasSigned: userId ? userSignature !== null : null,
+      userSignature,
+      recent,
+    };
+  }),
+
+  signGuestbookHandwriting: protectedProcedure
+    .input(
+      z.object({
+        svgPath: z
+          .string()
+          .min(20, "Signature too short")
+          .max(48_000, "Signature too long"),
+        width: z.number().int().positive().max(2000),
+        height: z.number().int().positive().max(800),
+      })
+    )
+    .handler(async ({ context, input }) => {
+      // Minimal shape check — allow plain M/L paths (legacy) and
+      // perfect-freehand filled polygon paths (M/L/Q/Z).
+      if (!/^[MLQZ\d\s.,\-]+$/.test(input.svgPath)) {
+        throw new Error("Invalid signature path");
+      }
+
+      const userId = context.session.user.id;
+
+      try {
+        const entry = await db
+          .insert(guestbookSignatures)
+          .values({
+            userId,
+            svgPath: input.svgPath,
+            width: input.width,
+            height: input.height,
+          })
+          .returning();
+        return entry[0];
+      } catch (err) {
+        // Postgres unique-violation for the user_id uniqueness on the
+        // signatures table. Any driver surfaces this as code 23505.
+        const code = (err as { code?: string })?.code;
+        if (code === "23505") {
+          throw new Error("You've already signed the guestbook");
+        }
+        throw err;
+      }
+    }),
 };
+
+// ── Simple server-side caches ──
+let weatherCache: { value: { temperatureC: number | null; weatherCode: number | null; isDay: boolean | null }; at: number } | null = null;
 
 export type AppRouter = typeof appRouter;
 export type AppRouterClient = RouterClient<typeof appRouter>;

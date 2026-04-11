@@ -8,6 +8,14 @@ import {
   isRouteErrorResponse,
 } from "react-router";
 
+import { ConsoleGreeting } from "@/components/console-greeting";
+import { DebugOverlays } from "@/components/debug-overlays";
+import { KonamiMode } from "@/components/konami-mode";
+import { Oneko } from "@/components/oneko";
+import { ScrollEffects } from "@/components/scroll-effects";
+import { SecretSynth } from "@/components/secret-synth";
+import { Terminal } from "@/components/terminal";
+import { UrlTheme } from "@/components/url-theme";
 import type { Route } from "./+types/root";
 
 export const links: Route.LinksFunction = () => [
@@ -39,7 +47,19 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-  return <Outlet />;
+  return (
+    <>
+      <UrlTheme />
+      <ConsoleGreeting />
+      <Oneko />
+      <ScrollEffects />
+      <Terminal />
+      <KonamiMode />
+      <SecretSynth />
+      <DebugOverlays />
+      <Outlet />
+    </>
+  );
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {

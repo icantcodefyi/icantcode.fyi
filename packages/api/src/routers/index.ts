@@ -6,6 +6,36 @@ import { z } from "zod";
 
 import { protectedProcedure, publicProcedure } from "../index";
 
+// ── Spotify types ──
+interface SpotifyTokenResponse {
+  access_token?: string;
+  expires_in?: number;
+}
+
+interface SpotifyArtist {
+  name: string;
+}
+
+interface SpotifyImage {
+  url: string;
+}
+
+interface SpotifyTrack {
+  name: string;
+  artists: SpotifyArtist[];
+  album?: { images?: SpotifyImage[] };
+  external_urls?: { spotify?: string };
+}
+
+interface SpotifyCurrentlyPlaying {
+  is_playing: boolean;
+  item?: SpotifyTrack;
+}
+
+interface SpotifyRecentlyPlayed {
+  items?: Array<{ track: SpotifyTrack }>;
+}
+
 // ── Spotify cache ──
 let spotifyAccessToken: string | null = null;
 let spotifyTokenExpiry = 0;
@@ -33,8 +63,8 @@ async function getSpotifyAccessToken(): Promise<string | null> {
     }),
   });
 
-  const data = await response.json();
-  if (data.access_token) {
+  const data = (await response.json()) as SpotifyTokenResponse;
+  if (data.access_token && typeof data.expires_in === "number") {
     spotifyAccessToken = data.access_token;
     spotifyTokenExpiry = Date.now() + (data.expires_in - 60) * 1000;
     return spotifyAccessToken;
@@ -79,34 +109,30 @@ export const appRouter = {
 
       if (!recentRes.ok) return { isPlaying: false as const };
 
-      const recentData = await recentRes.json();
+      const recentData = (await recentRes.json()) as SpotifyRecentlyPlayed;
       const track = recentData.items?.[0]?.track;
       if (!track) return { isPlaying: false as const };
 
       return {
         isPlaying: false as const,
-        title: track.name as string,
-        artist: (track.artists as Array<{ name: string }>)
-          .map((a) => a.name)
-          .join(", "),
-        albumArt: (track.album?.images?.[2]?.url ||
-          track.album?.images?.[0]?.url) as string | undefined,
-        songUrl: track.external_urls?.spotify as string | undefined,
+        title: track.name,
+        artist: track.artists.map((a) => a.name).join(", "),
+        albumArt:
+          track.album?.images?.[2]?.url || track.album?.images?.[0]?.url,
+        songUrl: track.external_urls?.spotify,
       };
     }
 
-    const data = await response.json();
+    const data = (await response.json()) as SpotifyCurrentlyPlaying;
     if (!data.item) return { isPlaying: false as const };
 
     return {
-      isPlaying: data.is_playing as boolean,
-      title: data.item.name as string,
-      artist: (data.item.artists as Array<{ name: string }>)
-        .map((a) => a.name)
-        .join(", "),
-      albumArt: (data.item.album?.images?.[2]?.url ||
-        data.item.album?.images?.[0]?.url) as string | undefined,
-      songUrl: data.item.external_urls?.spotify as string | undefined,
+      isPlaying: data.is_playing,
+      title: data.item.name,
+      artist: data.item.artists.map((a) => a.name).join(", "),
+      albumArt:
+        data.item.album?.images?.[2]?.url || data.item.album?.images?.[0]?.url,
+      songUrl: data.item.external_urls?.spotify,
     };
   }),
 

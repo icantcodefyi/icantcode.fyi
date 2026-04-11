@@ -13,11 +13,19 @@ import { logger } from "hono/logger";
 
 const app = new Hono();
 
+// Build an allowlist set once so lookup per request is O(1)
+const allowedOrigins = new Set(env.CORS_ORIGIN);
+
 app.use(logger());
 app.use(
   "/*",
   cors({
-    origin: env.CORS_ORIGIN,
+    // When `credentials: true`, the browser requires the response's
+    // `Access-Control-Allow-Origin` to echo the exact request origin
+    // (not `*` and not a list). Returning the matched origin here
+    // handles `icantcode.fyi`, `www.icantcode.fyi`, and localhost
+    // from a single `CORS_ORIGIN=url1,url2,url3` env var.
+    origin: (origin) => (origin && allowedOrigins.has(origin) ? origin : null),
     allowMethods: ["GET", "POST", "OPTIONS"],
     allowHeaders: ["Content-Type", "Authorization"],
     credentials: true,

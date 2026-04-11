@@ -4,6 +4,8 @@ export function PageViews({ serverUrl }: { serverUrl: string }) {
   const [views, setViews] = useState<number | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
+
     async function recordView() {
       try {
         const res = await fetch(`${serverUrl}/rpc/pageView`, {
@@ -11,18 +13,26 @@ export function PageViews({ serverUrl }: { serverUrl: string }) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({}),
         });
+        if (!res.ok) return;
         const data = await res.json();
+        // oRPC wraps responses as { json: ... }
         const count = data?.json?.views ?? data?.views;
-        if (typeof count === "number") setViews(count);
+        if (!cancelled && typeof count === "number" && Number.isFinite(count)) {
+          setViews(count);
+        }
       } catch {
         // Silently fail
       }
     }
 
     recordView();
+    return () => {
+      cancelled = true;
+    };
   }, [serverUrl]);
 
-  if (views === null || typeof views !== "number") return null;
+  // `views == null` catches both null *and* undefined (double-equal to null)
+  if (views == null || !Number.isFinite(views)) return null;
 
   return (
     <span className="text-xs text-muted-foreground/40 tabular-nums">

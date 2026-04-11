@@ -18,7 +18,20 @@ const corsOriginSchema = z
   )
   .pipe(z.array(z.url()).min(1));
 
+/**
+ * `clientPrefix: ""` + empty `client: {}` narrows @t3-oss/env-core's
+ * internal `TPrefix` generic to the literal `""`. Without it, some build
+ * environments (notably Vercel's tsc run) fail to narrow `TPrefix` at all
+ * and widen it to `string`, which makes every server key trip the
+ * "should not be prefixed with ${string}" guard in `ServerOptions`.
+ *
+ * See env-core's `ServerOptions` type:
+ *   TPrefix extends "" ? TServer[TKey] : ... ErrorMessage<...>
+ * An explicit empty prefix always takes the first branch.
+ */
 export const env = createEnv({
+  clientPrefix: "",
+  client: {},
   server: {
     DATABASE_URL: z.string().min(1),
     BETTER_AUTH_SECRET: z.string().min(32),

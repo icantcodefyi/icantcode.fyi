@@ -207,3 +207,26 @@
 .delay-6 { animation-delay: 0.3s; }
 .delay-7 { animation-delay: 0.35s; }
 .delay-8 { animation-delay: 0.4s; }
+
+/* ── Command palette animations ── */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes cmd-enter {
+  from {
+    opacity: 0;
+    transform: scale(0.97) translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* ── Spotify equalizer bars ── */
+@keyframes equalizer {
+  0%, 100% { height: 4px; }
+  50% { height: 14px; }
+}

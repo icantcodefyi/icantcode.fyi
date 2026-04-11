@@ -178,12 +178,12 @@ const HACKATHONS_ORGANIZED = [
   { name: "HackWave 2024", venue: "CDGI Indore", detail: "College\u2019s first hackathon. 500+ registrations, 40 teams offline" },
 ] as const;
 
-const HACKATHON_IMAGES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 17, 18, 19, 20, 21];
+const HACKATHON_IMAGES = [1, 3, 4, 6, 7, 8, 9, 10, 12, 13, 16, 19, 20, 21];
 
 const HACKATHON_HEIGHTS: Record<number, number> = {
-  1: 300, 2: 400, 3: 300, 4: 350, 5: 300, 6: 350, 7: 300, 8: 320,
-  9: 300, 10: 350, 11: 300, 12: 400, 13: 350, 14: 300, 16: 350,
-  17: 300, 18: 320, 19: 300, 20: 400, 21: 300,
+  1: 300, 3: 300, 4: 350, 6: 350, 7: 300, 8: 320,
+  9: 300, 10: 350, 12: 400, 13: 350, 16: 350,
+  19: 300, 20: 400, 21: 300,
 };
 
 /* ── Components ── */

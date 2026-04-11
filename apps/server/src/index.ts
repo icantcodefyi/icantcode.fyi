@@ -80,7 +80,13 @@ app.use("/*", async (c, next) => {
 });
 
 app.get("/", (c) => {
-  return c.text("OK");
+  return c.json({
+    ok: true,
+    path: c.req.path,
+    url: c.req.url,
+    method: c.req.method,
+    marker: "diag-9f8a",
+  });
 });
 
 export default app;

@@ -10537,15 +10537,7 @@ app.use("/*", async (c, next) => {
 	if (apiResult.matched) return c.newResponse(apiResult.response.body, apiResult.response);
 	await next();
 });
-app.get("/", (c) => {
-	return c.json({
-		ok: true,
-		path: c.req.path,
-		url: c.req.url,
-		method: c.req.method,
-		marker: "diag-9f8a"
-	});
-});
+app.get("/healthz", (c) => c.text("OK"));
 var src_default = app;
 
 //#endregion

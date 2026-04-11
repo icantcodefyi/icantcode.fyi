@@ -2,8 +2,6 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "installCommand": "cd ../.. && bun install",
   "buildCommand": "cd ../.. && turbo run build --filter=server",
-  "rewrites": [
-    { "source": "/", "destination": "/api/hono" },
-    { "source": "/(.*)", "destination": "/api/hono" }
-  ]
+  "redirects": [{ "source": "/", "destination": "/healthz", "permanent": false }],
+  "rewrites": [{ "source": "/(.*)", "destination": "/api/hono" }]
 }

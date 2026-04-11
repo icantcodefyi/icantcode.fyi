@@ -79,14 +79,9 @@ app.use("/*", async (c, next) => {
   await next();
 });
 
-app.get("/", (c) => {
-  return c.json({
-    ok: true,
-    path: c.req.path,
-    url: c.req.url,
-    method: c.req.method,
-    marker: "diag-9f8a",
-  });
-});
+// Vercel's edge silently 500s any request hitting `/` on this project
+// (likely a stale static-file override we can't see from the CLI). Work
+// around it with a redirect: `/` → `/healthz` → rewrite → function.
+app.get("/healthz", (c) => c.text("OK"));
 
 export default app;

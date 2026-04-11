@@ -10550,7 +10550,25 @@ var src_default = app;
 
 //#endregion
 //#region src/handler.ts
-var handler_default = { fetch: handle(src_default) };
+const honoFetch = handle(src_default);
+var handler_default = { async fetch(req) {
+	try {
+		const url = new URL(req.url);
+		if (url.pathname === "/") return Response.json({
+			marker: "handler-bypass",
+			url: req.url,
+			pathname: url.pathname,
+			method: req.method
+		});
+		return await honoFetch(req);
+	} catch (err) {
+		const e = err;
+		return new Response(`HANDLER ERROR: ${e.message}\n\n${e.stack}`, {
+			status: 500,
+			headers: { "content-type": "text/plain" }
+		});
+	}
+} };
 
 //#endregion
 export { handler_default as default };

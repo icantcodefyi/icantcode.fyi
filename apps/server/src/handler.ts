@@ -1,9 +1,29 @@
 import { handle } from "hono/vercel";
 import app from "./index";
 
-// Vercel's Node.js runtime dispatches via `defaultExport.fetch(request)` —
-// it needs an object with a fetch method, not a bare function. handle(app)
-// returns (req) => app.fetch(req), which we wrap into the expected shape.
+const honoFetch = handle(app);
+
 export default {
-  fetch: handle(app),
+  async fetch(req: Request): Promise<Response> {
+    try {
+      const url = new URL(req.url);
+      // Bypass Hono for root to see if the issue is Hono's routing or something lower.
+      if (url.pathname === "/") {
+        return Response.json({
+          marker: "handler-bypass",
+          url: req.url,
+          pathname: url.pathname,
+          method: req.method,
+        });
+      }
+      return await honoFetch(req);
+    } catch (err) {
+      // Surface errors so Vercel returns them in the body instead of 500-ing opaquely.
+      const e = err as Error;
+      return new Response(
+        `HANDLER ERROR: ${e.message}\n\n${e.stack}`,
+        { status: 500, headers: { "content-type": "text/plain" } },
+      );
+    }
+  },
 };

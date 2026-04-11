@@ -9,9 +9,18 @@ import { build } from "tsdown";
 
 const OUT = ".vercel/output";
 const FN = `${OUT}/functions/api.func`;
+const STATIC = `${OUT}/static`;
 
 await rm(OUT, { recursive: true, force: true });
 await mkdir(FN, { recursive: true });
+await mkdir(STATIC, { recursive: true });
+
+// Diagnostic probe — if /probe.txt serves this string, Vercel is reading
+// .vercel/output/; if it 404s or 500s, Vercel never saw our Build Output.
+await writeFile(
+  `${STATIC}/probe.txt`,
+  `build-output-api-v3 ok ${new Date().toISOString()}\n`,
+);
 
 await build({
   entry: { index: "./src/handler.ts" },
@@ -42,7 +51,11 @@ await writeFile(
   `${JSON.stringify(
     {
       version: 3,
-      routes: [{ src: "/(.*)", dest: "/api" }],
+      routes: [
+        // Static files (like /probe.txt) win over the catch-all below.
+        { handle: "filesystem" },
+        { src: "/(.*)", dest: "/api" },
+      ],
     },
     null,
     2,

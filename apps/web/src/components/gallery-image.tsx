@@ -6,6 +6,7 @@ interface GalleryImageProps {
   width: number;
   height: number;
   index: number;
+  size?: "big" | "wide" | "tall";
 }
 
 /**
@@ -15,7 +16,7 @@ interface GalleryImageProps {
  *   3. Applies a tiny index-based stagger so neighbours don't fire
  *      at exactly the same frame when the user scrolls in quickly
  */
-export function GalleryImage({ src, alt, width, height, index }: GalleryImageProps) {
+export function GalleryImage({ src, alt, width, height, index, size }: GalleryImageProps) {
   const ref = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
   const [inView, setInView] = useState(false);
@@ -55,7 +56,7 @@ export function GalleryImage({ src, alt, width, height, index }: GalleryImagePro
   return (
     <div
       ref={ref}
-      className="overflow-hidden rounded-lg bg-muted/30"
+      className={`overflow-hidden rounded-lg bg-muted/30${size ? ` span-${size}` : ""}`}
       style={{
         opacity: visible ? 1 : 0,
         transform: visible ? "translateY(0)" : "translateY(10px)",
@@ -72,7 +73,7 @@ export function GalleryImage({ src, alt, width, height, index }: GalleryImagePro
         loading="lazy"
         decoding="async"
         onLoad={() => setLoaded(true)}
-        className="w-full object-cover transition-transform duration-500 ease-out hover:scale-[1.03]"
+        className="w-full h-full object-cover transition-transform duration-500 ease-out hover:scale-[1.03]"
       />
     </div>
   );

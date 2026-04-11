@@ -180,10 +180,15 @@ const HACKATHONS_ORGANIZED = [
 
 const HACKATHON_IMAGES = [1, 3, 4, 6, 7, 8, 9, 10, 12, 13, 16, 19, 20, 21];
 
-const HACKATHON_HEIGHTS: Record<number, number> = {
-  1: 300, 3: 300, 4: 350, 6: 350, 7: 300, 8: 320,
-  9: 300, 10: 350, 12: 400, 13: 350, 16: 350,
-  19: 300, 20: 400, 21: 300,
+// Size pattern keyed by array position. Traced against grid-auto-flow:dense
+// to pack 14 items (2 big + 2 wide + 2 tall + 8 small) into a 4×6 rectangle.
+const HACKATHON_SIZES: Record<number, "big" | "wide" | "tall"> = {
+  0: "big",
+  3: "tall",
+  6: "wide",
+  9: "big",
+  10: "tall",
+  13: "wide",
 };
 
 /* ── Components ── */
@@ -563,8 +568,9 @@ export default function Home() {
                 src={`/hackathons/image${num}.webp`}
                 alt={`Hackathon moment ${num}`}
                 width={400}
-                height={HACKATHON_HEIGHTS[num] || 300}
+                height={400}
                 index={i}
+                size={HACKATHON_SIZES[i]}
               />
             ))}
           </div>

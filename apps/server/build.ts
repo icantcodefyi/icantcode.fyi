@@ -10,7 +10,7 @@ await rm("api", { recursive: true, force: true });
 await mkdir("api", { recursive: true });
 
 await build({
-  entry: { index: "./src/handler.ts" },
+  entry: { hono: "./src/handler.ts" },
   format: "esm",
   outDir: "./api",
   clean: false,
@@ -18,4 +18,4 @@ await build({
   silent: true,
 });
 
-console.log("✓ api/index.mjs ready");
+console.log("✓ api/hono.mjs ready");

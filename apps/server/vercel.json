@@ -1,5 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "installCommand": "cd ../.. && bun install",
-  "buildCommand": "cd ../.. && turbo run build --filter=server"
+  "buildCommand": "cd ../.. && turbo run build --filter=server",
+  "rewrites": [{ "source": "/:path((?!api).*)*", "destination": "/api" }]
 }

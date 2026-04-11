@@ -5,6 +5,12 @@
     ".": {
       "default": "./src/index.ts"
     },
+    "./context": {
+      "default": "./src/context.ts"
+    },
+    "./routers/index": {
+      "default": "./src/routers/index.ts"
+    },
     "./*": {
       "default": "./src/*.ts"
     }

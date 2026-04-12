@@ -30,7 +30,6 @@
   },
   "devDependencies": {
     "@my-better-t-app/config": "workspace:*",
-    "hono": "catalog:",
     "typescript": "^5"
   }
 }

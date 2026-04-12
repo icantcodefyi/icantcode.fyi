@@ -1,14 +1,11 @@
 import { auth } from "@my-better-t-app/auth";
-import type { Context as HonoContext } from "hono";
 
 export type CreateContextOptions = {
-  context: HonoContext;
+  headers: Headers;
 };
 
-export async function createContext({ context }: CreateContextOptions) {
-  const session = await auth.api.getSession({
-    headers: context.req.raw.headers,
-  });
+export async function createContext({ headers }: CreateContextOptions) {
+  const session = await auth.api.getSession({ headers });
   return {
     auth: null,
     session,

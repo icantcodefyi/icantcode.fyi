@@ -2,11 +2,10 @@
   "name": "server",
   "type": "module",
   "scripts": {
-    "build": "bun run build.ts",
+    "build": "next build",
     "check-types": "tsc -b",
-    "compile": "bun build --compile --minify --sourcemap --bytecode ./src/index.ts --outfile server",
-    "dev": "bun run --hot src/index.ts",
-    "start": "bun run api/index.mjs"
+    "dev": "next dev --port 3000",
+    "start": "next start"
   },
   "dependencies": {
     "@my-better-t-app/api": "workspace:*",
@@ -18,13 +17,16 @@
     "@orpc/zod": "catalog:",
     "better-auth": "catalog:",
     "dotenv": "catalog:",
-    "hono": "catalog:",
+    "next": "^15.3.1",
+    "react": "catalog:",
+    "react-dom": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
     "@my-better-t-app/config": "workspace:*",
-    "@types/bun": "catalog:",
-    "tsdown": "^0.16.5",
+    "@types/node": "^22",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
     "typescript": "^5"
   }
 }

@@ -7,9 +7,9 @@ import { GuestbookWall } from "@/components/guestbook-wall";
 import { LocalTime } from "@/components/local-time";
 import { PageViews } from "@/components/page-views";
 import { Reveal } from "@/components/reveal";
-import { NowPlaying } from "@/components/now-playing";
 import { WeatherTint } from "@/components/weather-tint";
 import { YearBar } from "@/components/year-bar";
+import { SpotifyNowPlaying } from "@/components/spotify-now-playing";
 
 const SERVER_URL = import.meta.env.VITE_SERVER_URL || "http://localhost:3000";
 
@@ -325,7 +325,7 @@ export default function Home() {
               className="hidden h-3 w-px bg-border sm:inline-block"
               aria-hidden="true"
             />
-            <NowPlaying serverUrl={SERVER_URL} />
+            <SpotifyNowPlaying serverUrl={SERVER_URL} />
             <span
               className="hidden h-3 w-px bg-border sm:inline-block"
               aria-hidden="true"

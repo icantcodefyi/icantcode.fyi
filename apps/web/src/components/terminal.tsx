@@ -33,11 +33,11 @@ type CommandResult =
   | { ssh: string }
   | { noop: true };
 
-const BANNER = `aniruddh@icantcode.fyi [~]
+const BANNER = `icantcodefyi@gmail.com [~]
 type 'help' for a list of commands, 'exit' to close.`;
 
 const ABOUT_TEXT = `  _
- / \\__  aniruddh dubge
+ / \\__  ani
 (    @\\___     developer from india
  /         O   self-taught, anime-pilled, hackathon-poisoned
 /   (_____/    currently: supernova ai (bengaluru)
@@ -122,7 +122,7 @@ const HELP_LINES = [
 const COMMANDS: Record<string, (args: string[]) => CommandResult> = {
   help: () => HELP_LINES,
   whoami: () =>
-    "aniruddh — developer from india, product engineer @ supernova ai",
+    "ani — developer from india, product engineer @ supernova ai",
   ls: () => [
     "experience/  projects/  hackathons/  moments/  guestbook/",
     "pfp.jpeg  resume.pdf  secrets.env",
@@ -205,7 +205,7 @@ const COMMANDS: Record<string, (args: string[]) => CommandResult> = {
       timeStyle: "long",
       timeZone: "Asia/Kolkata",
     }).format(new Date()),
-  pwd: () => "/home/aniruddh/portfolio",
+  pwd: () => "/home/ani/portfolio",
   clear: () => ({ clear: true }),
   exit: () => ({ exit: true }),
 };
@@ -214,7 +214,7 @@ const COMMANDS: Record<string, (args: string[]) => CommandResult> = {
 const VIM_ABOUT = [
   "# about.md",
   "",
-  "name:     aniruddh dubge",
+  "name:     ani",
   "handle:   icantcodefyi",
   "location: bengaluru, india",
   "role:     product engineer @ supernova ai",

@@ -7,7 +7,7 @@ import { GuestbookWall } from "@/components/guestbook-wall";
 import { LocalTime } from "@/components/local-time";
 import { PageViews } from "@/components/page-views";
 import { Reveal } from "@/components/reveal";
-import { SpotifyNowPlaying } from "@/components/spotify-now-playing";
+import { NowPlaying } from "@/components/now-playing";
 import { WeatherTint } from "@/components/weather-tint";
 import { YearBar } from "@/components/year-bar";
 
@@ -15,13 +15,13 @@ const SERVER_URL = import.meta.env.VITE_SERVER_URL || "http://localhost:3000";
 
 export function meta({}: Route.MetaArgs) {
   return [
-    { title: "Aniruddh Dubge" },
+    { title: "ani" },
     {
       name: "description",
       content:
         "Developer from India. Building tools, winning hackathons, shipping code.",
     },
-    { property: "og:title", content: "Aniruddh Dubge" },
+    { property: "og:title", content: "ani" },
     {
       property: "og:description",
       content:
@@ -261,14 +261,14 @@ export default function Home() {
           <div className="flex items-center gap-5">
             <img
               src="/pfp.jpeg"
-              alt="Aniruddh"
+              alt="ani"
               width={60}
               height={60}
               className="h-[60px] w-[60px] shrink-0 rounded-full object-cover ring-2 ring-border"
             />
             <div className="flex-1 min-w-0">
               <h1 className="font-display text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-                Aniruddh Dubge
+                ani
               </h1>
               <p className="mt-0.5 text-sm text-muted-foreground">
                 Developer from India
@@ -325,7 +325,7 @@ export default function Home() {
               className="hidden h-3 w-px bg-border sm:inline-block"
               aria-hidden="true"
             />
-            <SpotifyNowPlaying serverUrl={SERVER_URL} />
+            <NowPlaying serverUrl={SERVER_URL} />
             <span
               className="hidden h-3 w-px bg-border sm:inline-block"
               aria-hidden="true"
@@ -586,7 +586,7 @@ export default function Home() {
           <footer className="border-t border-border pt-6 pb-8">
             <div className="flex flex-col items-center gap-2 text-center sm:flex-row sm:justify-between sm:text-left">
               <p className="text-sm font-medium text-foreground/80">
-                Aniruddh Dubge
+                ani
               </p>
               <div className="flex items-center gap-3">
                 <PageViews serverUrl={SERVER_URL} />

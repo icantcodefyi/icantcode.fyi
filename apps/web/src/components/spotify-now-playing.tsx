@@ -63,6 +63,11 @@ export function SpotifyNowPlaying({ serverUrl }: { serverUrl: string }) {
     };
   }, [serverUrl]);
 
+  // lets the desk scene float music notes while something is playing
+  useEffect(() => {
+    document.documentElement.toggleAttribute("data-playing", !!data?.isPlaying);
+  }, [data?.isPlaying]);
+
   if (!data?.title) return null;
 
   const Wrapper = data.songUrl ? "a" : "div";

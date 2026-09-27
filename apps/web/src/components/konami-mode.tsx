@@ -27,6 +27,7 @@ const RESET_AFTER_MS = 1200;
 
 export function KonamiMode() {
   const [active, setActive] = useState(false);
+  const [burst, setBurst] = useState(false);
 
   useEffect(() => {
     let progress = 0;
@@ -61,7 +62,13 @@ export function KonamiMode() {
         if (progress === SEQUENCE.length) {
           progress = 0;
           clearReset();
-          setActive((a) => !a);
+          setActive((a) => {
+            if (!a) {
+              setBurst(true);
+              setTimeout(() => setBurst(false), 1300);
+            }
+            return !a;
+          });
           unlock("konami");
           return;
         }
@@ -92,8 +99,17 @@ export function KonamiMode() {
   if (!active) return null;
 
   return (
-    <div className="pointer-events-none fixed bottom-6 left-1/2 z-[80] -translate-x-1/2 rounded-full border border-border/60 bg-card/90 px-3 py-1 text-[11px] text-foreground shadow-sm backdrop-blur">
-      <span className="mr-1">≽^•⩊•^≼</span> cat mode
-    </div>
+    <>
+      {/* manga mode: page goes black & white with screentone dots */}
+      <div className="manga-tone" aria-hidden="true" />
+      {burst && (
+        <div className="manga-burst" aria-hidden="true">
+          <span>にゃ!</span>
+        </div>
+      )}
+      <div className="pointer-events-none fixed bottom-6 left-1/2 z-[80] -translate-x-1/2 rounded-full border border-border/60 bg-card/90 px-3 py-1 text-[11px] text-foreground shadow-sm backdrop-blur">
+        <span className="mr-1">≽^•⩊•^≼</span> cat mode
+      </div>
+    </>
   );
 }

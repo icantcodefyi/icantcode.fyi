@@ -26,6 +26,7 @@ export const ACHIEVEMENTS = {
   "rm-rf": { label: "rm -rf", icon: "✗" },
   console: { label: "snoop", icon: "👁" },
   palette: { label: "⌘k", icon: "⌘" },
+  petals: { label: "hanami", icon: "✿" },
 } as const;
 
 export type AchievementId = keyof typeof ACHIEVEMENTS;

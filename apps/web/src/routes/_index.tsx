@@ -10,6 +10,9 @@ import { Reveal } from "@/components/reveal";
 import { WeatherTint } from "@/components/weather-tint";
 import { YearBar } from "@/components/year-bar";
 import { SpotifyNowPlaying } from "@/components/spotify-now-playing";
+import { IndiaMap } from "@/components/india-map";
+import { ToyBox } from "@/components/toy-box";
+import { DeskScene, Grain, Heading, JellyText, MarginNote, Marquee, NightSky, PfpBadge, PlaneTrail, ProjectPreview, Sakura, Signature, Squiggle, Stickers } from "@/components/doodles";
 
 const SERVER_URL = import.meta.env.VITE_SERVER_URL || "http://localhost:3000";
 
@@ -180,6 +183,24 @@ const HACKATHONS_ORGANIZED = [
 
 const HACKATHON_IMAGES = [1, 3, 4, 6, 7, 8, 9, 10, 12, 13, 16, 19, 20, 21];
 
+// Handwritten on the back of each polaroid (same order as HACKATHON_IMAGES).
+const HACKATHON_CAPTIONS = [
+  "we actually won this one",
+  "3am, still debugging",
+  "free pizza > sleep",
+  "the team ♡",
+  "demo in 5 minutes",
+  "it worked on my machine",
+  "first flight to Bangalore",
+  "judges liked it!!",
+  "no sleep, all vibes",
+  "swag haul",
+  "stage fright (none)",
+  "ship it",
+  "the best people",
+  "see you next hackathon",
+];
+
 // Size pattern keyed by array position. Traced against grid-auto-flow:dense
 // to pack 14 items (2 big + 2 wide + 2 tall + 8 small) into a 4×6 rectangle.
 const HACKATHON_SIZES: Record<number, "big" | "wide" | "tall"> = {
@@ -252,39 +273,44 @@ function SocialLink({
 
 export default function Home() {
   return (
-    <div className="min-h-screen">
+    <div className="relative min-h-screen">
+      <Grain />
+      <Sakura />
       <CommandPalette />
 
       <div className="mx-auto max-w-2xl px-5 pb-24 pt-12 sm:pt-20">
         {/* ── Intro ── */}
         <header className="animate-fade-up">
-          <div className="flex items-center gap-5">
-            <img
-              src="/pfp.jpeg"
-              alt="ani"
-              width={60}
-              height={60}
-              className="h-[60px] w-[60px] shrink-0 rounded-full object-cover ring-2 ring-border"
-            />
-            <div className="flex-1 min-w-0">
-              <h1 className="font-display text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-                ani
-              </h1>
-              <p className="mt-0.5 text-sm text-muted-foreground">
-                Developer from India
-              </p>
-            </div>
+          <div className="flex items-end justify-between gap-4">
+            <PfpBadge src="/pfp.jpeg" />
+            <DeskScene className="w-[150px] shrink-0 sm:w-[220px]" />
           </div>
+
+          <p className="mt-6 font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
+            hi, i'm
+          </p>
+          <h1 className="relative mt-1 inline-block font-display text-6xl font-semibold tracking-tight text-foreground sm:text-7xl">
+            <JellyText text="ani" />
+            <Squiggle className="absolute -bottom-3 left-0 h-4 w-full" />
+          </h1>
+          <p className="mt-4 text-sm text-muted-foreground">
+            Developer from India <span className="inline-block animate-bounce">🇮🇳</span>
+          </p>
 
           <p
             className="mt-6 leading-relaxed text-foreground/80"
             style={{ maxWidth: "60ch" }}
           >
-            Self-taught developer who loves building things. Currently working on
+            Self-taught developer who loves{" "}
+            <mark className="marker" style={{ animationDelay: "600ms" }}>building things</mark>. Currently working on
             app development, software engineering, and web design. I enjoy
-            creating interactive websites, investigating AI in my free time, and
-            I'm an unapologetic anime enthusiast.
+            creating{" "}
+            <mark className="marker" style={{ animationDelay: "1000ms", ["--mk" as string]: "var(--pastel-sky)" }}>interactive websites</mark>,
+            investigating AI in my free time, and I'm an{" "}
+            <mark className="marker" style={{ animationDelay: "1400ms", ["--mk" as string]: "var(--pastel-blush)" }}>unapologetic anime enthusiast</mark>.
           </p>
+
+          <Stickers />
 
           {/* Social links */}
           <div className="mt-5 flex flex-wrap items-center gap-5">
@@ -336,15 +362,18 @@ export default function Home() {
           <YearBar />
         </header>
 
+        <div className="mt-14">
+          <Marquee items={["ships things", "wins hackathons", "watches anime", "breaks prod (rarely)", "drinks chai", "builds AI tools"]} />
+        </div>
+
         {/* ── Experience ── */}
         <Reveal className="mt-14" delay={50}>
           <section id="experience">
-            <h2 className="font-display text-lg font-medium text-foreground tracking-tight">
-              Experience
-            </h2>
+            <Heading glyph="plane">Experience</Heading>
             <div className="mt-5 space-y-5">
               {EXPERIENCE.map((exp) => (
-                <div key={exp.company} className="flex items-start gap-4">
+                <div key={exp.company} className="relative flex items-start gap-4">
+                  {exp.company === "Supernova AI" && <MarginNote>current home ♡</MarginNote>}
                   <img
                     src={exp.logo}
                     alt={exp.company}
@@ -371,13 +400,13 @@ export default function Home() {
           </section>
         </Reveal>
 
+        <PlaneTrail />
+
         {/* ── Projects ── */}
-        <Reveal className="mt-14" delay={50}>
+        <Reveal delay={50}>
           <section id="projects">
             <div className="flex items-baseline justify-between gap-4">
-              <h2 className="font-display text-lg font-medium tracking-tight text-foreground">
-                Projects
-              </h2>
+              <Heading glyph="flower">Projects</Heading>
               <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground/80 tabular-nums">
                 {PROJECTS.length.toString().padStart(2, "0")} shipped
               </span>
@@ -386,9 +415,11 @@ export default function Home() {
             {/* Editorial directory — numbered index, no cards.
                 Hairline dividers via divide-y; hover wash via negative-margin
                 trick so the background extends past the text columns. */}
+            <ProjectPreview items={PROJECTS} />
             <ol className="mt-6 list-none divide-y divide-border/60">
               {PROJECTS.map((project, i) => (
-                <li key={project.name} className="first:border-t first:border-border/60">
+                <li key={project.name} data-preview={i} className="relative first:border-t first:border-border/60">
+                  {i === 0 && <MarginNote side="left" className="top-3">my favourite child</MarginNote>}
                   <a
                     href={project.url}
                     target="_blank"
@@ -403,8 +434,11 @@ export default function Home() {
                     </span>
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5">
-                        <h3 className="font-display text-[17px] font-medium tracking-tight text-foreground">
+                        <h3 className="relative font-display text-[17px] font-medium tracking-tight text-foreground">
                           {project.name}
+                          <svg viewBox="0 0 100 40" preserveAspectRatio="none" className="scribble pointer-events-none absolute -inset-x-3 -inset-y-2 h-[calc(100%+16px)] w-[calc(100%+24px)]" fill="none" aria-hidden="true">
+                            <path pathLength={1} d="M60 4 C 30 0, 4 8, 4 20 C 4 34, 50 38, 80 32 C 98 28, 98 10, 76 5 C 60 2, 40 4, 30 6" stroke="var(--pastel-blush)" strokeWidth="2.5" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
+                          </svg>
                         </h3>
                         <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground/70">
                           {PROJECT_HOSTS[i]}
@@ -480,6 +514,11 @@ export default function Home() {
           </div>
         </Reveal>
 
+        <Reveal className="relative mt-10" delay={50}>
+          <MarginNote side="left" className="top-16">go on, throw React</MarginNote>
+          <ToyBox />
+        </Reveal>
+
         {/* ── GitHub Heatmap ── */}
         <Reveal className="mt-14" delay={50}>
           <section>
@@ -490,24 +529,32 @@ export default function Home() {
         {/* ── Hackathons ── */}
         <Reveal className="mt-14" delay={50}>
           <section id="hackathons">
-            <h2 className="font-display text-lg font-medium text-foreground tracking-tight">
-              Hackathons
-            </h2>
+            <Heading glyph="trophy">Hackathons</Heading>
 
-            <div className="mt-5 space-y-6">
+            <IndiaMap />
+
+            <div className="mt-8 space-y-6">
               <div>
                 <h3 className="mb-3 text-sm font-medium uppercase tracking-[0.14em] text-muted-foreground/80">
                   13 Wins
                 </h3>
-                <div className="space-y-2.5">
+                <div className="timeline space-y-2.5">
                   {HACKATHON_WINS.map((h) => (
-                    <div key={h.name} className="flex items-start gap-3">
-                      {/* 24px tall flex cell so the dot sits on the title's optical center */}
+                    <div key={h.name} className="relative flex items-start gap-3">
+                      {h.name === "Hackistica '23" && <MarginNote>where it all started!</MarginNote>}
+                      {h.name === "EthIndia 2023" && <MarginNote side="left">first time on a plane</MarginNote>}
+                      {/* 24px tall flex cell so the marker sits on the title's optical center */}
                       <span
                         aria-hidden="true"
-                        className="flex h-6 shrink-0 items-center"
+                        className="timeline-dot flex h-6 w-3 shrink-0 items-center justify-center"
                       >
-                        <span className="block h-1.5 w-1.5 rounded-full bg-pastel-sage" />
+                        {h.prize.startsWith("1st") ? (
+                          <svg width="14" height="14" viewBox="0 0 14 14" className="scale-125">
+                            <path d="M7 1 L8.8 5 L13 5.4 L9.8 8.2 L10.8 12.5 L7 10.2 L3.2 12.5 L4.2 8.2 L1 5.4 L5.2 5 Z" fill="var(--pastel-butter)" stroke="oklch(0.55 0.08 85)" strokeWidth="1" strokeLinejoin="round" />
+                          </svg>
+                        ) : (
+                          <span className="block h-2.5 w-2.5 rounded-full border-2 border-background bg-pastel-sage ring-1 ring-foreground/15" />
+                        )}
                       </span>
                       <div className="min-w-0">
                         <p className="font-medium text-foreground">
@@ -554,12 +601,15 @@ export default function Home() {
           </section>
         </Reveal>
 
+        <div className="mt-16">
+          <Marquee tilt={1.2} tone="var(--pastel-lavender)" items={["13 wins", "2 organized", "too many all-nighters", "free pizza", "demo in 5 mins", "it works on my machine"]} />
+        </div>
+
         {/* ── Photo Gallery (Masonry) ── */}
         <section id="gallery" className="mt-14">
           <Reveal>
-            <h2 className="font-display text-lg font-medium text-foreground tracking-tight mb-5">
-              Moments
-            </h2>
+            <Heading glyph="camera">Moments</Heading>
+            <div className="mb-8" />
           </Reveal>
           <div className="masonry">
             {HACKATHON_IMAGES.map((num, i) => (
@@ -571,6 +621,7 @@ export default function Home() {
                 height={400}
                 index={i}
                 size={HACKATHON_SIZES[i]}
+                caption={HACKATHON_CAPTIONS[i]}
               />
             ))}
           </div>
@@ -581,13 +632,15 @@ export default function Home() {
           <GuestbookWall />
         </Reveal>
 
+        <Reveal className="mt-20">
+          <NightSky />
+        </Reveal>
+
         {/* ── Footer ── */}
-        <Reveal className="mt-24">
-          <footer className="border-t border-border pt-6 pb-8">
+        <Reveal className="mt-6">
+          <footer className="pt-6 pb-8">
             <div className="flex flex-col items-center gap-2 text-center sm:flex-row sm:justify-between sm:text-left">
-              <p className="text-sm font-medium text-foreground/80">
-                ani
-              </p>
+              <Signature className="h-14 w-28" />
               <div className="flex items-center gap-3">
                 <PageViews serverUrl={SERVER_URL} />
                 <span

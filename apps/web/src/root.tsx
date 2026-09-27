@@ -26,6 +26,8 @@ export const links: Route.LinksFunction = () => [
     rel: "stylesheet",
     href: "https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&f[]=erode@400,500,600&display=swap",
   },
+  { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
+  { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Caveat:wght@500;600&display=swap" },
 ];
 
 export function Layout({ children }: { children: React.ReactNode }) {

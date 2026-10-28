@@ -297,18 +297,9 @@ function StageBack({ index }: { index: number }) {
           <stop offset="0.55" className="bt-halo-1" />
           <stop offset="1" className="bt-halo-2" />
         </radialGradient>
-        <linearGradient id="bt-floor" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" className="bt-floor-0" />
-          <stop offset="1" className="bt-floor-1" />
-        </linearGradient>
         <linearGradient id="bt-beam-g" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" className="bt-beam-0" />
           <stop offset="0.55" className="bt-beam-1" />
-          <stop offset="1" className="bt-beam-2" />
-        </linearGradient>
-        <linearGradient id="bt-edge-g" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0" className="bt-beam-2" />
-          <stop offset="0.5" className="bt-edge-0" />
           <stop offset="1" className="bt-beam-2" />
         </linearGradient>
       </defs>
@@ -346,12 +337,13 @@ function StageBack({ index }: { index: number }) {
         ))}
       </g>
 
-      {/* screen: a dark panel with a halo behind the performer */}
+      {/* screen: a dark panel with a halo behind the performer, running past
+          the bottom so no edge cuts across the photo */}
       <rect
         x="160"
         y="100"
         width="480"
-        height="490"
+        height="640"
         rx="4"
         className="bt-wall"
       />
@@ -360,23 +352,11 @@ function StageBack({ index }: { index: number }) {
         x="160.5"
         y="100.5"
         width="479"
-        height="489"
+        height="639"
         rx="4"
         fill="none"
         className="bt-wall-edge"
       />
-
-      {/* glossy deck: one lit edge, and the halo mirrored in the floor */}
-      <rect x="0" y="590" width="800" height="130" fill="url(#bt-floor)" />
-      <ellipse
-        cx="400"
-        cy="640"
-        rx="300"
-        ry="42"
-        fill="url(#bt-halo)"
-        opacity="0.55"
-      />
-      <rect x="0" y="589" width="800" height="1.5" fill="url(#bt-edge-g)" />
 
       <Truss />
       {FIXTURES.map((x, k) => (

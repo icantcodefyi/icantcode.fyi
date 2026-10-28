@@ -134,23 +134,14 @@
 .bt-stage-light { z-index: 1; mix-blend-mode: screen; pointer-events: none; }
 .bt-screen-name { z-index: 1; }
 .bt-figure { z-index: 2; }
-/* the deck is solid: the member stands behind its lip, and nothing of the
-   photo shows through the floor (the SVG deck is matched underneath) */
+/* no deck: the member runs to the bottom of the stage and fades into it,
+   like a poster, so the photo is never cut by a floor line */
 .bt-stage > .bt-floor-fade {
   z-index: 3;
   inset: auto 0 0 0;
-  height: 18%;
+  height: 26%;
   pointer-events: none;
-  background: linear-gradient(to bottom, var(--bt-floor-0), var(--bt-floor-1));
-  box-shadow: inset 0 1.5px 0 var(--bt-edge);
-}
-/* a short haze where the figure meets the lip, so the edge isn't a cut */
-.bt-stage > .bt-floor-fade::before {
-  content: "";
-  position: absolute;
-  inset: auto 0 100% 0;
-  height: 9cqh;
-  background: linear-gradient(to top, color-mix(in srgb, var(--bt-floor-0) 70%, transparent), transparent);
+  background: linear-gradient(to top, var(--bt-floor-1) 0%, color-mix(in srgb, var(--bt-floor-1) 60%, transparent) 40%, transparent);
 }
 
 /* sky + stage svg paint */
@@ -202,10 +193,10 @@
    and the base melts into the deck. Per-member nudges live in FRAMING. */
 .bt-stage {
   --bt-headroom: 0.1;
-  --bt-sink: 0.08;
+  --bt-sink: 0;
 }
 @media (max-width: 639px) {
-  .bt-stage { --bt-headroom: 0.2; --bt-sink: 0.06; }
+  .bt-stage { --bt-headroom: 0.16; --bt-sink: 0; }
 }
 .bt-stage > .bt-figure {
   position: absolute;
@@ -220,9 +211,9 @@
   translate: 0 14px;
   pointer-events: none;
   user-select: none;
-  -webkit-mask-image: linear-gradient(to right, transparent, #000 9%, #000 91%, transparent), linear-gradient(to bottom, #000 66%, transparent 96%);
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 9%, #000 91%, transparent), linear-gradient(to bottom, #000 74%, transparent 100%);
   -webkit-mask-composite: source-in;
-  mask-image: linear-gradient(to right, transparent, #000 9%, #000 91%, transparent), linear-gradient(to bottom, #000 66%, transparent 96%);
+  mask-image: linear-gradient(to right, transparent, #000 9%, #000 91%, transparent), linear-gradient(to bottom, #000 74%, transparent 100%);
   mask-composite: intersect;
 }
 .bt-stage > .bt-figure[data-on] { opacity: 1; translate: 0 0; }

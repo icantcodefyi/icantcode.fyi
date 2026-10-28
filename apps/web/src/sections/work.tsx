@@ -2,8 +2,8 @@ import { useRef, useState, type CSSProperties } from "react";
 import { art, halfSet } from "@/lib/art";
 import { useDayArt } from "@/lib/day-art";
 import { EARLIER, WORK, type Work } from "@/lib/site-data";
-import { useSceneMotion } from "./experience";
-import "./experience-work.css";
+import { useSceneMotion } from "./scene-motion";
+import "./work.css";
 
 const SHIP = "/site/scenes/ship-launch";
 /** Screenshots ship at 1080w with a 540w half (panes zoom to 1.16 on hover). */

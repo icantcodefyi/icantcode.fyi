@@ -7,12 +7,6 @@ export const SOCIALS = [
   { label: "LinkedIn", href: "https://linkedin.com/in/aniruddhdubge" },
 ];
 
-export const EXPERIENCE = [
-  { company: "Supernova AI", role: "Product engineer", when: "Jul 2025 – now", where: "Bengaluru" },
-  { company: "Merlin AI", role: "Software engineer intern", when: "Sep 2024 – Feb 2025", where: "Bengaluru" },
-  { company: "DevKit", role: "Software engineer intern", when: "Jun – Aug 2024", where: "Remote" },
-] as const;
-
 export interface Work {
   name: string;
   what: string;

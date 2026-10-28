@@ -1,6 +1,4 @@
-import { useEffect, type CSSProperties, type RefObject } from "react";
-import { EXPERIENCE } from "@/lib/site-data";
-import "./experience-work.css";
+import { useEffect, type RefObject } from "react";
 
 /* ──────────────────────────────────────────────────────────────────────
  * Scene motion for the painted Recent work section (work.tsx).
@@ -81,58 +79,3 @@ const LEDE =
   "I learned to code from YouTube in Indore, got hooked on hackathons, and now ship product end to end: the idea, the interface and the code behind it.";
 
 /** One plain line per role, keyed by company. */
-const DID: Record<(typeof EXPERIENCE)[number]["company"], string> = {
-  "Supernova AI": "Building the product end to end: shaping features, designing the interface and writing the code that ships it.",
-  "Merlin AI": "Worked on the Merlin Chrome extension, an AI assistant you can call up on any page you're reading.",
-  DevKit: "Worked on developer tooling, the small utilities that take the busywork out of a developer's day.",
-};
-
-export function Experience() {
-  const current = EXPERIENCE[0].company;
-
-  return (
-    <section id="experience" className="xp" aria-labelledby="xp-title">
-      <div className="xp-glow" aria-hidden="true" />
-      <header className="xp-head">
-        <h2 id="xp-title" className="xp-title" data-reveal>
-          Where I&nbsp;work
-        </h2>
-        <p className="xp-lede" data-reveal style={{ "--d": "90ms" } as CSSProperties}>
-          {LEDE}
-        </p>
-      </header>
-
-      <ol className="xp-list">
-        {EXPERIENCE.map((r, i) => {
-          const now = r.company === current;
-          const [from, to] = r.when.split(" – ");
-          return (
-            <li
-              key={r.company}
-              className="xp-row"
-              data-now={now ? "" : undefined}
-              data-reveal
-              style={{ "--d": `${140 + i * 90}ms` } as CSSProperties}
-            >
-              <p className="xp-when">
-                <span>
-                  {from}
-                  {to ? <> – {now ? <span className="xp-now">{to}</span> : to}</> : null}
-                </span>
-                {now ? <span className="xp-dot" aria-hidden="true" /> : null}
-                {now ? <span className="sr-only"> (current role)</span> : null}
-              </p>
-              <h3 className="xp-co">{r.company}</h3>
-              <div className="xp-detail">
-                <p className="xp-role">
-                  {r.role} <span aria-hidden="true">·</span> {r.where}
-                </p>
-                <p className="xp-did">{DID[r.company]}</p>
-              </div>
-            </li>
-          );
-        })}
-      </ol>
-    </section>
-  );
-}

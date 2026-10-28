@@ -74,14 +74,6 @@ function scrollToId(id: string) {
 const COMMANDS: CommandItem[] = [
   // ── Navigate ──
   {
-    id: "scroll-experience",
-    label: "Experience",
-    icon: HashIcon,
-    group: "Navigate",
-    action: () => scrollToId("experience"),
-    keywords: ["work", "jobs", "career"],
-  },
-  {
     id: "scroll-projects",
     label: "Work",
     icon: HashIcon,

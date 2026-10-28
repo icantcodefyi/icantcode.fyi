@@ -21,7 +21,7 @@
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  min-height: max(100svh, 760px);
+  min-height: clamp(600px, 78svh, 740px);
   display: flex;
   flex-direction: column;
   background: #0b0a0d;
@@ -46,6 +46,18 @@
   height: 100%;
   object-fit: cover;
   object-position: 70% 20%;
+}
+/* desktop is shorter than the night plate wants: drop it a little so the
+   moon clears the top fade (the day plate's sun already sits clear) */
+@media (min-width: 1024px) {
+  html:not([data-mode="day"]) .cf-sky { background: var(--surface); }
+  html:not([data-mode="day"]) .cf-sky img {
+    top: 9%;
+    height: 100%;
+    object-position: 70% 0%;
+    -webkit-mask-image: linear-gradient(to bottom, transparent, #000 14%);
+    mask-image: linear-gradient(to bottom, transparent, #000 14%);
+  }
 }
 /* the guestbook above is --surface; melt into it, and keep the plate's own
    ground from showing under our ridges */

@@ -5,7 +5,6 @@ import { Hero } from "@/components/hero";
 import { ModeDock } from "@/components/mode-dock";
 import { useOffscreenPause, useReveal } from "@/components/site";
 import { Contact } from "@/sections/contact";
-import { Experience } from "@/sections/experience";
 import { SiteFooter } from "@/sections/footer";
 import { RecentWork } from "@/sections/work";
 // The worlds' styles stay in the page stylesheet, in their original order, so
@@ -94,8 +93,6 @@ export default function Home() {
       <ModeDock />
 
       <Hero />
-
-      <Experience />
 
       <RecentWork />
 

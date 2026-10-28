@@ -1,6 +1,6 @@
 import { useRef } from "react";
 import { CommandPalette } from "@/components/command-palette";
-import { deferred } from "@/components/deferred";
+import { deferred, useInitialHash } from "@/components/deferred";
 import { Hero } from "@/components/hero";
 import { ModeDock } from "@/components/mode-dock";
 import { useOffscreenPause, useReveal } from "@/components/site";
@@ -85,6 +85,7 @@ const WORLDS = [
 export default function Home() {
   const root = useRef<HTMLDivElement>(null);
   useReveal();
+  useInitialHash();
   useOffscreenPause(root);
 
   return (

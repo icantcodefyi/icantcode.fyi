@@ -69,6 +69,21 @@ export function scrollToSection(id: string, behavior?: ScrollBehavior) {
   void mountBefore(document.getElementById(id)).then(() => requestAnimationFrame(() => glide(id, behavior)));
 }
 
+/**
+ * Deep links (icantcode.fyi/#work). The browser tries the jump while the SPA
+ * is still an empty <body>, finds nothing and stays at the top, so the page
+ * repeats it once it has rendered. glide() keeps re-aiming while images above
+ * the target load and shift the layout.
+ */
+export function useInitialHash() {
+  useEffect(() => {
+    const id = decodeURIComponent(location.hash.slice(1));
+    const el = id ? document.getElementById(id) : null;
+    if (!el) return;
+    void mountBefore(el).then(() => requestAnimationFrame(() => glide(id, "instant")));
+  }, []);
+}
+
 if (typeof window !== "undefined") {
   const nav = performance.getEntriesByType?.("navigation")[0] as PerformanceNavigationTiming | undefined;
   // deep links and restored scroll positions need the real layout from the start

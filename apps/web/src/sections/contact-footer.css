@@ -1,17 +1,13 @@
 /* ──────────────────────────────────────────────────────────────────────
  * Contact + footer: one night scene that ends on pink ground.
- *   sky plate → star field → sparkles → scrim → ridges → her → flowers
+ *   sky plate → star field → sparkles → scrim → ridges → flowers
  *   → petals; the front ridge is the footer's own pink, so the page
- *   walks straight from the hill onto the wordmark she sits on.
+ *   walks straight from the hill onto the footer's wordmark.
  * ──────────────────────────────────────────────────────────────────── */
 
 /* ═══ Contact ═══ */
 .cf-contact {
   --gh: clamp(190px, 30svh, 300px); /* ground height */
-  --girl-h: min(86svh, 820px);
-  --girl-x: 74%;
-  /* front ridge sits at y≈157 of 300 under her feet */
-  --girl-b: calc(var(--gh) * 0.4);
   /* ridge paint (night); day overrides these below */
   --cf-far-0: #4a1d44;
   --cf-far-1: #1d0f1f;
@@ -79,14 +75,22 @@
     radial-gradient(90% 75% at 0% 40%, rgb(11 10 13 / 0.82) 0%, rgb(11 10 13 / 0.5) 45%, rgb(11 10 13 / 0) 75%);
 }
 
-/* ── copy ── */
-.cf-copy-col {
+/* ── copy left, the card beside it; both sit in the sky above the ridges ── */
+.cf-body {
   position: relative;
   z-index: 6;
-  width: min(600px, 48%);
-  margin-left: calc(var(--margin) + clamp(0px, 3vw, 48px));
-  padding-top: clamp(96px, 15svh, 150px);
-  padding-bottom: calc(var(--gh) * 0.55);
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 600px) minmax(0, 440px);
+  justify-content: space-between;
+  align-content: center;
+  align-items: end;
+  gap: 48px clamp(40px, 6vw, 120px);
+  padding: clamp(96px, 13svh, 140px) clamp(var(--margin), 8vw, 140px) calc(var(--gh) * 0.62)
+    calc(var(--margin) + clamp(0px, 3vw, 48px));
+}
+.cf-copy-col {
+  min-width: 0;
 }
 .cf-title {
   margin: 0;
@@ -183,12 +187,12 @@
 }
 
 .cf-card {
-  margin-top: 2.2rem;
-  max-width: 520px;
+  margin: 0;
+  width: 100%;
   padding: 10px 22px;
   border-radius: 22px;
   border: 1px solid rgb(253 241 246 / 0.14);
-  background: linear-gradient(160deg, rgb(35 24 38 / 0.72), rgb(17 12 20 / 0.62));
+  background: linear-gradient(160deg, rgb(35 24 38 / 0.78), rgb(17 12 20 / 0.7));
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   box-shadow: 0 30px 60px -30px rgb(0 0 0 / 0.7), inset 0 1px 0 rgb(255 255 255 / 0.06);
@@ -238,15 +242,6 @@
   z-index: 3;
   pointer-events: none;
 }
-.cf-halo {
-  position: absolute;
-  left: var(--girl-x);
-  bottom: calc(var(--girl-b) + var(--girl-h) * 0.18);
-  width: calc(var(--girl-h) * 1.05);
-  aspect-ratio: 1;
-  transform: translateX(-50%);
-  background: radial-gradient(closest-side, rgb(255 46 136 / 0.32), rgb(255 46 136 / 0.1) 55%, rgb(255 46 136 / 0) 100%);
-}
 .cf-ground {
   position: absolute;
   left: 0;
@@ -254,33 +249,6 @@
   bottom: -2px; /* no hairline seam into the footer */
   width: 100%;
   height: calc(var(--gh) + 2px);
-}
-.cf-girl {
-  position: absolute;
-  left: var(--girl-x);
-  bottom: var(--girl-b);
-  height: var(--girl-h);
-  aspect-ratio: 1122 / 1402;
-  transform: translateX(-50%);
-}
-.cf-girl::before {
-  /* a soft contact shadow where her heels meet the meadow */
-  content: "";
-  position: absolute;
-  left: 22%;
-  right: 22%;
-  bottom: -2%;
-  height: 5%;
-  border-radius: 50%;
-  background: radial-gradient(closest-side, rgb(110 29 75 / 0.45), rgb(110 29 75 / 0));
-}
-.cf-girl img {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  object-position: 50% 100%;
-  filter: drop-shadow(0 24px 40px rgb(0 0 0 / 0.35));
 }
 .cf-flowers {
   position: absolute;
@@ -321,9 +289,6 @@
     animation: cf-fall var(--t) linear infinite;
     animation-delay: var(--d);
   }
-  .cf-girl img {
-    animation: cf-bob 6s ease-in-out infinite;
-  }
 }
 @keyframes cf-twinkle {
   0%, 100% { opacity: 0.15; }
@@ -339,44 +304,56 @@
   85% { opacity: 0.85; }
   100% { transform: translate3d(-12vw, 110svh, 0) rotate(540deg); opacity: 0; }
 }
-@keyframes cf-bob {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
-}
 @media (prefers-reduced-motion: reduce) {
   .cf-petals { display: none; }
 }
 
-/* ── tablet / phone: copy first, then the scene below it ── */
+/* ── tablet / phone: copy, then the card, then the ground below them ── */
 @media (max-width: 1023px) {
   .cf-contact {
     --gh: clamp(150px, 26vw, 220px);
-    --girl-h: min(78vw, 640px);
-    --girl-x: 62%;
-    --girl-b: calc(var(--gh) * 0.42);
     min-height: 0;
   }
-  .cf-copy-col {
-    width: auto;
-    margin-inline: var(--margin);
-    padding-top: clamp(88px, 14vw, 128px);
-    padding-bottom: 0;
+  .cf-body {
+    flex: none;
+    grid-template-columns: minmax(0, 1fr);
+    justify-content: stretch;
+    align-items: start;
+    gap: 40px;
+    padding: clamp(88px, 14vw, 128px) var(--margin) 0;
   }
+  .cf-copy-col {
+    max-width: 560px;
+  }
+  /* the moon sits just right of the (now two-line) title */
+  .cf-sky img {
+    object-position: 88% 10%;
+  }
+  .cf-card {
+    max-width: 560px;
+  }
+  /* a wash behind the copy that leaves the moon (and sun) clear on the right */
   .cf-scrim {
-    background: linear-gradient(to bottom, rgb(11 10 13 / 0.7) 0%, rgb(11 10 13 / 0.45) 50%, rgb(11 10 13 / 0) 75%);
+    background: linear-gradient(to right, rgb(11 10 13 / 0.72) 0%, rgb(11 10 13 / 0.5) 55%, rgb(11 10 13 / 0) 85%);
   }
   .cf-scene {
     position: relative;
     inset: auto;
-    height: calc(var(--girl-h) + var(--girl-b) - 2vw);
-    margin-top: 1rem;
+    height: calc(var(--gh) + clamp(48px, 10vw, 96px));
   }
 }
 @media (max-width: 639px) {
   .cf-contact {
-    --girl-h: min(112vw, 520px);
-    --girl-x: 56%;
-    --girl-b: calc(var(--gh) * 0.38);
+    --gh: 176px;
+  }
+  .cf-scene {
+    height: calc(var(--gh) + 56px);
+  }
+  .cf-sky img {
+    object-position: 70% 20%;
+  }
+  .cf-scrim {
+    background: linear-gradient(to bottom, rgb(11 10 13 / 0.7) 0%, rgb(11 10 13 / 0.45) 50%, rgb(11 10 13 / 0) 75%);
   }
   .cf-title {
     font-size: clamp(2.1rem, 9.6vw, 2.8rem);
@@ -518,23 +495,20 @@ html[data-mode="day"] .cf-row dt {
 html[data-mode="day"] .cf-links .link:hover {
   color: var(--pink);
 }
-html[data-mode="day"] .cf-halo {
-  background: radial-gradient(closest-side, rgb(255 255 255 / 0.55), rgb(255 214 232 / 0.25) 55%, rgb(255 214 232 / 0) 100%);
-}
-html[data-mode="day"] .cf-girl img {
-  filter: drop-shadow(0 24px 40px rgb(150 40 100 / 0.25));
-}
 @media (max-width: 1023px) {
   html[data-mode="day"] .cf-scrim {
-    background: linear-gradient(to bottom, rgb(255 246 250 / 0.85) 0%, rgb(255 246 250 / 0.6) 50%, rgb(255 246 250 / 0) 75%);
+    background: linear-gradient(to right, rgb(255 246 250 / 0.85) 0%, rgb(255 246 250 / 0.6) 55%, rgb(255 246 250 / 0) 85%);
   }
   .cf-sun {
     left: 86%;
-    top: 24%;
+    top: 17%;
     width: 96px;
   }
 }
 @media (max-width: 639px) {
+  html[data-mode="day"] .cf-scrim {
+    background: linear-gradient(to bottom, rgb(255 246 250 / 0.85) 0%, rgb(255 246 250 / 0.6) 50%, rgb(255 246 250 / 0) 75%);
+  }
   .cf-sun {
     left: 80%;
     top: 6%;

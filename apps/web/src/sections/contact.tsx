@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
 import { SpotifyNowPlaying } from "@/components/spotify-now-playing";
-import { art, halfSet } from "@/lib/art";
+import { art } from "@/lib/art";
 import { EMAIL, MAILTO, SOCIALS } from "@/lib/site-data";
 import "./contact-footer.css";
 
@@ -264,18 +264,20 @@ export function Contact() {
       <DaySky />
       <div className="cf-scrim" aria-hidden="true" />
 
-      <div className="cf-copy-col">
-        <h2 id="contact-title" className="cf-title" data-reveal>
-          Got an odd idea? <span className="cf-title-pink">Say hi.</span>
-        </h2>
-        <p className="cf-lede" data-reveal style={{ "--d": "80ms" } as CSSProperties}>
-          A DM on Twitter is the quickest way to reach me. Email works too, if your idea needs more room.
-        </p>
-        <div className="cf-actions" data-reveal style={{ "--d": "140ms" } as CSSProperties}>
-          <a className="cf-btn" href={TWITTER} target="_blank" rel="noopener noreferrer">
-            Talk to me <span className="cf-arr" aria-hidden="true">→</span>
-          </a>
-          <CopyEmail />
+      <div className="cf-body">
+        <div className="cf-copy-col">
+          <h2 id="contact-title" className="cf-title" data-reveal>
+            Got an odd idea? <span className="cf-title-pink">Say hi.</span>
+          </h2>
+          <p className="cf-lede" data-reveal style={{ "--d": "80ms" } as CSSProperties}>
+            A DM on Twitter is the quickest way to reach me. Email works too, if your idea needs more room.
+          </p>
+          <div className="cf-actions" data-reveal style={{ "--d": "140ms" } as CSSProperties}>
+            <a className="cf-btn" href={TWITTER} target="_blank" rel="noopener noreferrer">
+              Talk to me <span className="cf-arr" aria-hidden="true">→</span>
+            </a>
+            <CopyEmail />
+          </div>
         </div>
 
         <dl className="cf-card" data-reveal style={{ "--d": "200ms" } as CSSProperties}>
@@ -312,20 +314,7 @@ export function Contact() {
       </div>
 
       <div className="cf-scene" aria-hidden="true">
-        <div className="cf-halo" />
         <Ground />
-        <div className="cf-girl">
-          <img
-            src="/site/scenes/wave-cutout.webp"
-            srcSet={halfSet("/site/scenes/wave-cutout.webp", 1122, "/site/scenes/wave-cutout-600.webp", 600)}
-            sizes="auto, 100vw"
-            alt=""
-            width={1122}
-            height={1402}
-            loading="lazy"
-            decoding="async"
-          />
-        </div>
         <Flowers />
         <Petals />
       </div>

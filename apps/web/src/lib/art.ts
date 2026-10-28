@@ -20,8 +20,6 @@ const AVIF = new Set([
   "/site/plate-day-sky",
   "/site/plate-day-hill",
   "/site/hero-cutout",
-  "/site/scenes/work-desk",
-  "/site/scenes/work-desk-day",
   "/site/scenes/ship-launch",
   "/site/scenes/ship-launch-day",
   "/site/scenes/sit-cutout",

@@ -20,12 +20,30 @@ import { MODE_BOOT } from "@/lib/mode";
 import type { Route } from "./+types/root";
 
 const SHARE = {
-  url: "https://icantcode.fyi/",
-  title: "icantcode.fyi",
+  url: "https://www.icantcode.fyi/",
+  title: "icantcodefyi",
   description:
     "Self-taught product engineer from Indore, building at Supernova AI in Bengaluru. Thirteen hackathon wins and a lot of anime.",
-  image: "https://icantcode.fyi/og.jpg",
+  image: "https://www.icantcode.fyi/og.jpg",
   imageAlt: "Aniruddh Dubge in big pink letters beside an anime girl in a white hooded jacket, on a moonlit hill of flowers",
+};
+
+const PERSON = {
+  "@context": "https://schema.org",
+  "@type": "Person",
+  name: "Aniruddh Dubge",
+  alternateName: ["ani", "icantcodefyi"],
+  url: SHARE.url,
+  image: SHARE.image,
+  jobTitle: "Product engineer",
+  worksFor: { "@type": "Organization", name: "Supernova AI" },
+  homeLocation: { "@type": "Place", name: "Bengaluru, India" },
+  description: SHARE.description,
+  sameAs: [
+    "https://github.com/icantcodefyi",
+    "https://twitter.com/icantcodefyi",
+    "https://www.linkedin.com/in/aniruddhdubge",
+  ],
 };
 
 export const links: Route.LinksFunction = () => [
@@ -48,12 +66,19 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Meta />
         {/* Share data lives here, not in route meta(): the site is an SPA, so
             only this static <head> reaches link crawlers (X, WhatsApp, Slack). */}
-        <title>icantcode.fyi</title>
+        <title>icantcodefyi</title>
         <meta name="description" content={SHARE.description} />
         <meta name="theme-color" content="#0b0a0d" />
+        <meta name="author" content="Aniruddh Dubge" />
+        <meta name="robots" content="index, follow, max-image-preview:large" />
+        <script
+          type="application/ld+json"
+          // who this site is about, for search engines
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(PERSON) }}
+        />
         <link rel="canonical" href={SHARE.url} />
         <meta property="og:type" content="website" />
-        <meta property="og:site_name" content="icantcode.fyi" />
+        <meta property="og:site_name" content="icantcodefyi" />
         <meta property="og:url" content={SHARE.url} />
         <meta property="og:title" content={SHARE.title} />
         <meta property="og:description" content={SHARE.description} />

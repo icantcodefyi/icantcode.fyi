@@ -1,5 +1,4 @@
 import { useRef } from "react";
-import type { Route } from "./+types/_index";
 import { CommandPalette } from "@/components/command-palette";
 import { deferred } from "@/components/deferred";
 import { Hero } from "@/components/hero";
@@ -41,19 +40,6 @@ const GuestbookWall = deferred(
   () => import("@/components/guestbook-wall").then((m) => ({ default: m.GuestbookWall })),
   (ref) => <div ref={ref as React.Ref<HTMLDivElement>} className="defer-ph" data-ph="guestbook" aria-hidden="true" />,
 );
-
-export function meta({}: Route.MetaArgs) {
-  const desc =
-    "Aniruddh Dubge (ani): self-taught product engineer from Indore, building at Supernova AI in Bengaluru. Thirteen hackathon wins.";
-  return [
-    { title: "Aniruddh Dubge — product engineer" },
-    { name: "description", content: desc },
-    { property: "og:title", content: "Aniruddh Dubge — product engineer" },
-    { property: "og:description", content: desc },
-    { property: "og:type", content: "website" },
-    { name: "theme-color", content: "#0b0a0d" },
-  ];
-}
 
 const WORLDS = [
   {

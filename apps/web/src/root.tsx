@@ -19,6 +19,15 @@ import { ART_BOOT } from "@/lib/art";
 import { MODE_BOOT } from "@/lib/mode";
 import type { Route } from "./+types/root";
 
+const SHARE = {
+  url: "https://icantcode.fyi/",
+  title: "Aniruddh Dubge — product engineer",
+  description:
+    "Self-taught product engineer from Indore, building at Supernova AI in Bengaluru. Thirteen hackathon wins and a lot of anime.",
+  image: "https://icantcode.fyi/og.jpg",
+  imageAlt: "Aniruddh Dubge in big pink letters beside an anime girl in a white hooded jacket, on a moonlit hill of flowers",
+};
+
 export const links: Route.LinksFunction = () => [
   { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
   { rel: "icon", type: "image/x-icon", href: "/favicon.ico" },
@@ -37,6 +46,28 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <Meta />
+        {/* Share data lives here, not in route meta(): the site is an SPA, so
+            only this static <head> reaches link crawlers (X, WhatsApp, Slack). */}
+        <title>Aniruddh Dubge — product engineer</title>
+        <meta name="description" content={SHARE.description} />
+        <meta name="theme-color" content="#0b0a0d" />
+        <link rel="canonical" href={SHARE.url} />
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="icantcode.fyi" />
+        <meta property="og:url" content={SHARE.url} />
+        <meta property="og:title" content={SHARE.title} />
+        <meta property="og:description" content={SHARE.description} />
+        <meta property="og:image" content={SHARE.image} />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta property="og:image:alt" content={SHARE.imageAlt} />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:site" content="@icantcodefyi" />
+        <meta name="twitter:creator" content="@icantcodefyi" />
+        <meta name="twitter:title" content={SHARE.title} />
+        <meta name="twitter:description" content={SHARE.description} />
+        <meta name="twitter:image" content={SHARE.image} />
+        <meta name="twitter:image:alt" content={SHARE.imageAlt} />
         <script
           // flags script-enhanced entrances before first paint
           dangerouslySetInnerHTML={{ __html: "document.documentElement.classList.replace('no-js','js')" }}

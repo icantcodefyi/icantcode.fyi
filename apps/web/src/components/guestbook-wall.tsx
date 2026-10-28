@@ -358,14 +358,14 @@ export function GuestbookWall() {
         <h2 className="font-display text-lg font-medium text-foreground tracking-tight">
           Guestbook
         </h2>
-        <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground/80 tabular-nums">
+        <span className="text-[14px] text-muted-foreground tabular-nums">
           {stateLoading
             ? "—   signed"
-            : `${totalCount.toString().padStart(3, "0")} signed`}
+            : `${totalCount} signed`}
         </span>
       </div>
 
-      <p className="mb-3 text-sm text-muted-foreground/80">
+      <p className="mb-3 text-sm text-muted-foreground/80 [html[data-mode=day]_&]:text-muted-foreground">
         Draw a line, a name, a doodle. It'll live here forever — one per
         guest.
       </p>
@@ -425,26 +425,26 @@ export function GuestbookWall() {
         {/* ── Action row — varies per state ──────────────────── */}
         <div className="mt-3 flex min-h-[34px] items-center justify-between gap-3">
           {isLoading ? (
-            <span className="text-[11px] text-muted-foreground/50">
+            <span className="text-[11px] text-muted-foreground/50 [html[data-mode=day]_&]:text-muted-foreground">
               loading…
             </span>
           ) : isAnon ? (
             <>
-              <span className="text-[11px] text-muted-foreground/70">
+              <span className="text-[11px] text-muted-foreground/70 [html[data-mode=day]_&]:text-muted-foreground">
                 sign in to add your signature
               </span>
               <button
                 type="button"
                 onClick={handleSignIn}
-                className="group inline-flex -rotate-[0.5deg] items-center gap-2 rounded-[10px] bg-pastel-butter/60 px-3.5 py-2 shadow-[0_1px_0_oklch(0.85_0.01_60),0_8px_16px_-12px_oklch(0.2_0.02_60/0.25)] transition-[transform,box-shadow] duration-300 ease-out hover:-translate-y-0.5 hover:rotate-0 hover:shadow-[0_1px_0_oklch(0.82_0.01_60),0_14px_22px_-14px_oklch(0.2_0.02_60/0.3)]"
+                className="group inline-flex min-h-11 items-center gap-2 rounded-full bg-[var(--accent)] px-4 py-2 text-[var(--accent-ink)] transition-transform duration-200 ease-out hover:-translate-y-0.5"
               >
                 <GoogleG className="h-[13px] w-[13px]" />
-                <span className="font-display text-[14px] font-medium italic leading-none text-foreground/90">
-                  continue with google
+                <span className="text-[15px] font-medium leading-none">
+                  Continue with Google
                 </span>
                 <span
                   aria-hidden="true"
-                  className="ml-0.5 text-[11px] text-foreground/35 transition-all duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-foreground/75"
+                  className="ml-0.5 text-[11px] text-foreground/35 [html[data-mode=day]_&]:text-[var(--accent-ink)] transition-all duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-foreground/75 [html[data-mode=day]_&]:group-hover:text-[var(--accent-ink)]"
                 >
                   ↗
                 </span>
@@ -452,7 +452,7 @@ export function GuestbookWall() {
             </>
           ) : isSigned && state?.userSignature ? (
             <>
-              <span className="text-[11px] text-muted-foreground/70">
+              <span className="text-[11px] text-muted-foreground/70 [html[data-mode=day]_&]:text-muted-foreground">
                 thanks{firstName ? `, ${firstName}` : ""} — signed{" "}
                 <span className="text-foreground/70">
                   {formatRelative(state.userSignature.createdAt)}
@@ -461,7 +461,7 @@ export function GuestbookWall() {
               <button
                 type="button"
                 onClick={() => void handleSignOut()}
-                className="text-[11px] text-muted-foreground/60 underline-offset-2 transition-colors hover:text-foreground hover:underline"
+                className="text-[11px] text-muted-foreground/60 underline-offset-2 transition-colors hover:text-foreground hover:underline [html[data-mode=day]_&]:text-muted-foreground [html[data-mode=day]_&]:hover:text-foreground"
               >
                 sign out
               </button>
@@ -469,7 +469,7 @@ export function GuestbookWall() {
           ) : (
             // isReady
             <>
-              <span className="text-[11px] text-muted-foreground/70">
+              <span className="text-[11px] text-muted-foreground/70 [html[data-mode=day]_&]:text-muted-foreground">
                 {error
                   ? error
                   : firstName
@@ -496,7 +496,7 @@ export function GuestbookWall() {
                 <button
                   type="button"
                   onClick={() => void handleSignOut()}
-                  className="text-[11px] text-muted-foreground/60 underline-offset-2 transition-colors hover:text-foreground hover:underline"
+                  className="text-[11px] text-muted-foreground/60 underline-offset-2 transition-colors hover:text-foreground hover:underline [html[data-mode=day]_&]:text-muted-foreground [html[data-mode=day]_&]:hover:text-foreground"
                 >
                   sign out
                 </button>
@@ -515,11 +515,11 @@ export function GuestbookWall() {
       {recent.length > 0 && (
         <div className="mt-10">
           <div className="mb-3 flex items-baseline justify-between">
-            <h3 className="text-sm font-medium uppercase tracking-[0.14em] text-muted-foreground/80">
+            <h3 className="text-sm font-medium uppercase tracking-[0.14em] text-muted-foreground/80 [html[data-mode=day]_&]:text-muted-foreground">
               Recent signatures
             </h3>
             {totalCount > recent.length ? (
-              <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground/60 tabular-nums">
+              <span className="text-[14px] text-muted-foreground tabular-nums">
                 showing {recent.length} of {totalCount}
               </span>
             ) : null}
@@ -551,7 +551,7 @@ export function GuestbookWall() {
                     <div className="-mx-3 flex items-center gap-5 rounded-lg px-3 py-3 transition-colors duration-300 hover:bg-pastel-lavender/25">
                       <span
                         aria-hidden="true"
-                        className="w-7 shrink-0 font-mono text-[10px] tabular-nums text-muted-foreground/60"
+                        className="w-7 shrink-0 text-[14px] tabular-nums text-muted-foreground/60 [html[data-mode=day]_&]:text-muted-foreground"
                       >
                         {indexLabel}
                       </span>
@@ -580,7 +580,7 @@ export function GuestbookWall() {
                           )}
                         </svg>
                       </div>
-                      <span className="shrink-0 font-mono text-[10px] uppercase tracking-[0.12em] tabular-nums text-muted-foreground/60">
+                      <span className="shrink-0 text-[14px] tabular-nums text-muted-foreground/60 [html[data-mode=day]_&]:text-muted-foreground">
                         {formatRelative(s.createdAt)}
                       </span>
                     </div>

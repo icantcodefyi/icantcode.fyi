@@ -32,6 +32,7 @@
     "react-dom": "catalog:",
     "react-router": "^7.10.1",
     "sonner": "catalog:",
+    "three": "^0.186.1",
     "zod": "catalog:"
   },
   "devDependencies": {
@@ -43,6 +44,7 @@
     "@types/node": "^20",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
+    "@types/three": "^0.186.0",
     "react-router-devtools": "^1.1.0",
     "tailwindcss": "catalog:",
     "typescript": "^5.8.3",

@@ -1,0 +1,433 @@
+/* ──────────────────────────────────────────────────────────────────────
+ * Site theme. Colours are Valorant's own (navy, bone, red); one face,
+ * Schibsted Grotesk. `:root` + attribute variants so WeatherTint and
+ * UrlTheme can't repaint the ground.
+ * ──────────────────────────────────────────────────────────────────── */
+
+:root,
+html[data-weather],
+html[data-theme] {
+  /* Main stage: black and hot pink. Each fandom world brings its own. */
+  --bg: #0b0a0d;
+  --surface: #17141a;
+  --ink: #fdf1f6;
+  --muted: #bfaab6;
+  --accent: #ff2e88;
+  --accent-ink: #0b0a0d;
+  --pink: #ff2e88;
+  --blush: #ffb3d1;
+  --blush-ink: #2a0b19;
+  --blush-muted: #6e3a52;
+  --gold: #f3c98b;
+
+  /* kept names for components written against the earlier theme */
+  --sky: var(--blush);
+  --sakura: var(--blush);
+  --night: var(--bg);
+  --night-ink: var(--ink);
+  --night-muted: var(--muted);
+
+  --step-small: clamp(0.875rem, 0.85rem + 0.1vw, 0.9375rem);
+  --step-body: clamp(1.0625rem, 1rem + 0.25vw, 1.1875rem);
+  --step-lead: clamp(1.25rem, 1.1rem + 0.6vw, 1.625rem);
+  --step-head: clamp(2.25rem, 1.2rem + 3.6vw, 5rem);
+  --step-display: clamp(3.25rem, 1.2rem + 6.6vw, 7.5rem);
+
+  --margin: clamp(16px, 2vw, 28px);
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+  --background: var(--bg);
+  --foreground: var(--ink);
+  --card: var(--surface);
+  --card-foreground: var(--ink);
+  --popover: var(--surface);
+  --popover-foreground: var(--ink);
+  --primary: var(--pink);
+  --primary-foreground: var(--accent-ink);
+  --secondary: #231d27;
+  --secondary-foreground: var(--ink);
+  --muted-foreground: var(--muted);
+  --border: #2c2430;
+  --input: #2c2430;
+  --ring: var(--pink);
+  --pastel-blush: var(--pink);
+  --pastel-lavender: #2c2430;
+  --pastel-sage: var(--pink);
+  --pastel-sky: #2c2430;
+  --pastel-butter: var(--blush);
+
+  color-scheme: dark;
+  background: var(--bg);
+}
+
+/* Day mode: same roles, light ground. Sections and worlds add their own
+   `html[data-mode="day"]` rules on top of these. */
+html[data-mode="day"],
+html[data-mode="day"][data-weather],
+html[data-mode="day"][data-theme] {
+  --bg: #fff6fa;
+  --surface: #ffe8f1;
+  --ink: #1d0b15;
+  --muted: #6b4558;
+  --accent: #e0006c;
+  --accent-ink: #ffffff;
+  --pink: #e0006c;
+  --blush: #ffc6dc;
+  --blush-ink: #2a0b19;
+  --blush-muted: #6e3a52;
+  --gold: #94570f;
+
+  --secondary: #ffdbe9;
+  --border: #f3c4d7;
+  --input: #f3c4d7;
+  --pastel-lavender: #f3c4d7;
+  --pastel-sky: #f3c4d7;
+
+  color-scheme: light;
+}
+
+/* the mode switch opens as a circle from the toggle (see lib/mode.ts).
+   <html> itself too: its 1.2s colour transition (from the shared globals) is
+   invisible behind <body>, but while it ran every element in the page was
+   restyled on every frame of the circle reveal. */
+html.mode-instant,
+html.mode-instant *,
+html.mode-instant *::before,
+html.mode-instant *::after {
+  transition: none !important;
+}
+
+/* no rubber-band past the page ends (it showed the bare canvas on macOS) */
+html,
+body {
+  overscroll-behavior-y: none;
+}
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+.mode-dock {
+  position: fixed;
+  top: 14px;
+  right: var(--margin);
+  z-index: 70;
+  padding: 5px;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--bg) 62%, transparent);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 6px 24px rgb(0 0 0 / 0.18);
+  opacity: 0;
+  translate: 0 -8px;
+  pointer-events: none;
+  /* hidden for real once it has faded out, so its blur isn't recomposited behind every scroll frame */
+  visibility: hidden;
+  transition: opacity 0.3s var(--ease), translate 0.3s var(--ease), visibility 0s linear 0.3s;
+}
+.mode-dock[data-shown] {
+  opacity: 1;
+  translate: 0 0;
+  pointer-events: auto;
+  visibility: visible;
+  transition-delay: 0s;
+}
+.mode-dock:not([data-shown]) * {
+  animation-play-state: paused !important;
+}
+
+@theme inline {
+  --font-sans: "Onest", system-ui, sans-serif;
+  --font-display: "Unbounded", system-ui, sans-serif;
+  --color-ground: var(--bg);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-soft: var(--muted);
+  --color-accent: var(--accent);
+  --color-pink: var(--pink);
+  --color-blush: var(--blush);
+  --color-blush-ink: var(--blush-ink);
+  --color-sky: var(--sky);
+  --color-sakura: var(--sakura);
+  --color-night: var(--night);
+  --color-night-ink: var(--night-ink);
+  --color-gold: var(--gold);
+}
+
+body {
+  font-family: "Onest", system-ui, sans-serif;
+  font-size: var(--step-body);
+  line-height: 1.5;
+  color: var(--ink);
+  background: var(--bg);
+}
+::selection {
+  background: var(--pink);
+  color: var(--accent-ink);
+}
+:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
+}
+
+/* ── Type steps ── */
+.t-small { font-size: var(--step-small); line-height: 1.4; }
+.t-body { font-size: var(--step-body); line-height: 1.45; }
+.t-lead { font-size: var(--step-lead); line-height: 1.2; letter-spacing: -0.02em; }
+.t-head,
+.t-display {
+  font-family: "Unbounded", system-ui, sans-serif;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+.t-head { font-size: var(--step-head); }
+.t-display { font-size: var(--step-display); }
+
+.wrap { padding-inline: var(--margin); }
+
+/* ── Buttons: fully round, flat, one fill (the Genshin menu-gold pill) ── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6em;
+  min-height: 52px;
+  padding: 0 1.6em;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 500;
+  font-size: var(--step-body);
+  transition: transform 160ms var(--ease), background-color 160ms;
+}
+.btn:hover { transform: translateY(-2px); }
+.btn:active { transform: translateY(0) scale(0.98); }
+.btn .arr { transition: transform 200ms var(--ease); }
+.btn:hover .arr { transform: translateX(4px); }
+
+.link {
+  text-decoration: underline;
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 0.22em;
+  transition: text-decoration-color 160ms, color 160ms;
+}
+.link:hover { text-decoration-color: var(--accent); }
+
+/* ── Hero name, split to two corners of the panel ── */
+.corner-name {
+  font-family: "Unbounded", system-ui, sans-serif;
+  font-size: var(--step-display);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+@media (max-width: 767px) {
+  .corner-name { font-size: 12.5vw; }
+}
+
+/* ── Work index ── */
+.work-row {
+  transition: color 200ms;
+}
+.work-row[aria-current="true"] .work-name { color: var(--ink); }
+.work-row .work-name { color: var(--muted); transition: color 200ms, transform 300ms var(--ease); }
+.work-row:hover .work-name,
+.work-row:focus-visible .work-name { color: var(--ink); }
+.work-row[aria-current="true"] .work-name { transform: translateX(10px); }
+.work-shot {
+  clip-path: inset(100% 0 0 0);
+  transition: clip-path 900ms var(--ease);
+}
+.work-shot[data-on="true"] { clip-path: inset(0 0 0 0); }
+
+/* ── Gallery: a slow scroll-linked settle on each photograph ── */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .settle {
+      animation: settle linear both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 60%;
+    }
+    @keyframes settle {
+      from { transform: scale(1.12); }
+      to { transform: scale(1); }
+    }
+  }
+}
+
+/* ── Portrait passes ── */
+.pick-frame img { transition: transform 700ms var(--ease); }
+.pick:hover .pick-frame img { transform: scale(1.04) translateY(-6px); }
+
+/* ── Entrances: hidden only when motion is welcome and script has run ── */
+@media (prefers-reduced-motion: no-preference) {
+  .js [data-reveal] {
+    opacity: 0;
+    transform: translateY(24px);
+    transition:
+      opacity 700ms var(--ease) var(--d, 0ms),
+      transform 700ms var(--ease) var(--d, 0ms);
+  }
+  .js [data-reveal].in {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+
+/* Easter-egg overlays stay out of the page until summoned */
+.debug-grid:not(.is-on) { display: none; }
+.debug-classes-pill { font-family: "Onest", system-ui, sans-serif !important; }
+
+/* ── Foil: holographic shine + slight tilt on the comfort-pick cards ── */
+.foil {
+  transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+  transition: transform 500ms var(--ease);
+}
+.foil::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  mix-blend-mode: color-dodge;
+  transition: opacity 300ms;
+  background:
+    radial-gradient(circle at var(--mx, 50%) var(--my, 50%), rgb(255 255 255 / 0.55), transparent 38%),
+    repeating-linear-gradient(
+      115deg,
+      #ff9ad5 0%,
+      #ffe39a 6%,
+      #9affd8 12%,
+      #9ac8ff 18%,
+      #d79aff 24%,
+      #ff9ad5 30%
+    );
+  background-size: 100% 100%, 260% 260%;
+  background-position: center, var(--mx, 50%) var(--my, 50%);
+}
+.foil:hover::after { opacity: 0.42; }
+
+/* ── Gold foil sheen sweeping across the footer wordmark ── */
+.foil-text {
+  color: transparent;
+  background-image: linear-gradient(
+    100deg,
+    #0b0a0d 0%,
+    #0b0a0d 40%,
+    #ff7ab6 47%,
+    #fff0f6 50%,
+    #ff7ab6 53%,
+    #0b0a0d 60%,
+    #0b0a0d 100%
+  );
+  background-size: 300% 100%;
+  background-position: 100% 0;
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .foil-text { animation: sheen 6s var(--ease) infinite; }
+  @keyframes sheen {
+    0%, 35% { background-position: 100% 0; }
+    100% { background-position: 0% 0; }
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .foil { transform: none; }
+}
+
+/* ── Hackathon map ── */
+.wins-map { color: var(--blush-ink); overflow: visible; }
+.wm-grid line { stroke-width: 0.5; opacity: 0.22; stroke-dasharray: 2 4; }
+.wm-grid .wm-tropic { opacity: 0.4; stroke-dasharray: 6 3 1 3; }
+.wm-grid text { font-size: 13px; opacity: 0.6; font-family: "Onest", sans-serif; }
+.wm-grid .wm-note { font-style: italic; opacity: 0.55; }
+.wm-land-fine { color: var(--blush-ink); opacity: 0.18; }
+.wm-land { color: var(--blush-ink); opacity: 0.55; }
+.wm-coast { stroke-width: 1.1; stroke-linejoin: round; opacity: 0.85; }
+.wm-route {
+  stroke: var(--pink);
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+  opacity: 0.75;
+  transition: stroke-width 200ms, opacity 200ms;
+}
+.wm-route.is-on { stroke-width: 2.6; opacity: 1; }
+.wm-traveller { fill: var(--pink); }
+.wm-pin { fill: var(--blush-ink); transition: fill 200ms; }
+.wm-halo { fill: var(--pink); opacity: 0.16; transform-box: fill-box; transform-origin: center; }
+.wm-hosted { fill: none; stroke: var(--blush-ink); stroke-width: 1.2; stroke-dasharray: 2 2; }
+.wm-home { fill: var(--pink); stroke: var(--blush); stroke-width: 1.6; }
+.wm-label { font: 600 14px "Onest", sans-serif; fill: var(--blush-ink); paint-order: stroke; stroke: var(--blush); stroke-width: 4px; stroke-linejoin: round; }
+.wm-count { fill: #a3124f; font-weight: 800; }
+.wm-city.is-on .wm-pin { fill: var(--pink); }
+.wm-city.is-on .wm-halo { opacity: 0.4; }
+.wm-scale text { font: 500 13px "Onest", sans-serif; fill: currentColor; }
+.wins-row { transition: background-color 160ms, padding 200ms var(--ease); border-radius: 12px; }
+.wins-row:hover, .wins-row:focus-visible { background: rgb(255 255 255 / 0.45); padding-inline: 12px; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .wins-map .wm-route { stroke-dashoffset: 1; transition: stroke-dashoffset 1400ms var(--ease) calc(var(--i) * 140ms), stroke-width 200ms, opacity 200ms; }
+  .wins-map.is-drawn .wm-route { stroke-dashoffset: 0; }
+  .wm-halo { animation: wm-pulse 2.8s var(--ease) infinite; }
+  @keyframes wm-pulse {
+    0% { transform: scale(0.6); opacity: 0.35; }
+    100% { transform: scale(1.6); opacity: 0; }
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .wm-traveller { display: none; }
+}
+
+/* ── Off-the-clock gates ── */
+.gate { transition: transform 400ms var(--ease); }
+.gate:hover { transform: translateY(-6px) rotate(-0.6deg); }
+.gate-art { transition: transform 700ms var(--ease); transform-origin: bottom right; }
+.gate:hover .gate-art { transform: scale(1.06) translateX(-4%); }
+
+/* ⌘K search field: the palette itself is the focus indicator */
+.cmdk-input:focus,
+.cmdk-input:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
+/* ── Deferred sections: a box of about the right height until the real one
+   mounts (two screens ahead, or before any jump that lands below it) ── */
+.defer-ph { display: block; height: var(--ph-h, 100vh); }
+.defer-ph[data-ph="hackathons"] { --ph-h: 2900px; }
+.defer-ph[data-ph="teyvat"] { --ph-h: 1470px; }
+.defer-ph[data-ph="valorant"] { --ph-h: 1330px; }
+.defer-ph[data-ph="anime"] { --ph-h: 2700px; }
+.defer-ph[data-ph="bts"] { --ph-h: 3180px; }
+.defer-ph[data-ph="guestbook"] { --ph-h: 420px; }
+@media (min-width: 640px) {
+  .defer-ph[data-ph="teyvat"] { --ph-h: 1520px; }
+  .defer-ph[data-ph="valorant"] { --ph-h: 1240px; }
+  .defer-ph[data-ph="anime"] { --ph-h: 1900px; }
+}
+@media (min-width: 768px) {
+  .defer-ph[data-ph="hackathons"] { --ph-h: 2460px; }
+  .defer-ph[data-ph="teyvat"] { --ph-h: 1630px; }
+  .defer-ph[data-ph="bts"] { --ph-h: 3260px; }
+}
+@media (min-width: 1024px) {
+  .defer-ph[data-ph="hackathons"] { --ph-h: 2280px; }
+  .defer-ph[data-ph="teyvat"] { --ph-h: 1000px; }
+  .defer-ph[data-ph="valorant"] { --ph-h: min(100vh, 934px); }
+  .defer-ph[data-ph="anime"] { --ph-h: 1222px; }
+  .defer-ph[data-ph="bts"] { --ph-h: 2350px; }
+}
+@media (min-width: 1280px) {
+  .defer-ph[data-ph="hackathons"] { --ph-h: 2085px; }
+  .defer-ph[data-ph="bts"] { --ph-h: 2445px; }
+}
+@media (min-width: 1440px) {
+  .defer-ph[data-ph="bts"] { --ph-h: 2608px; }
+}
+@media (min-width: 1920px) {
+  .defer-ph[data-ph="hackathons"] { --ph-h: 1800px; }
+}

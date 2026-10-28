@@ -1,0 +1,724 @@
+/* Each character owns the palette: base field, light field, accent stripe,
+   tinted line gold, glow, element colour and a secondary particle colour. */
+.tv-world,
+.tv-scene-anemo {
+  --tv-base: #08403f;
+  --tv-field: #0f6e64;
+  --tv-stripe: #d4452c;
+  --tv-hairline: #f2b94a;
+  --tv-line: #f4d690;
+  --tv-line-deep: #b89452;
+  --tv-glow: #7ff3d3;
+  --tv-el: #8af5d6;
+  --tv-alt: #ff7a45;
+  --tv-soft: #dcf2ec;
+}
+.tv-world[data-element="geo"],
+.tv-scene-geo {
+  --tv-base: #3b210b;
+  --tv-field: #9a5f12;
+  --tv-stripe: #2f9a78;
+  --tv-hairline: #ffd77e;
+  --tv-line: #ffdf96;
+  --tv-line-deep: #c48f3b;
+  --tv-glow: #ffc552;
+  --tv-el: #ffcf63;
+  --tv-alt: #7fe0b8;
+  --tv-soft: #f4e6d0;
+}
+.tv-world[data-element="hydro"],
+.tv-scene-hydro {
+  --tv-base: #0a2470;
+  --tv-field: #1663d2;
+  --tv-stripe: #eaf7ff;
+  --tv-hairline: #63e0ff;
+  --tv-line: #f2e6bf;
+  --tv-line-deep: #93a8d8;
+  --tv-glow: #6fe4ff;
+  --tv-el: #7fe6ff;
+  --tv-alt: #ffffff;
+  --tv-soft: #dfe9ff;
+}
+.tv-world[data-element="pyro"],
+.tv-scene-pyro {
+  --tv-base: #360922;
+  --tv-field: #8f1232;
+  --tv-stripe: #ff7a2f;
+  --tv-hairline: #ffc37a;
+  --tv-line: #f8c999;
+  --tv-line-deep: #b8705c;
+  --tv-glow: #ff5a2e;
+  --tv-el: #ff9150;
+  --tv-alt: #ffd6ea;
+  --tv-soft: #f6dfe6;
+}
+
+.tv-world {
+  --tv-ink: #ffffff;
+  --tv-px: 0;
+  --tv-py: 0;
+  --tv-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  background: var(--tv-base);
+  color: var(--tv-ink);
+  font-family: "Onest", system-ui, sans-serif;
+  padding-block: 96px;
+}
+@media (max-width: 767px) {
+  .tv-world { padding-block: 72px 80px; }
+}
+
+.tv-display {
+  font-family: "Cinzel", Georgia, serif;
+  letter-spacing: 0.01em;
+}
+
+/* colour fields */
+.tv-scene {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background: var(--tv-base);
+  opacity: 0;
+}
+.tv-scene[data-on] { opacity: 1; }
+.tv-scene > span {
+  position: absolute;
+  inset: 0;
+}
+.tv-field {
+  background: var(--tv-field);
+  clip-path: polygon(0 0, 53% 0, 39% 100%, 0 100%);
+}
+.tv-stripe {
+  background: var(--tv-stripe);
+  clip-path: polygon(53% 0, 55% 0, 41% 100%, 39% 100%);
+}
+.tv-hair {
+  background: var(--tv-hairline);
+  clip-path: polygon(56.1% 0, 56.25% 0, 42.25% 100%, 42.1% 100%);
+}
+.tv-scene-stage { display: none; }
+@media (max-width: 1023px) {
+  .tv-scene:not(.tv-scene-stage) > span { display: none; }
+  .tv-scene-stage {
+    display: block;
+    z-index: auto;
+    inset: -24px calc(var(--margin) * -1) -28px;
+    background: none;
+  }
+  .tv-scene-stage .tv-field { clip-path: polygon(0 5%, 100% 0, 100% 88%, 0 94%); }
+  .tv-scene-stage .tv-stripe { clip-path: polygon(0 94%, 100% 88%, 100% 90.5%, 0 96.5%); }
+  .tv-scene-stage .tv-hair { clip-path: polygon(0 98.2%, 100% 92.2%, 100% 92.4%, 0 98.4%); }
+}
+
+.tv-sky {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  fill: #ffffff;
+  opacity: 0.5;
+}
+
+.tv-edge {
+  position: absolute;
+  left: var(--margin);
+  right: var(--margin);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  color: var(--tv-line);
+  pointer-events: none;
+}
+.tv-edge::before,
+.tv-edge::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--tv-line);
+  opacity: 0.4;
+}
+.tv-edge-top { top: 32px; }
+.tv-edge-bottom { bottom: 32px; }
+.tv-edge .tv-divider { width: 96px; flex: none; }
+
+.tv-divider {
+  display: block;
+  width: 160px;
+  height: auto;
+  color: var(--tv-line);
+}
+
+/* layout */
+.tv-layout {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: "head" "stage" "switch" "info";
+  row-gap: 32px;
+}
+@media (min-width: 1024px) {
+  .tv-world {
+    display: flex;
+    align-items: center;
+  }
+  .tv-layout {
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+    grid-template-rows: auto 1fr auto;
+    grid-template-areas: "stage head" "stage info" "stage switch";
+    column-gap: 64px;
+    row-gap: 32px;
+  }
+}
+
+.tv-head,
+.tv-info { max-width: 34rem; }
+.tv-title {
+  font-weight: 800;
+  font-size: clamp(2.5rem, 1.8rem + 2vw, 3.5rem);
+  line-height: 1;
+  color: var(--tv-line);
+}
+.tv-intro {
+  margin-top: 16px;
+  font-size: clamp(1.0625rem, 1rem + 0.25vw, 1.1875rem);
+  line-height: 1.5;
+  color: var(--tv-soft);
+  max-width: 36ch;
+}
+
+/* stage */
+.tv-stage {
+  position: relative;
+  container-type: inline-size;
+  height: clamp(440px, 118vw, 620px);
+  touch-action: pan-y;
+}
+@media (min-width: 768px) {
+  .tv-stage { height: 680px; }
+  .tv-astro { width: min(100%, 640px); }
+}
+@media (min-width: 1024px) {
+  .tv-stage { height: clamp(840px, 92svh, 880px); }
+  .tv-astro { width: min(100%, 760px); }
+}
+
+.tv-glow {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 92%;
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--g) 70%, transparent), color-mix(in srgb, var(--g) 22%, transparent) 55%, transparent);
+  opacity: 0;
+}
+.tv-glow[data-on] { opacity: 1; }
+.tv-glow-anemo { --g: #7ff3d3; }
+.tv-glow-geo { --g: #ffc552; }
+.tv-glow-hydro { --g: #6fe4ff; }
+.tv-glow-pyro { --g: #ff5a2e; }
+
+.tv-par {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+}
+
+.tv-astro {
+  position: relative;
+  width: min(100%, 760px);
+  aspect-ratio: 1;
+  color: var(--tv-line);
+}
+@media (max-width: 767px) {
+  .tv-astro { width: 112vw; }
+}
+.tv-astro svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.tv-astro .tv-sd { stroke: var(--tv-line-deep); }
+.tv-astro .tv-fd { fill: var(--tv-line-deep); }
+.tv-astro .tv-fbase { fill: var(--tv-base); }
+.tv-astro-outer { opacity: 0.85; }
+.tv-astro-chart { opacity: 0.85; }
+
+.tv-figure { opacity: 0.5; }
+.tv-figure[data-on] { opacity: 1; }
+.tv-figure-name {
+  font-family: "Cinzel", Georgia, serif;
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: 0.04em;
+}
+
+.tv-sigils {
+  position: absolute;
+  inset: 33.5%;
+}
+.tv-sigil {
+  position: absolute;
+  inset: 0;
+  background: var(--tv-line);
+  -webkit-mask: var(--src) center / contain no-repeat;
+  mask: var(--src) center / contain no-repeat;
+  opacity: 0;
+  scale: 0.9;
+}
+.tv-sigil[data-on] { opacity: 0.8; scale: 1; }
+
+.tv-ghosts {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: end center;
+  pointer-events: none;
+  overflow: hidden;
+}
+.tv-ghost {
+  grid-area: 1 / 1;
+  font-weight: 800;
+  font-size: min(17cqw, 12rem);
+  line-height: 0.8;
+  translate: 0 8%;
+  color: transparent;
+  -webkit-text-stroke: 1px color-mix(in srgb, var(--tv-line) 55%, transparent);
+  opacity: 0;
+  white-space: nowrap;
+}
+.tv-ghost[data-on] { opacity: 1; }
+
+.tv-float {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+.tv-char {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  height: 96%;
+  width: auto;
+  max-width: none;
+  translate: -50% 0;
+  object-fit: contain;
+  opacity: 0;
+  filter: drop-shadow(0 28px 36px rgb(0 0 0 / 0.35));
+  pointer-events: none;
+  user-select: none;
+}
+.tv-char[data-state="on"] { opacity: 1; }
+
+/* particles */
+.tv-particles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  color: var(--tv-el);
+}
+.tv-mote {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: calc(18px * var(--s));
+  height: calc(18px * var(--s));
+  opacity: 0.85;
+}
+.tv-mote-alt { color: var(--tv-alt); }
+.tv-p-pyro .tv-mote-alt { width: calc(26px * var(--s)); height: calc(22px * var(--s)); }
+.tv-mote svg { display: block; width: 100%; height: 100%; overflow: visible; }
+
+/* info */
+.tv-element {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding-left: 13px;
+  font-size: 1rem;
+  color: var(--tv-soft);
+}
+.tv-element-name { color: var(--tv-ink); font-weight: 600; }
+.tv-dot {
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  margin: 0 10px 3px;
+  rotate: 45deg;
+  background: var(--tv-line);
+}
+.tv-glyph-frame {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  flex: none;
+  rotate: 45deg;
+  background: color-mix(in srgb, var(--tv-el) 16%, transparent);
+  border: 1px solid var(--tv-line);
+  outline: 1px solid color-mix(in srgb, var(--tv-line) 40%, transparent);
+  outline-offset: 4px;
+}
+.tv-glyph {
+  width: 32px;
+  height: 32px;
+  rotate: -45deg;
+  color: var(--tv-el);
+  stroke-width: 1.5;
+}
+.tv-glyph-path { stroke-dasharray: 1; stroke-dashoffset: 0; }
+
+.tv-name {
+  margin-top: 24px;
+  font-weight: 800;
+  font-size: clamp(2.75rem, 1.6rem + 2.8vw, 4.25rem);
+  line-height: 1;
+  color: var(--tv-ink);
+  text-wrap: balance;
+}
+.tv-info .tv-divider { margin-top: 24px; }
+.tv-line {
+  margin-top: 16px;
+  font-size: clamp(1.0625rem, 1rem + 0.25vw, 1.1875rem);
+  line-height: 1.6;
+  color: var(--tv-ink);
+}
+.tv-details {
+  margin-top: 32px;
+  display: grid;
+  grid-template-columns: 8.5rem 1fr;
+  border-top: 1px solid color-mix(in srgb, var(--tv-line) 45%, transparent);
+}
+.tv-details > div { display: contents; }
+.tv-details dt,
+.tv-details dd {
+  padding-block: 10px;
+  border-bottom: 1px solid color-mix(in srgb, var(--tv-line) 25%, transparent);
+}
+.tv-details dt {
+  font-size: 0.9375rem;
+  line-height: 1.5rem;
+  color: var(--tv-line);
+}
+.tv-details dd { font-size: 1rem; line-height: 1.5rem; color: var(--tv-ink); }
+
+@media (min-width: 1024px) {
+  .tv-world { padding-block: 72px; }
+  .tv-info { align-self: center; }
+  .tv-switch { align-self: end; }
+  .tv-line { min-height: calc(1.6em * 3); }
+}
+
+/* switcher */
+.tv-switch {
+  display: flex;
+  gap: 16px;
+  margin-inline: calc(var(--margin) * -1);
+  padding: 8px var(--margin);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.tv-switch::-webkit-scrollbar { display: none; }
+@media (min-width: 480px) {
+  .tv-switch { justify-content: center; overflow: visible; margin-inline: 0; padding-inline: 0; }
+}
+@media (min-width: 1024px) {
+  .tv-switch { justify-content: flex-start; }
+}
+
+.tv-thumb {
+  --c: #8af5d6;
+  --c-deep: #0f6e64;
+  flex: none;
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  width: 88px;
+  padding: 4px 0;
+  background: none;
+  border: 0;
+  color: var(--tv-soft);
+  font: 500 0.9375rem/1.25 "Onest", system-ui, sans-serif;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.tv-thumb-geo { --c: #ffcf63; --c-deep: #9a5f12; }
+.tv-thumb-hydro { --c: #7fe6ff; --c-deep: #1663d2; }
+.tv-thumb-pyro { --c: #ff9150; --c-deep: #8f1232; }
+
+.tv-thumb-ring {
+  position: relative;
+  display: block;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  padding: 3px;
+  background: var(--c);
+}
+.tv-thumb-ring::after {
+  content: "";
+  position: absolute;
+  inset: -7px;
+  border-radius: 50%;
+  border: 1.5px solid var(--tv-line);
+  opacity: 0;
+  scale: 0.88;
+}
+.tv-thumb-ring img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--c-deep);
+  opacity: 0.8;
+}
+.tv-thumb-glyph {
+  position: absolute;
+  right: -5px;
+  bottom: -3px;
+  width: 28px;
+  height: 28px;
+  padding: 4px;
+  border-radius: 50%;
+  background: var(--c);
+  color: #10131f;
+  box-shadow: 0 0 0 2px var(--tv-base);
+  stroke-width: 3;
+}
+.tv-thumb:hover .tv-thumb-ring img,
+.tv-thumb[aria-pressed="true"] .tv-thumb-ring img { opacity: 1; }
+.tv-thumb:hover { color: var(--tv-ink); }
+.tv-thumb[aria-pressed="true"] { color: var(--tv-ink); font-weight: 600; }
+.tv-thumb[aria-pressed="true"] .tv-thumb-ring::after { opacity: 1; scale: 1; }
+.tv-thumb:focus-visible { outline: none; }
+.tv-thumb:focus-visible .tv-thumb-ring { outline: 2px solid var(--tv-ink); outline-offset: 12px; }
+
+@media (max-width: 479px) {
+  .tv-switch { gap: 8px; justify-content: center; }
+  .tv-thumb { width: 80px; }
+  .tv-thumb-ring { width: 64px; height: 64px; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .tv-scene, .tv-glow { transition: opacity 0.9s var(--tv-ease); }
+  .tv-figure, .tv-ghost { transition: opacity 0.7s var(--tv-ease); }
+  .tv-sigil { transition: opacity 0.7s var(--tv-ease), scale 0.9s var(--tv-ease); }
+  .tv-thumb-ring { transition: scale 0.3s var(--tv-ease); }
+  .tv-thumb-ring img { transition: opacity 0.3s var(--tv-ease); }
+  .tv-thumb-ring::after { transition: opacity 0.3s var(--tv-ease), scale 0.4s var(--tv-ease); }
+
+  .tv-scene[data-on] .tv-field { animation: tv-field-in 1.1s var(--tv-ease) both; }
+  .tv-scene[data-on] .tv-stripe,
+  .tv-scene[data-on] .tv-hair { animation: tv-field-in 1.3s var(--tv-ease) 80ms both; }
+
+  .tv-astro-outer { animation: tv-spin 240s linear infinite; }
+  .tv-astro-chart { animation: tv-spin 360s linear infinite reverse; }
+
+  .tv-twinkle { animation: tv-twinkle 4.2s ease-in-out var(--d, 0s) infinite; transform-box: fill-box; transform-origin: center; }
+
+  .tv-par { transition: transform 0.9s var(--tv-ease); }
+  .tv-par-back { transform: translate3d(calc(var(--tv-px) * -10px), calc(var(--tv-py) * -8px), 0); }
+  .tv-par-front { transform: translate3d(calc(var(--tv-px) * 16px), calc(var(--tv-py) * 10px), 0); }
+
+  .tv-float { animation: tv-bob 7s ease-in-out infinite; }
+
+  .tv-anim .tv-char[data-state="on"] { animation: tv-char-in 0.9s var(--tv-ease) both; }
+  .tv-anim .tv-char[data-state="out"] { animation: tv-char-out 0.5s cubic-bezier(0.4, 0, 1, 1) both; }
+
+  .tv-rise { animation: tv-rise 0.7s var(--tv-ease) calc(var(--r) * 70ms + 120ms) both; }
+  .tv-glyph-path { animation: tv-draw 1.1s var(--tv-ease) calc(var(--i) * 140ms + 200ms) both; }
+
+  .tv-mote { animation: tv-drift var(--dur) linear var(--delay) infinite; }
+  .tv-p-anemo .tv-mote { animation-name: tv-leaf; }
+  .tv-p-geo .tv-mote { animation-name: tv-glint; }
+  .tv-p-hydro .tv-mote { animation-name: tv-bubble; }
+  .tv-p-pyro .tv-mote { animation-name: tv-ember; }
+  .tv-p-pyro .tv-mote-alt { animation-name: tv-flutter; }
+
+  .tv-thumb:active .tv-thumb-ring { scale: 0.96; }
+}
+
+@keyframes tv-spin { to { transform: rotate(360deg); } }
+@keyframes tv-field-in {
+  from { transform: translateX(-6%); }
+  to { transform: none; }
+}
+@keyframes tv-twinkle {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.25; transform: scale(0.6); }
+}
+@keyframes tv-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+@keyframes tv-char-in {
+  from { opacity: 0; transform: translateY(56px) scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes tv-char-out {
+  from { opacity: 1; transform: none; }
+  to { opacity: 0; transform: translateX(-60px); }
+}
+@keyframes tv-rise {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes tv-draw {
+  from { stroke-dashoffset: 1; }
+  to { stroke-dashoffset: 0; }
+}
+@keyframes tv-leaf {
+  0% { opacity: 0; transform: translate(-40px, -30px) rotate(0deg); }
+  15%, 80% { opacity: 0.9; }
+  100% { opacity: 0; transform: translate(90px, 70px) rotate(300deg); }
+}
+@keyframes tv-glint {
+  0% { opacity: 0; transform: translateY(20px) scale(0.6); }
+  40%, 60% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-30px) scale(0.6); }
+}
+@keyframes tv-bubble {
+  0% { opacity: 0; transform: translate(0, 60px) scale(0.7); }
+  20%, 75% { opacity: 0.85; }
+  50% { transform: translate(10px, -20px) scale(1); }
+  100% { opacity: 0; transform: translate(-6px, -110px) scale(1.1); }
+}
+@keyframes tv-ember {
+  0% { opacity: 0; transform: translate(0, 50px) scale(1); }
+  20% { opacity: 1; }
+  100% { opacity: 0; transform: translate(18px, -120px) scale(0.3); }
+}
+@keyframes tv-flutter {
+  0% { opacity: 0; transform: translate(0, 30px) scaleX(1); }
+  20%, 70% { opacity: 0.7; }
+  25% { transform: translate(14px, 0) scaleX(0.55); }
+  50% { transform: translate(-10px, -40px) scaleX(1); }
+  75% { transform: translate(12px, -70px) scaleX(0.55); }
+  100% { opacity: 0; transform: translate(0, -100px) scaleX(1); }
+}
+@keyframes tv-drift {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-16px); }
+}
+
+/* ───────── Day: a daylight Teyvat ─────────
+   Sky and parchment grounds, each character's palette kept as tints. The
+   astrolabe turns into a gilded instrument drawn in gold and ink, and the
+   night sky's stars become soft motes of light. Night above is untouched. */
+html[data-mode="day"] .tv-world,
+html[data-mode="day"] .tv-scene-anemo {
+  --tv-base: #eaf5f0;
+  --tv-field: #bfe5d8;
+  --tv-stripe: #d4452c;
+  --tv-hairline: #b8862f;
+  --tv-line: #7d5a14;
+  --tv-line-deep: #b8954f;
+  --tv-glow: #9fe9d4;
+  --tv-el: #2a9e82;
+  --tv-alt: #e8693a;
+  --tv-soft: #2c4a44;
+  --tv-ink: #10302b;
+}
+html[data-mode="day"] .tv-world[data-element="geo"],
+html[data-mode="day"] .tv-scene-geo {
+  --tv-base: #f7eedb;
+  --tv-field: #efd29c;
+  --tv-stripe: #2f9a78;
+  --tv-hairline: #b07b22;
+  --tv-line: #7a4c0c;
+  --tv-line-deep: #c09450;
+  --tv-glow: #ffd98a;
+  --tv-el: #c98a1c;
+  --tv-alt: #2f9a78;
+  --tv-soft: #4d3818;
+  --tv-ink: #2b1a07;
+}
+html[data-mode="day"] .tv-world[data-element="hydro"],
+html[data-mode="day"] .tv-scene-hydro {
+  --tv-base: #e9f1fb;
+  --tv-field: #bcd5f3;
+  --tv-stripe: #1663d2;
+  --tv-hairline: #b08a3a;
+  --tv-line: #6e5216;
+  --tv-line-deep: #a8955f;
+  --tv-glow: #a9dcff;
+  --tv-el: #2b86d8;
+  --tv-alt: #7fc8ff;
+  --tv-soft: #26375e;
+  --tv-ink: #0d1f4d;
+}
+html[data-mode="day"] .tv-world[data-element="pyro"],
+html[data-mode="day"] .tv-scene-pyro {
+  --tv-base: #fbefea;
+  --tv-field: #f5c9cc;
+  --tv-stripe: #e5561f;
+  --tv-hairline: #b8742e;
+  --tv-line: #8a3a1f;
+  --tv-line-deep: #c98a6c;
+  --tv-glow: #ffb08a;
+  --tv-el: #e0502a;
+  --tv-alt: #d9608f;
+  --tv-soft: #55222f;
+  --tv-ink: #3a0a1f;
+}
+
+/* stars become drifting gold dust on a sunlit sky */
+html[data-mode="day"] .tv-sky {
+  fill: var(--tv-line-deep);
+  opacity: 0.45;
+}
+
+/* sun-haze behind the figure instead of an elemental glow */
+html[data-mode="day"] .tv-glow {
+  background: radial-gradient(
+    closest-side,
+    rgb(255 255 255 / 0.95),
+    color-mix(in srgb, var(--g) 45%, rgb(255 255 255 / 0.6)) 45%,
+    color-mix(in srgb, var(--g) 18%, transparent) 70%,
+    transparent
+  );
+}
+html[data-mode="day"] .tv-glow-anemo { --g: #9fe9d4; }
+html[data-mode="day"] .tv-glow-geo { --g: #ffd98a; }
+html[data-mode="day"] .tv-glow-hydro { --g: #a9dcff; }
+html[data-mode="day"] .tv-glow-pyro { --g: #ffb08a; }
+
+/* the astrolabe: gold engraving on parchment, ink for the fine work */
+html[data-mode="day"] .tv-astro-outer,
+html[data-mode="day"] .tv-astro-chart { opacity: 1; }
+html[data-mode="day"] .tv-astro .tv-fbase { fill: #fffaf0; }
+html[data-mode="day"] .tv-figure { opacity: 0.55; }
+html[data-mode="day"] .tv-figure[data-on] { opacity: 1; }
+html[data-mode="day"] .tv-sigil[data-on] { opacity: 0.55; }
+html[data-mode="day"] .tv-ghost {
+  -webkit-text-stroke: 1px color-mix(in srgb, var(--tv-line) 45%, transparent);
+}
+
+/* a soft, warm contact shadow reads as daylight; the night one goes grey */
+html[data-mode="day"] .tv-char {
+  filter: drop-shadow(0 22px 26px color-mix(in srgb, var(--tv-line) 22%, transparent));
+}
+
+/* light motes: white bodies with the element colour as an edge */
+html[data-mode="day"] .tv-mote { opacity: 0.75; }
+html[data-mode="day"] .tv-mote svg {
+  filter: drop-shadow(0 0 3px rgb(255 255 255 / 0.9));
+}
+
+html[data-mode="day"] .tv-glyph-frame {
+  background: color-mix(in srgb, var(--tv-el) 14%, #fffaf0);
+}
+html[data-mode="day"] .tv-glyph { color: var(--tv-line); }
+
+html[data-mode="day"] .tv-thumb { --c: #5fcfae; --c-deep: #bfe5d8; }
+html[data-mode="day"] .tv-thumb-geo { --c: #e7b24a; --c-deep: #efd29c; }
+html[data-mode="day"] .tv-thumb-hydro { --c: #5fb2f0; --c-deep: #bcd5f3; }
+html[data-mode="day"] .tv-thumb-pyro { --c: #f07a4a; --c-deep: #f5c9cc; }
+html[data-mode="day"] .tv-thumb-ring { box-shadow: 0 6px 14px color-mix(in srgb, var(--tv-line) 18%, transparent); }
+html[data-mode="day"] .tv-thumb-ring img { opacity: 0.9; }
+html[data-mode="day"] .tv-thumb-glyph { color: #fffaf0; box-shadow: 0 0 0 2px var(--tv-base); }

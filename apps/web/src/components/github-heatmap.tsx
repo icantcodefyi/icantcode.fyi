@@ -11,32 +11,20 @@ const WEEKS = 52;
 const CELL_SIZE = 11;
 const GAP = 3;
 
-// Flat-mode colours (original sage ramp)
+// Flat-mode colours (five-star gold ramp)
 const LEVEL_COLORS = [
-  "oklch(0.94 0.01 60)",
-  "oklch(0.87 0.04 155)",
-  "oklch(0.78 0.06 155)",
-  "oklch(0.65 0.09 155)",
-  "oklch(0.50 0.12 155)",
+  "#1a1f2b",
+  "#4a3f22",
+  "#8a6c2a",
+  "#c99a3a",
+  "#f2c14e",
 ];
 
 // 3D mode — top / right / left faces per level
 // Lit from upper-right, darker on left face
 const TOP_COLORS = LEVEL_COLORS;
-const RIGHT_COLORS = [
-  "oklch(0.88 0.01 60)",
-  "oklch(0.79 0.04 155)",
-  "oklch(0.70 0.06 155)",
-  "oklch(0.56 0.09 155)",
-  "oklch(0.42 0.12 155)",
-];
-const LEFT_COLORS = [
-  "oklch(0.82 0.01 60)",
-  "oklch(0.72 0.04 155)",
-  "oklch(0.63 0.06 155)",
-  "oklch(0.49 0.09 155)",
-  "oklch(0.36 0.12 155)",
-];
+const RIGHT_COLORS = ["#141822", "#3a321c", "#6e5622", "#a17b2e", "#c99a3a"];
+const LEFT_COLORS = ["#10131b", "#2c2616", "#56431b", "#7f6125", "#a17b2e"];
 
 type Mode = "flat" | "3d";
 

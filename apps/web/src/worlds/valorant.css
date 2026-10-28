@@ -1,0 +1,411 @@
+.vl {
+  --vl-red: #ff4655;
+  --vl-ink: #f4f2f0;
+  --vl-black: #0b0b0d;
+  --vl-black-2: #111114;
+  --vl-pad: clamp(20px, 4vw, 64px);
+  --vl-ease: cubic-bezier(0.77, 0, 0.175, 1);
+  font-family: "Onest", system-ui, sans-serif;
+}
+
+.vl-display {
+  font-family: "Anton", "Impact", sans-serif;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0;
+}
+
+.vl-hazard {
+  position: relative;
+  height: 14px;
+  overflow: hidden;
+  background: var(--vl-black);
+  border-bottom: 2px solid var(--vl-red);
+}
+.vl-hazard > div {
+  position: absolute;
+  inset: 0 -64px;
+  background: repeating-linear-gradient(-60deg, var(--vl-red) 0 10px, transparent 10px 32px);
+}
+
+/* layout: phones/tablet stack head, stage, tiles, info */
+.vl-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: "head" "stage" "tiles" "info";
+}
+.vl-head { grid-area: head; padding-bottom: 32px; }
+.vl-stage { grid-area: stage; }
+.vl-tiles { grid-area: tiles; padding-top: 12px; }
+.vl-info { grid-area: info; padding-top: 32px; padding-bottom: 56px; }
+.vl-divider { display: block; margin-bottom: 24px; overflow: visible; }
+
+@media (min-width: 640px) {
+  .vl-info .vl-swap {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    column-gap: 32px;
+    align-items: end;
+  }
+  .vl-info .vl-swap > ul { grid-column: 2; grid-row: 1 / span 3; margin-top: 0; }
+}
+
+/* desktop: left column is one vertically centred stack on a fixed rhythm */
+@media (min-width: 1024px) {
+  .vl-grid {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    grid-template-rows: 1fr auto auto auto 1fr;
+    grid-template-areas: "." "head" "info" "tiles" ".";
+    min-height: clamp(720px, calc(100svh - 16px), 920px);
+  }
+  .vl-stage { grid-column: 2; grid-row: 1 / -1; }
+  .vl-head, .vl-info, .vl-tiles { grid-column: 1; padding-top: 0; padding-bottom: 0; }
+  .vl-head { padding-bottom: 40px; }
+  .vl-info { padding-bottom: 40px; }
+  .vl-info .vl-swap { display: block; }
+  .vl-info .vl-swap > ul { margin-top: 28px; }
+}
+
+/* stage: black field, red field, split on the diagonal */
+.vl-stage {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  height: clamp(440px, 64svh, 620px);
+  background: var(--vl-black-2);
+  container-type: size;
+}
+@media (min-width: 1024px) {
+  .vl-stage { height: auto; min-height: 100%; }
+}
+
+.vl-layer {
+  position: absolute;
+  inset: 0;
+  background: color-mix(in srgb, var(--vl-a) 16%, var(--vl-black-2));
+}
+.vl-field {
+  position: absolute;
+  inset: 0;
+  background: var(--vl-red);
+  clip-path: polygon(40% 0, 100% 0, 100% 100%, 14% 100%);
+}
+.vl-seam {
+  position: absolute;
+  inset: 0;
+  background: var(--vl-red);
+  clip-path: polygon(36.4% 0, 37.2% 0, 11.2% 100%, 10.4% 100%);
+}
+.vl-texture {
+  position: absolute;
+  right: 4%;
+  top: 0;
+  height: 100%;
+  width: auto;
+  opacity: 0.14;
+  filter: brightness(0);
+  pointer-events: none;
+}
+
+.vl-bigname {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding-bottom: 8cqh;
+  font-family: "Anton", "Impact", sans-serif;
+  text-transform: uppercase;
+  line-height: 0.8;
+  font-size: min(calc(178cqw / var(--vl-len)), 62cqh);
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+}
+.vl-bigname span {
+  color: transparent;
+  -webkit-text-stroke: 2px rgb(244 242 240 / 0.42);
+}
+
+.vl-portrait {
+  position: absolute;
+  left: 50%;
+  top: -6%;
+  height: 150%;
+  width: auto;
+  max-width: none;
+  transform: translateX(-50%);
+  pointer-events: none;
+  user-select: none;
+}
+@media (min-width: 1024px) {
+  .vl-portrait { top: -4%; height: 140%; left: 54%; }
+}
+
+.vl-slash {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  background: var(--vl-ink);
+  clip-path: polygon(-34% 0, -30% 0, -60% 100%, -64% 100%);
+  pointer-events: none;
+}
+
+/* frame geometry */
+.vl-brackets {
+  position: absolute;
+  inset: clamp(12px, 2.4vw, 28px);
+  z-index: 4;
+  pointer-events: none;
+}
+.vl-bracket { position: absolute; }
+.vl-bracket-tl { top: 0; left: 0; }
+.vl-bracket-tr { top: 0; right: 0; transform: scaleX(-1); }
+.vl-bracket-br { bottom: 0; right: 0; transform: scale(-1, -1); }
+.vl-bracket-bl { bottom: 0; left: 0; transform: scaleY(-1); }
+
+.vl-radar {
+  position: absolute;
+  z-index: 4;
+  top: clamp(24px, 4vw, 52px);
+  right: clamp(24px, 4vw, 52px);
+  width: clamp(104px, 12vw, 176px);
+  height: auto;
+}
+.vl-sweep { transform-origin: 100px 100px; transform-box: view-box; }
+.vl-blip { opacity: 0.85; transform-box: fill-box; transform-origin: center; }
+
+.vl-ladder {
+  position: absolute;
+  z-index: 4;
+  right: clamp(24px, 4vw, 52px);
+  top: 50%;
+  transform: translateY(-50%);
+  display: none;
+}
+
+.vl-plate {
+  position: absolute;
+  z-index: 4;
+  left: clamp(28px, 4.6vw, 60px);
+  bottom: clamp(28px, 4.6vw, 60px);
+}
+
+@media (min-width: 1024px) {
+  .vl-ladder { display: block; }
+}
+/* phones: radar takes the empty black corner, plate shrinks into the bottom-left */
+@media (max-width: 639px) {
+  .vl-bracket-tl { display: none; }
+  .vl-radar { right: auto; left: 14px; top: 14px; width: 88px; }
+  .vl-plate { left: 14px; bottom: 16px; width: 128px; height: auto; }
+  .vl-portrait { left: 56%; height: 140%; top: -2%; }
+}
+
+/* tiles */
+.vl-tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #17171b;
+  color: var(--vl-ink);
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%);
+  cursor: pointer;
+  outline: none;
+}
+.vl-tile::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--vl-red);
+  transform: scaleY(0);
+  transform-origin: bottom;
+}
+.vl-tile[aria-pressed="true"]::before { transform: scaleY(1); }
+.vl-tile-img {
+  position: relative;
+  aspect-ratio: 1;
+  width: 100%;
+  object-fit: cover;
+}
+.vl-tile-name {
+  position: relative;
+  padding: 6px 10px 10px;
+  font-size: clamp(17px, 1.6vw, 24px);
+  line-height: 1;
+  text-align: left;
+}
+.vl-tile[aria-pressed="true"] .vl-tile-name { color: var(--vl-black); }
+.vl-tile[aria-pressed="true"]::after {
+  content: "";
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  width: 8px;
+  height: 8px;
+  background: var(--vl-black);
+}
+.vl-tile:hover:not([aria-pressed="true"]) { background: #222228; }
+.vl-tile:focus-visible {
+  box-shadow: inset 0 0 0 3px var(--vl-ink), inset 0 0 0 6px var(--vl-black);
+}
+
+/* crosshair */
+.vl-xhair {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 20;
+  pointer-events: none;
+  opacity: 0;
+}
+.vl-hit { opacity: 0; transform-box: view-box; transform-origin: 32px 32px; }
+.vl-xhair-inner, .vl-xhair-outer { transform-box: view-box; transform-origin: 32px 32px; }
+@media (hover: hover) and (pointer: fine) {
+  .vl.vl-aiming, .vl.vl-aiming * { cursor: none; }
+  .vl.vl-aiming .vl-xhair { opacity: 1; }
+}
+.vl-xhair-wide .vl-xhair-outer { transform: scale(1.35); }
+.vl-xhair-wide .vl-xhair-inner { transform: scale(1.2); }
+
+@media (prefers-reduced-motion: no-preference) {
+  .vl-hazard > div { animation: vl-tape 1.6s linear infinite; }
+  .vl-plate-stripes { animation: vl-plate 1.2s linear infinite; }
+  .vl-sweep { animation: vl-spin 4s linear infinite; }
+  .vl-blip { animation: vl-ping 4s linear infinite; animation-delay: var(--vl-delay); }
+  .vl-spike-ring { transform-box: fill-box; transform-origin: center; animation: vl-spike 1.4s var(--vl-ease) infinite; }
+
+  .vl-wipe { animation: vl-wipe 720ms var(--vl-ease) both; z-index: 2; }
+  .vl-wipe .vl-portrait { animation: vl-settle 900ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+  .vl-wipe .vl-bigname { animation: vl-drift 900ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+  .vl-slash { animation: vl-slash 720ms var(--vl-ease) both; }
+  .vl-swap { animation: vl-rise 520ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+  .vl-tile::before { transition: transform 320ms var(--vl-ease); }
+  .vl-tile-img { transition: transform 320ms cubic-bezier(0.16, 1, 0.3, 1); }
+  .vl-tile:hover .vl-tile-img { transform: scale(1.06); }
+  .vl-xhair-inner, .vl-xhair-outer { transition: transform 140ms ease-out; }
+  .vl-firing .vl-hit { animation: vl-hit 260ms ease-out; }
+  .vl-firing .vl-xhair-outer { animation: vl-kick 200ms ease-out; }
+
+  .vl-js:not(.vl-in) .vl-enter,
+  .vl-js:not(.vl-in) .vl-info,
+  .vl-js:not(.vl-in) .vl-tiles { opacity: 0; transform: translateY(24px); }
+  .vl-js:not(.vl-in) .vl-bracket-tl { transform: translate(-24px, -24px); opacity: 0; }
+  .vl-js:not(.vl-in) .vl-bracket-tr { transform: scaleX(-1) translate(-24px, -24px); opacity: 0; }
+  .vl-js:not(.vl-in) .vl-bracket-br { transform: scale(-1, -1) translate(-24px, -24px); opacity: 0; }
+  .vl-js:not(.vl-in) .vl-bracket-bl { transform: scaleY(-1) translate(-24px, -24px); opacity: 0; }
+  .vl-js:not(.vl-in) .vl-plate { transform: translateX(-120%); }
+  .vl-js:not(.vl-in) .vl-hazard > div { transform: translateX(-100%); }
+  .vl-js:not(.vl-in) .vl-stage { clip-path: polygon(0 0, 0 0, 0 100%, 0 100%); }
+  .vl-js .vl-enter, .vl-js .vl-info, .vl-js .vl-tiles, .vl-js .vl-bracket, .vl-js .vl-plate {
+    transition: transform 700ms cubic-bezier(0.16, 1, 0.3, 1) 180ms, opacity 400ms ease 180ms;
+  }
+  .vl-js .vl-stage { transition: clip-path 760ms var(--vl-ease); clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); }
+}
+
+@keyframes vl-tape { to { transform: translateX(37px); } }
+@keyframes vl-plate { to { transform: translateX(16px); } }
+@keyframes vl-spin { to { transform: rotate(360deg); } }
+@keyframes vl-ping {
+  0% { opacity: 1; transform: scale(1.15); }
+  40% { opacity: 0.55; transform: scale(1); }
+  100% { opacity: 0.2; transform: scale(1); }
+}
+@keyframes vl-spike {
+  0% { transform: scale(1); opacity: 0.9; }
+  100% { transform: scale(2.4); opacity: 0; }
+}
+@keyframes vl-wipe {
+  from { clip-path: polygon(-30% 0, 0% 0, -30% 100%, -30% 100%); }
+  to { clip-path: polygon(-30% 0, 130% 0, 100% 100%, -30% 100%); }
+}
+@keyframes vl-slash {
+  from { clip-path: polygon(-4% 0, 0% 0, -30% 100%, -34% 100%); }
+  to { clip-path: polygon(130% 0, 134% 0, 104% 100%, 100% 100%); }
+}
+@keyframes vl-settle {
+  from { transform: translateX(-44%); }
+  to { transform: translateX(-50%); }
+}
+@keyframes vl-drift {
+  from { transform: translateX(-5%); }
+  to { transform: translateX(0); }
+}
+@keyframes vl-rise {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes vl-hit {
+  0% { opacity: 1; transform: scale(0.7); }
+  100% { opacity: 0; transform: scale(1.15); }
+}
+@keyframes vl-kick {
+  50% { transform: scale(1.5); }
+}
+
+@media (min-width: 640px) and (max-width: 1023px) {
+  .vl-tile-img { aspect-ratio: 16 / 11; object-position: 50% 20%; }
+}
+
+/* ───────── Day: Riot's bright agent screens ─────────
+   Bone ground, Valorant red, deep navy ink. Every SVG mark draws in
+   currentColor, so flipping the section colour redraws the radar, brackets,
+   ladder, crosshair and plate in navy; `.vl-ko` parts are the knockouts. */
+html[data-mode="day"] .vl {
+  --vl-ink: #0f1923;
+  --vl-black: #0f1923;
+  --vl-black-2: #e3ded5;
+  --vl-bone: #ece8e1;
+  --vl-paper: #f7f5f1;
+  --vl-red-text: #b81d2f;
+  background: var(--vl-bone);
+  color: var(--vl-ink);
+}
+html[data-mode="day"] .vl .vl-ko { fill: var(--vl-paper); }
+html[data-mode="day"] .vl .vl-kos { stroke: var(--vl-paper); }
+
+html[data-mode="day"] .vl-title { color: var(--vl-red-text); }
+html[data-mode="day"] .vl-muted { color: #3b4653; }
+html[data-mode="day"] .vl-strong { color: var(--vl-ink); }
+
+/* hazard tape: red bars on bone, navy kerb line */
+html[data-mode="day"] .vl-hazard {
+  background: var(--vl-bone);
+  border-bottom-color: var(--vl-ink);
+}
+
+/* stage: bone slice and red field on the same diagonal */
+html[data-mode="day"] .vl-layer {
+  background: color-mix(in srgb, var(--vl-a) 9%, var(--vl-paper));
+}
+html[data-mode="day"] .vl-bigname span {
+  -webkit-text-stroke: 2px rgb(15 25 35 / 0.32);
+}
+html[data-mode="day"] .vl-slash { background: var(--vl-ink); }
+
+/* radar and plate panels go paper-light; their lines are navy */
+html[data-mode="day"] .vl-radar .vl-ko { fill-opacity: 0.94; }
+html[data-mode="day"] .vl-plate .vl-plate-chip { fill: var(--vl-ink); }
+
+/* agent tiles */
+html[data-mode="day"] .vl-tile {
+  background: var(--vl-paper);
+  box-shadow: inset 0 0 0 1px rgb(15 25 35 / 0.12);
+}
+html[data-mode="day"] .vl-tile:hover:not([aria-pressed="true"]) { background: #ddd7cd; }
+html[data-mode="day"] .vl-tile[aria-pressed="true"] .vl-tile-name { color: var(--vl-ink); }
+html[data-mode="day"] .vl-tile:focus-visible {
+  box-shadow: inset 0 0 0 3px var(--vl-ink), inset 0 0 0 6px var(--vl-paper);
+}
+
+/* ability chips: navy glyphs on paper */
+html[data-mode="day"] .vl-ability {
+  background: var(--vl-paper);
+  border-color: rgb(15 25 35 / 0.16);
+}
+html[data-mode="day"] .vl-ability-icon { filter: brightness(0); opacity: 0.85; }
+
+/* crosshair: navy arms with a paper keyline so it holds on red and bone */
+html[data-mode="day"] .vl-xhair { color: var(--vl-ink); }

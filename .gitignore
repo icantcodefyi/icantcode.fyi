@@ -49,3 +49,6 @@ coverage
 .cache
 tmp
 temp
+
+# design-tool working files
+.taste-skill/

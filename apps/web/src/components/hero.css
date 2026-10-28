@@ -1,0 +1,542 @@
+/* ──────────────────────────────────────────────────────────────────────
+ * Hero: a layered key visual.
+ *   sky plate → back petals → name → character → hairline name → hill
+ *   → scrim → front petals → nav + copy
+ * --mx / --my (pointer, -1..1) and --p (exit progress, 0..1) are written by
+ * hero.tsx; each layer moves by its depth. Entrances live on .hero-in so they
+ * never fight the parallax transform on .hero-layer.
+ * ──────────────────────────────────────────────────────────────────── */
+
+.hero {
+  --mx: 0;
+  --my: 0;
+  --p: 0;
+  --hero-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --hero-pad: clamp(18px, 2.4vw, 36px);
+
+  --name-size: min(10.4vw, 20svh);
+  --name-top: 16svh;
+  --char-x: 70%;
+  --char-h: 92svh;
+  --char-b: 2svh;
+
+  /* night */
+  --hero-top-ink: #fdf1f6;
+  --hero-name: #ff2e88;
+  --hero-name-glow: rgba(255, 46, 136, 0.45);
+  --hero-ghost: rgba(255, 46, 136, 0.16);
+  --hero-scrim: 11, 10, 13;
+  --hero-copy: #fdf1f6;
+  --hero-chip: rgba(253, 241, 246, 0.08);
+  --hero-chip-line: rgba(253, 241, 246, 0.2);
+
+  position: relative;
+  isolation: isolate;
+  height: 100svh;
+  min-height: 620px;
+  overflow: hidden;
+  background: #0b0a0d;
+  color: #fdf1f6;
+}
+
+.hero[data-mode="day"] {
+  --hero-top-ink: #1b2150;
+  --hero-name: #1f2660;
+  --hero-name-glow: rgba(255, 255, 255, 0.55);
+  --hero-ghost: rgba(31, 38, 96, 0.1);
+  --hero-scrim: 240, 243, 255;
+  --hero-copy: #161b45;
+  --hero-chip: rgba(255, 255, 255, 0.42);
+  --hero-chip-line: rgba(27, 33, 80, 0.18);
+}
+
+/* ── layers ── */
+.hero-layer,
+.hero-in,
+.hero-canvas,
+.hero-scrim {
+  position: absolute;
+  inset: 0;
+}
+.hero-layer {
+  will-change: transform;
+  pointer-events: none;
+}
+.hero-img {
+  position: absolute;
+  opacity: 0;
+  transition: opacity 1.1s var(--hero-ease), filter 1.1s var(--hero-ease);
+  user-select: none;
+  -webkit-user-drag: none;
+}
+.hero-img[data-on] {
+  opacity: 1;
+}
+.hero-img[data-broken] {
+  display: none;
+}
+
+.hero-l-sky {
+  z-index: 1;
+  inset: -3%;
+  transform: translate3d(calc(var(--mx) * -10px), calc(var(--my) * -6px + var(--p) * 14svh), 0)
+    scale(calc(1.02 + var(--p) * 0.08));
+}
+.hero-sky {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 62%;
+}
+
+.hero-canvas {
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 1.2s var(--hero-ease);
+}
+.hero[data-ready] .hero-canvas {
+  opacity: 1;
+}
+.hero-canvas-back {
+  z-index: 2;
+}
+
+.hero-l-name {
+  z-index: 3;
+  transform: translate3d(calc(var(--mx) * -22px), calc(var(--my) * -12px + var(--p) * 30svh), 0);
+  opacity: calc(1 - var(--p) * 1.25);
+}
+.hero-l-char {
+  z-index: 4;
+  transform: translate3d(calc(var(--mx) * -34px), calc(var(--my) * -16px - var(--p) * 6svh), 0)
+    scale(calc(1 + var(--p) * 0.06));
+  transform-origin: var(--char-x) 100%;
+}
+.hero-l-ghost {
+  z-index: 5;
+}
+.hero-l-hill {
+  z-index: 6;
+  /* The foreground never slides off her feet: it grows up from its bottom edge. */
+  transform: translate3d(calc(var(--mx) * -56px), calc(var(--my) * -14px), 0) scale(calc(1.06 + var(--p) * 0.34));
+  transform-origin: 50% 100%;
+}
+.hero-scrim {
+  z-index: 7;
+  pointer-events: none;
+  background:
+    radial-gradient(120% 62% at 0% 100%, rgba(var(--hero-scrim), 0.88) 0%, rgba(var(--hero-scrim), 0.55) 34%, rgba(var(--hero-scrim), 0) 68%),
+    linear-gradient(to top, rgba(var(--hero-scrim), 0.55), rgba(var(--hero-scrim), 0) 30%),
+    linear-gradient(to bottom, rgba(var(--hero-scrim), 0.35), rgba(var(--hero-scrim), 0) 16%);
+  transition: background 1.1s var(--hero-ease);
+}
+.hero[data-mode="day"] .hero-scrim {
+  background:
+    radial-gradient(105% 56% at 0% 100%, rgba(var(--hero-scrim), 0.9) 0%, rgba(var(--hero-scrim), 0.62) 36%, rgba(var(--hero-scrim), 0) 66%),
+    linear-gradient(to top, rgba(var(--hero-scrim), 0.3), rgba(var(--hero-scrim), 0) 24%);
+}
+.hero-canvas-front {
+  z-index: 8;
+}
+
+/* ── character ── */
+.hero-char {
+  position: absolute;
+  left: var(--char-x);
+  bottom: var(--char-b);
+  height: var(--char-h);
+  aspect-ratio: 2 / 3;
+  transform: translateX(-50%);
+}
+.hero-char-img {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: 50% 100%;
+  filter: drop-shadow(0 30px 60px rgba(0, 0, 0, 0.35));
+}
+.hero[data-mode="day"] .hero-char-img {
+  filter: drop-shadow(0 30px 60px rgba(40, 50, 120, 0.25));
+}
+
+/* ── hill ── */
+.hero-hill {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 100%;
+}
+
+/* ── name ── */
+.hero-name {
+  position: absolute;
+  left: var(--hero-pad);
+  right: var(--hero-pad);
+  top: var(--name-top);
+  margin: 0;
+  font-family: "Unbounded", system-ui, sans-serif;
+  font-weight: 800;
+  font-size: var(--name-size);
+  line-height: 0.9;
+  letter-spacing: -0.045em;
+  pointer-events: none;
+}
+.hero-name-art {
+  display: block;
+}
+.hero-line {
+  display: block;
+  white-space: nowrap;
+}
+.hero-line-2 {
+  padding-left: 0.08em;
+}
+.hero-ch {
+  display: inline-block;
+  color: var(--hero-name);
+  transition: color 1s var(--hero-ease);
+  animation: hero-rise 0.66s var(--hero-ease) both;
+  animation-delay: calc(0.14s + var(--i) * 0.03s);
+}
+.hero-l-name:not(.hero-l-ghost) .hero-name-art {
+  filter: drop-shadow(0 0 0.35em var(--hero-name-glow));
+}
+/* Same colour as the name at low alpha: invisible over the name itself,
+   a soft print across her coat where she covers it. */
+.hero-name-ghost .hero-ch {
+  color: var(--hero-ghost);
+}
+@keyframes hero-rise {
+  from {
+    transform: translate3d(0, 0.55em, 0) rotate(5deg);
+    opacity: 0;
+    filter: blur(8px);
+  }
+  to {
+    transform: none;
+    opacity: 1;
+    filter: none;
+  }
+}
+
+/* ── top bar ── */
+.hero-top {
+  position: absolute;
+  z-index: 9;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: clamp(16px, 2.4vw, 40px);
+  padding: calc(var(--hero-pad) * 0.8) var(--hero-pad);
+  color: var(--hero-top-ink);
+  transition: color 0.9s var(--hero-ease);
+  animation: hero-fade 0.8s var(--hero-ease) 0.35s both;
+}
+.hero-nav {
+  margin-left: auto;
+}
+.hero-nav ul {
+  display: flex;
+  gap: clamp(18px, 2.2vw, 34px);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.hero-nav a,
+.hero-link {
+  position: relative;
+  font-size: 16px;
+  font-weight: 500;
+  padding-block: 6px;
+}
+.hero-nav a::after,
+.hero-link::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 2px;
+  height: 1.5px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 0.35s var(--hero-ease);
+}
+.hero-nav a:hover::after,
+.hero-link:hover::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+/* day ⇄ night switch */
+.hero-toggle {
+  display: block;
+  padding: 0;
+  border: 0;
+  background: none;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: transform 0.2s var(--hero-ease);
+}
+.hero-toggle[hidden] { display: none; }
+.hero-toggle:active { transform: scale(0.96); }
+.hero-toggle:focus-visible { outline: 2px solid #ff2e88; outline-offset: 3px; }
+.hero-toggle svg { display: block; overflow: visible; }
+
+.hero-toggle-day { fill: #8ec9ff; transition: opacity 0.6s var(--hero-ease); }
+.hero-toggle-night { fill: #1c0d22; opacity: 0; transition: opacity 0.6s var(--hero-ease); }
+.hero-toggle-rim { stroke: rgb(255 255 255 / 0.55); stroke-width: 1; transition: stroke 0.6s; }
+.hero-toggle-clouds { fill: #fff; transition: transform 0.7s var(--hero-ease), opacity 0.4s; }
+.hero-toggle-cloud-far { opacity: 0.75; }
+.hero-toggle-stars { fill: #ffd6e8; opacity: 0; transform: translateY(6px); transition: transform 0.7s var(--hero-ease) 0.1s, opacity 0.5s 0.1s; }
+.hero-toggle-knob { transform: translateX(0); transition: transform 0.65s cubic-bezier(0.34, 1.32, 0.5, 1); }
+.hero-toggle-rays { stroke: #ffc35e; stroke-width: 1.3; stroke-linecap: round; transform-origin: 19px 19px; transition: transform 0.7s var(--hero-ease), opacity 0.35s; }
+.hero-toggle-sunface,
+.hero-toggle-moonface { transform-origin: 19px 19px; transition: opacity 0.45s var(--hero-ease), transform 0.65s var(--hero-ease); }
+.hero-toggle-moonface { opacity: 0; transform: rotate(-40deg) scale(0.7); }
+
+.hero-toggle[data-night] .hero-toggle-day { opacity: 0; }
+.hero-toggle[data-night] .hero-toggle-night { opacity: 1; }
+.hero-toggle[data-night] .hero-toggle-rim { stroke: rgb(255 143 192 / 0.5); }
+.hero-toggle[data-night] .hero-toggle-clouds { opacity: 0; transform: translateY(10px); }
+.hero-toggle[data-night] .hero-toggle-stars { opacity: 1; transform: none; }
+.hero-toggle[data-night] .hero-toggle-knob { transform: translateX(38px); }
+.hero-toggle[data-night] .hero-toggle-sunface { opacity: 0; transform: rotate(60deg) scale(0.6); }
+.hero-toggle[data-night] .hero-toggle-moonface { opacity: 1; transform: none; }
+.hero-toggle[data-night] .hero-toggle-rays { transform: rotate(90deg) scale(0.4); opacity: 0; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .hero-toggle:not([data-night]) .hero-toggle-rays { animation: hero-ray-spin 18s linear infinite; }
+  .hero-toggle[data-night] .hero-toggle-stars path { animation: hero-twinkle 2.4s ease-in-out infinite; animation-delay: calc(var(--s) * 0.37s); transform-box: fill-box; transform-origin: center; }
+  @keyframes hero-ray-spin { to { transform: rotate(360deg); } }
+  @keyframes hero-twinkle { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.35; transform: scale(0.6); } }
+}
+
+/* ── copy ── */
+.hero-copy {
+  position: absolute;
+  z-index: 9;
+  left: var(--hero-pad);
+  bottom: calc(var(--hero-pad) + 1svh);
+  max-width: 31rem;
+  color: var(--hero-copy);
+  transition: color 0.9s var(--hero-ease);
+  opacity: calc(1 - var(--p) * 1.6);
+  transform: translate3d(0, calc(var(--p) * -8svh), 0);
+}
+.hero-copy > * {
+  animation: hero-up 0.8s var(--hero-ease) both;
+}
+.hero-copy > :nth-child(1) {
+  animation-delay: 0.5s;
+}
+.hero-copy > :nth-child(2) {
+  animation-delay: 0.62s;
+}
+.hero-lede {
+  margin: 0 0 1.4rem;
+  font-size: clamp(17px, 0.95rem + 0.4vw, 21px);
+  line-height: 1.45;
+  font-weight: 450;
+  text-wrap: pretty;
+  text-shadow: 0 1px 18px rgba(var(--hero-scrim), 0.6);
+}
+.hero-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px 26px;
+}
+.hero-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55em;
+  min-height: 54px;
+  padding: 0 1.55em;
+  border-radius: 999px;
+  background: #ff2e88;
+  color: #0b0a0d;
+  font-size: 17px;
+  font-weight: 600;
+  box-shadow: 0 10px 30px -10px rgba(255, 46, 136, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  transition: transform 0.2s var(--hero-ease), box-shadow 0.3s var(--hero-ease), background-color 0.2s;
+}
+.hero-btn:hover {
+  transform: translateY(-2px);
+  background: #ff4796;
+  box-shadow: 0 16px 40px -12px rgba(255, 46, 136, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+.hero-btn:active {
+  transform: translateY(0) scale(0.98);
+}
+.hero-arr {
+  display: inline-block;
+  transition: transform 0.25s var(--hero-ease);
+}
+.hero-btn:hover .hero-arr {
+  transform: translateX(4px);
+}
+.hero-btn:focus-visible,
+.hero-link:focus-visible,
+.hero-nav a:focus-visible {
+  outline: 2px solid #ff2e88;
+  outline-offset: 4px;
+  border-radius: 6px;
+}
+.hero-btn:focus-visible {
+  border-radius: 999px;
+}
+
+/* ── entrance: layers start apart in depth and settle ── */
+.hero-l-sky .hero-in {
+  animation: hero-sky-in 1.5s var(--hero-ease) both;
+}
+.hero-l-char .hero-in {
+  animation: hero-char-in 1.25s var(--hero-ease) 0.05s both;
+}
+.hero-l-hill .hero-in {
+  animation: hero-hill-in 1.2s var(--hero-ease) both;
+}
+@keyframes hero-sky-in {
+  from {
+    transform: scale(1.16);
+    opacity: 0;
+  }
+  35% {
+    opacity: 1;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+@keyframes hero-char-in {
+  from {
+    transform: translate3d(0, 6%, 0) scale(1.08);
+    opacity: 0;
+  }
+  40% {
+    opacity: 1;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+@keyframes hero-hill-in {
+  from {
+    transform: translate3d(0, 24%, 0) scale(1.1);
+  }
+  to {
+    transform: none;
+  }
+}
+@keyframes hero-fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes hero-up {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 18px, 0);
+  }
+}
+
+/* ── portrait / tablet ── */
+@media (max-aspect-ratio: 1 / 1) {
+  .hero {
+    --name-size: 13.4vw;
+    --name-top: 11.5svh;
+    --char-x: 58%;
+    --char-h: 80svh;
+    --char-b: 4svh;
+  }
+  .hero-sky {
+    object-position: 42% 50%;
+  }
+  .hero-l-hill {
+    top: auto;
+    height: 50svh;
+  }
+  .hero-hill {
+    object-position: 26% 100%;
+  }
+  .hero-copy {
+    right: var(--hero-pad);
+    max-width: 32rem;
+  }
+  .hero-scrim,
+  .hero[data-mode="day"] .hero-scrim {
+    background:
+      linear-gradient(to top, rgba(var(--hero-scrim), 0.9) 0%, rgba(var(--hero-scrim), 0.7) 20%, rgba(var(--hero-scrim), 0) 44%),
+      linear-gradient(to bottom, rgba(var(--hero-scrim), 0.35), rgba(var(--hero-scrim), 0) 16%);
+  }
+  .hero[data-mode="day"] .hero-scrim {
+    background: linear-gradient(to top, rgba(var(--hero-scrim), 0.8) 0%, rgba(var(--hero-scrim), 0.62) 18%, rgba(var(--hero-scrim), 0) 38%);
+  }
+}
+
+/* ── phones ── */
+@media (max-width: 640px) {
+  .hero {
+    --hero-pad: 18px;
+    --name-size: 14.6vw;
+    --name-top: 13.5svh;
+    --char-x: 57%;
+    --char-h: 70svh;
+    --char-b: 7svh;
+    min-height: 640px;
+  }
+  .hero-top {
+    flex-wrap: wrap;
+    row-gap: 6px;
+  }
+  .hero-nav {
+    order: 3;
+    flex-basis: 100%;
+  }
+  .hero-nav ul {
+    gap: 18px;
+  }
+  .hero-toggle {
+    margin-left: auto;
+  }
+  .hero-copy {
+    bottom: 18px;
+  }
+  .hero-lede {
+    margin-bottom: 1.1rem;
+  }
+  .hero-actions {
+    gap: 12px 22px;
+  }
+}
+
+/* ── reduced motion: the painted layers, still ── */
+@media (prefers-reduced-motion: reduce) {
+  .hero *,
+  .hero *::before,
+  .hero *::after {
+    animation: none !important;
+  }
+  .hero-layer,
+  .hero-copy {
+    transform: none !important;
+    opacity: 1 !important;
+  }
+  .hero-l-sky {
+    transform: scale(1.02) !important;
+  }
+  .hero-img,
+  .hero-canvas {
+    transition-duration: 0.3s;
+  }
+}

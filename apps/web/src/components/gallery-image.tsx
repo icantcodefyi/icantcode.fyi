@@ -7,6 +7,8 @@ interface GalleryImageProps {
   height: number;
   index: number;
   size?: "big" | "wide" | "tall";
+  /** Episode caption shown as a badge (Replays scene). */
+  ep?: string;
 }
 
 /**
@@ -16,7 +18,7 @@ interface GalleryImageProps {
  *   3. Applies a tiny index-based stagger so neighbours don't fire
  *      at exactly the same frame when the user scrolls in quickly
  */
-export function GalleryImage({ src, alt, width, height, index, size }: GalleryImageProps) {
+export function GalleryImage({ src, alt, width, height, index, size, ep }: GalleryImageProps) {
   const ref = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
   const [inView, setInView] = useState(false);
@@ -56,7 +58,8 @@ export function GalleryImage({ src, alt, width, height, index, size }: GalleryIm
   return (
     <div
       ref={ref}
-      className={`overflow-hidden rounded-lg bg-muted/30${size ? ` span-${size}` : ""}`}
+      data-ep={ep}
+      className={`overflow-hidden bg-muted/30${ep ? " replay" : " rounded-lg"}${size ? ` span-${size}` : ""}`}
       style={{
         opacity: visible ? 1 : 0,
         transform: visible ? "translateY(0)" : "translateY(10px)",

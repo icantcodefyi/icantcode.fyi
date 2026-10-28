@@ -5,33 +5,17 @@ import { setMode, useMode } from "@/lib/mode";
 
 /**
  * The hero's day ⇄ night switch, docked top-right once the hero scrolls away.
- * It tucks away while you scroll down (so it never sits on what you're
- * reading) and comes back as soon as you scroll up.
  */
 export function ModeDock() {
   const mode = useMode();
-  const [pastHero, setPastHero] = useState(false);
-  const [goingDown, setGoingDown] = useState(false);
-  const shown = pastHero && !goingDown;
+  const [shown, setShown] = useState(false);
 
   useEffect(() => {
     const hero = document.getElementById("top");
     if (!hero) return;
-    const io = new IntersectionObserver(([e]) => setPastHero(!e.isIntersecting), { rootMargin: "-80px 0px 0px 0px" });
+    const io = new IntersectionObserver(([e]) => setShown(!e.isIntersecting), { rootMargin: "-80px 0px 0px 0px" });
     io.observe(hero);
     return () => io.disconnect();
-  }, []);
-
-  useEffect(() => {
-    let last = window.scrollY;
-    const onScroll = () => {
-      const y = window.scrollY;
-      if (Math.abs(y - last) < 12) return;
-      setGoingDown(y > last);
-      last = y;
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   return (

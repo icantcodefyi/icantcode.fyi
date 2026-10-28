@@ -21,7 +21,7 @@ import type { Route } from "./+types/root";
 
 const SHARE = {
   url: "https://icantcode.fyi/",
-  title: "Aniruddh Dubge — product engineer",
+  title: "icantcode.fyi",
   description:
     "Self-taught product engineer from Indore, building at Supernova AI in Bengaluru. Thirteen hackathon wins and a lot of anime.",
   image: "https://icantcode.fyi/og.jpg",
@@ -48,7 +48,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Meta />
         {/* Share data lives here, not in route meta(): the site is an SPA, so
             only this static <head> reaches link crawlers (X, WhatsApp, Slack). */}
-        <title>Aniruddh Dubge — product engineer</title>
+        <title>icantcode.fyi</title>
         <meta name="description" content={SHARE.description} />
         <meta name="theme-color" content="#0b0a0d" />
         <link rel="canonical" href={SHARE.url} />

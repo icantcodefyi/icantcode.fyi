@@ -298,12 +298,32 @@ export function driveStage(root: HTMLElement, opts: { reduced: boolean; dims: Re
     goal.p = clamp01(window.scrollY / (heroH || window.innerHeight));
   };
 
+  // A hero that isn't laid out (display: none, a zero-height frame) has nothing to measure: a 0 x 0 lens
+  // would leave the camera and the scene in a state they don't come back from. The observer fires again
+  // when it gets its size back; by then the plates' entrances (.hero-in) have started over, and the scene
+  // is placed on where the images are, so it is placed again once they have played out.
+  const laidOut = () => stage.offsetWidth > 0 && stage.offsetHeight > 0;
+  let gone = false;
+  async function back() {
+    const entrances = [...root.querySelectorAll(".hero-in")].flatMap((n) => n.getAnimations());
+    await Promise.all(entrances.map((a) => a.finished.catch(() => {})));
+    if (laidOut()) scene?.layout(measure());
+  }
+
   // the stage's box and the hero's height, kept by observers so frames never read layout
   const ro = new ResizeObserver(() => {
+    if (!laidOut()) {
+      gone = true;
+      return;
+    }
     heroH = root.offsetHeight;
     const l = measure();
     scene?.layout(l);
     onScroll();
+    if (gone) {
+      gone = false;
+      void back();
+    }
   });
   ro.observe(stage);
   ro.observe(root);
@@ -340,11 +360,12 @@ export function driveStage(root: HTMLElement, opts: { reduced: boolean; dims: Re
   return {
     attach(s) {
       scene = s;
+      if (!laidOut()) return;
       s.layout(measure());
       s.frame(e, 0, cur.p);
     },
     relayout() {
-      scene?.layout(measure());
+      if (laidOut()) scene?.layout(measure());
     },
     swap() {
       if (spent || opts.reduced) return;

@@ -320,7 +320,8 @@ export function shadowSource(img: ImageBitmap) {
 
 /** Three box passes each way: a Gaussian of `sigma` px, as browsers blur. */
 function blur(src: Uint8Array, sigma: number) {
-  const r = Math.max(0, Math.round((Math.sqrt(4 * sigma * sigma + 1) - 1) / 2));
+  // past the frame's size a wider box changes nothing (and an endless one would never finish)
+  const r = Math.min(Math.max(SW, SH), Math.max(0, Math.round((Math.sqrt(4 * sigma * sigma + 1) - 1) / 2)));
   let a = new Float32Array(src);
   let b = new Float32Array(a.length);
   const pass = (w: number, h: number, step: number, line: number) => {
@@ -390,6 +391,8 @@ export function createShadow(source: Uint8Array, depth: Texture, shared: PlateSh
     mesh,
     /** match the stylesheet's shadow at her current on-screen height (css px) */
     set(s: Shadow, height: number) {
+      // a hero that isn't laid out (display: none, a zero-height frame) has no size to match
+      if (!(height > 0)) return;
       offset.set(s.x, s.y);
       mat.uniforms.uColor.value.set(s.color[0] * s.color[3], s.color[1] * s.color[3], s.color[2] * s.color[3], s.color[3]);
       // drop-shadow()'s length is the Gaussian's standard deviation (box-shadow's is twice it)

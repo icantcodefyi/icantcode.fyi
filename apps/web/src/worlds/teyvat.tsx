@@ -2,10 +2,15 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { CSSProperties, KeyboardEvent, ReactNode } from "react";
 
 import { DepthStage, useDepthLayer } from "@/components/depth-stage";
+import { art, halfSet, TEYVAT_VISTA } from "@/lib/art";
+import { useDayArt } from "@/lib/day-art";
 import { STRENGTH } from "@/lib/depth/camera";
 import type { StageSpec } from "@/lib/depth/types";
+import { useMode, type Mode } from "@/lib/mode";
 
 type Element = "anemo" | "geo" | "hydro" | "pyro";
+type Home = typeof TEYVAT_VISTA.characterRegion;
+type Region = Home[keyof Home];
 
 type Character = {
   id: string;
@@ -404,9 +409,10 @@ function Divider() {
 }
 
 /**
- * The stage on the site camera (worlds strength): the astrolabe and its glow
- * hang far at 17, the ghost name at 15, the motes at 12.5 and the character
- * stands forward at 11.5. Every layer moves against the pointer by 1/d.
+ * The world on the site camera (worlds strength), driven by the stage's
+ * scroll position: the region vista at 30 / 22 / 18, the astrolabe and its
+ * glow at 17, the ghost name at 15, the motes at 12.5 and the character
+ * forward at 11.5. Every layer moves against the pointer by 1/d.
  */
 const STAGE: StageSpec = { id: "teyvat", plates: [], camera: { strength: STRENGTH.world } };
 const D = { astro: 17, ghost: 15, motes: 12.5, char: 11.5 } as const;
@@ -421,15 +427,195 @@ function Layer({ d, className, children }: { d: number; className: string; child
   );
 }
 
+/**
+ * The selected character's home region, painted behind everything in three
+ * plates on the same camera: the sky far off at 30 (its clouds and sea drift
+ * slowly), the land at 22 and the shore at 18, just behind the astrolabe.
+ * The planes sit close so their relative travel stays within the few px the
+ * painting's hidden underpaint allows.
+ * Desktop: the whole section, the quiet right of the painting under the
+ * info. Phones: the stage band. Only the shown region is in the page; the
+ * next one joins on a pick, fades in once decoded, and the old one leaves.
+ */
+const VISTA_PLATES = [
+  ["sky", 30],
+  ["far", 22],
+  ["near", 18],
+] as const;
+type VistaPlateName = (typeof VISTA_PLATES)[number][0];
+const homeOf = (id: string) => TEYVAT_VISTA.characterRegion[id as keyof Home];
+
+/** Where each painting stands: the region and the place in it, for the plate on the top rule. */
+const PLACES: Record<Region, { name: string; place: string }> = {
+  inazuma: { name: "Inazuma", place: "Narukami Island" },
+  liyue: { name: "Liyue", place: "Liyue Harbor" },
+  fontaine: { name: "Fontaine", place: "Court of Fontaine" },
+};
+
+/** A waypoint rose: the mark beside the region's name. */
+function Waypoint() {
+  return (
+    <svg viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor">
+      <path d="M10 1.5 L12 8 L18.5 10 L12 12 L10 18.5 L8 12 L1.5 10 L8 8 Z" fill="currentColor" fillOpacity="0.25" strokeLinejoin="round" />
+      <circle cx="10" cy="10" r="2" fill="currentColor" stroke="none" />
+      <circle cx="10" cy="10" r="6.5" strokeOpacity="0.55" strokeWidth="0.8" />
+    </svg>
+  );
+}
+
+/**
+ * The swap: a one-shot burst of the incoming element behind the character,
+ * each in its own motion. Anemo blows through as a gust, geo shards lift,
+ * hydro splashes outward from the astrolabe's heart, pyro embers climb.
+ */
+const GUST = (() => {
+  const rnd = seeded(71);
+  return Array.from({ length: 14 }, () => ({ x: rnd(), y: rnd(), a: rnd(), b: rnd(), s: round(0.9 + rnd() * 0.8), delay: Math.round(rnd() * 240) }));
+})();
+
+function gustPath(element: Element, g: (typeof GUST)[number]) {
+  const x = 12 + g.x * 76;
+  const y = 18 + g.y * 64;
+  if (element === "anemo") return { x: x - 24, y, dx: 150 + g.a * 90, dy: -30 - g.b * 60, rot: 200 + g.a * 160 };
+  if (element === "geo") return { x, y: 40 + g.y * 50, dx: -12 + g.a * 24, dy: -70 - g.b * 60, rot: -40 + g.a * 80 };
+  if (element === "pyro") return { x, y: 36 + g.y * 54, dx: -26 + g.a * 52, dy: -110 - g.b * 70, rot: -30 + g.a * 60 };
+  // hydro: out from the centre, a ring of droplets
+  const t = g.x * Math.PI * 2;
+  const r = 90 + g.a * 70;
+  return { x: 50 + Math.cos(t) * 6, y: 46 + Math.sin(t) * 6, dx: Math.cos(t) * r, dy: Math.sin(t) * r, rot: 0 };
+}
+
+function Gust({ element }: { element: Element }) {
+  return (
+    <div className={`tv-gust tv-p-${element}`} aria-hidden="true">
+      {GUST.map((g, i) => {
+        const m = gustPath(element, g);
+        return (
+          <span
+            key={i}
+            className={`tv-gust-bit ${i % 2 ? "tv-mote-alt" : ""}`}
+            style={
+              {
+                "--x": `${round(m.x)}%`,
+                "--y": `${round(m.y)}%`,
+                "--dx": `${Math.round(m.dx)}px`,
+                "--dy": `${Math.round(m.dy)}px`,
+                "--rot": `${Math.round(m.rot)}deg`,
+                "--s": g.s,
+                "--delay": `${g.delay}ms`,
+              } as CSSProperties
+            }
+          >
+            <Particle element={element} alt={i % 2 === 1} />
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
+const STAR = "M6 0.6 L7.5 4.2 L11.4 4.5 L8.4 7 L9.4 10.8 L6 8.7 L2.6 10.8 L3.6 7 L0.6 4.5 L4.5 4.2 Z";
+
+function VistaPlate({ region, plate, d, day }: { region: Region; plate: VistaPlateName; d: number; day: boolean }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useDepthLayer(ref, d);
+  const [w, h] = TEYVAT_VISTA.size;
+  const img = (m: Mode) => {
+    const set = TEYVAT_VISTA[region][m];
+    const full = art(set[plate]);
+    return (
+      <img
+        src={full}
+        srcSet={halfSet(full, w, art(set[`${plate}Half`]), TEYVAT_VISTA.halfSize[0])}
+        sizes="auto, 100vw"
+        data-set={m}
+        alt=""
+        width={w}
+        height={h}
+        loading="lazy"
+        decoding="async"
+      />
+    );
+  };
+  return (
+    <div ref={ref} className={`tv-plate tv-plate-${plate}`}>
+      {img("night")}
+      {day ? img("day") : null}
+    </div>
+  );
+}
+
+type Shown = (n: number, show: boolean, ready: boolean) => void;
+
+function Vista({ region, n, onShow }: { region: Region; n: number; onShow: Shown }) {
+  const fresh = n > 0;
+  const ref = useRef<HTMLDivElement>(null);
+  const mode = useMode();
+  const sky = useDayArt(art(TEYVAT_VISTA[region].day.sky), ref);
+  const far = useDayArt(art(TEYVAT_VISTA[region].day.far), ref);
+  const near = useDayArt(art(TEYVAT_VISTA[region].day.near), ref);
+  const day = sky && far && near;
+  const show = mode === "night" || day;
+  const [ready, setReady] = useState(!fresh);
+
+  // a picked region waits for its plates in the current mode before it fades in
+  useEffect(() => {
+    if (ready || !show) return;
+    let alive = true;
+    const imgs = [...(ref.current?.querySelectorAll<HTMLImageElement>(`img[data-set="${mode}"]`) ?? [])];
+    void Promise.all(imgs.map((i) => i.decode().catch(() => {}))).then(() => alive && setReady(true));
+    return () => {
+      alive = false;
+    };
+  }, [ready, show, mode]);
+
+  useEffect(() => onShow(n, show, ready), [onShow, n, show, ready]);
+
+  return (
+    <div ref={ref} className="tv-region" data-region={region} data-show={show || undefined} data-fresh={fresh || undefined} data-ready={ready || undefined} aria-hidden="true">
+      {VISTA_PLATES.map(([plate, d]) => (
+        <VistaPlate key={plate} region={region} plate={plate} d={d} day={day} />
+      ))}
+    </div>
+  );
+}
+
 export function Teyvat() {
   const [active, setActive] = useState(0);
   const [prev, setPrev] = useState<number | null>(null);
   const [moved, setMoved] = useState(false);
+  const [gust, setGust] = useState(0);
   const [entered, setEntered] = useState(false);
   const [staged, setStaged] = useState(false);
   const sectionRef = useRef<HTMLElement>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
   const tabsRef = useRef<(HTMLButtonElement | null)[]>([]);
   const c = CAST[active];
+  const home = homeOf(c.id);
+
+  // the region on show, plus (during a crossfade) the ones under it; n counts picks so a
+  // region that comes back mounts fresh and fades in again
+  const [vistas, setVistas] = useState<{ r: Region; n: number }[]>([{ r: homeOf(CAST[0].id), n: 0 }]);
+  const [shown, setShown] = useState<Record<number, boolean>>({});
+  const [ready, setReady] = useState(0);
+  useEffect(() => {
+    setVistas((v) => {
+      const top = v[v.length - 1];
+      return top.r === home ? v : [...v.slice(-2), { r: home, n: top.n + 1 }];
+    });
+  }, [home]);
+  const onShow = useCallback<Shown>((n, show, isReady) => {
+    setShown((s) => (s[n] === show ? s : { ...s, [n]: show }));
+    if (isReady) setReady((x) => Math.max(x, n));
+  }, []);
+  useEffect(() => {
+    const top = vistas[vistas.length - 1];
+    if (vistas.length < 2 || ready < top.n) return;
+    // the fade is --dur-scene (1100ms): drop the regions underneath once it has run
+    const t = window.setTimeout(() => setVistas([top]), 1200);
+    return () => window.clearTimeout(t);
+  }, [vistas, ready]);
+  const vista = vistas.some((v) => shown[v.n]);
 
   const pick = useCallback(
     (i: number) => {
@@ -437,9 +623,17 @@ export function Teyvat() {
       setPrev(active);
       setActive(i);
       setMoved(true);
+      setGust((n) => n + 1);
     },
     [active],
   );
+
+  // the burst runs about 1.5s; then it leaves the page
+  useEffect(() => {
+    if (!gust) return;
+    const t = window.setTimeout(() => setGust(0), 1700);
+    return () => window.clearTimeout(t);
+  }, [gust]);
 
   useEffect(() => {
     for (const ch of CAST) {
@@ -497,11 +691,13 @@ export function Teyvat() {
       data-element={c.element}
       data-in={entered || undefined}
       data-staged={staged || undefined}
+      data-vista={vista || undefined}
       className={`tv-world relative isolate overflow-hidden ${moved ? "tv-anim" : ""}`}
     >
       {ELEMENTS.map((el) => (
         <div key={el} className={`tv-scene tv-scene-${el}`} data-on={el === c.element || undefined} aria-hidden="true">
           <span className="tv-field" />
+          <span className="tv-shade" />
           <span className="tv-stripe" />
           <span className="tv-hair" />
         </div>
@@ -519,10 +715,26 @@ export function Teyvat() {
         ))}
       </svg>
       <div className="tv-edge tv-edge-top" aria-hidden="true">
+        <span key={home} className="tv-locale">
+          <Waypoint />
+          <span className="tv-locale-name">{PLACES[home].name}</span>
+          <span className="tv-locale-place">{PLACES[home].place}</span>
+        </span>
         <Divider />
       </div>
 
-      <div className="tv-layout relative mx-auto grid w-full max-w-[1440px] px-[var(--margin)]">
+      <DepthStage spec={STAGE} track={stageRef} className="tv-layout mx-auto grid w-full max-w-[1440px] px-[var(--margin)]">
+        <div className="tv-vista [grid-area:stage]" aria-hidden="true">
+          {vistas.map((v) => (
+            <Vista key={v.n} region={v.r} n={v.n} onShow={onShow} />
+          ))}
+          {/* mist on the horizon, between the land and the shore */}
+          <Layer d={20} className="tv-mist">
+            <span />
+            <span />
+          </Layer>
+        </div>
+
         <header className="tv-head [grid-area:head]">
           <h2 id="teyvat-title" className="tv-display tv-title">
             Teyvat
@@ -532,7 +744,7 @@ export function Teyvat() {
           </p>
         </header>
 
-        <DepthStage spec={STAGE} className="tv-stage [grid-area:stage]">
+        <div ref={stageRef} className="tv-stage [grid-area:stage]">
           {ELEMENTS.map((el) => (
             <div key={el} className={`tv-scene tv-scene-stage tv-scene-${el}`} data-on={el === c.element || undefined} aria-hidden="true">
               <span className="tv-field" />
@@ -556,6 +768,7 @@ export function Teyvat() {
           </Layer>
           <Layer d={D.motes} className="tv-par">
             <Particles key={c.element} element={c.element} />
+            {gust ? <Gust key={gust} element={c.element} /> : null}
           </Layer>
           <Layer d={D.char} className="tv-par tv-par-front">
             <div className="tv-float">
@@ -572,7 +785,7 @@ export function Teyvat() {
               ))}
             </div>
           </Layer>
-        </DepthStage>
+        </div>
 
         <div key={c.id} className="tv-info [grid-area:info]" aria-live="polite">
           <div className="tv-rise tv-element" style={{ "--r": 0 } as CSSProperties}>
@@ -588,7 +801,15 @@ export function Teyvat() {
           <h3 className="tv-rise tv-display tv-name" style={{ "--r": 1 } as CSSProperties}>
             {c.name}
           </h3>
-          <div className="tv-rise" style={{ "--r": 2 } as CSSProperties}>
+          {/* rarity on the gold rule: five stars, then the ornament */}
+          <div className="tv-rise tv-rank" style={{ "--r": 2 } as CSSProperties}>
+            <span className="tv-stars" role="img" aria-label="Five-star character">
+              {[0, 1, 2, 3, 4].map((i) => (
+                <svg key={i} viewBox="0 0 12 12" aria-hidden="true" style={{ "--s": i } as CSSProperties}>
+                  <path d={STAR} />
+                </svg>
+              ))}
+            </span>
             <Divider />
           </div>
           <p className="tv-rise tv-line" style={{ "--r": 3 } as CSSProperties}>
@@ -631,7 +852,7 @@ export function Teyvat() {
             </button>
           ))}
         </div>
-      </div>
+      </DepthStage>
 
       <div className="tv-edge tv-edge-bottom" aria-hidden="true">
         <Divider />

@@ -108,6 +108,57 @@
   .tv-scene-stage .tv-hair { clip-path: polygon(0 98.2%, 100% 92.2%, 100% 92.4%, 0 98.4%); }
 }
 
+/* the region vista: phones, the stage band; desktop, the whole section, the
+   quiet right of the painting under a shade of the element's base */
+.tv-layout { position: relative; }
+.tv-vista {
+  position: relative;
+  z-index: 0;
+  margin: -24px calc(var(--margin) * -1) -28px;
+  clip-path: polygon(0 5%, 100% 0, 100% 88%, 0 94%);
+  pointer-events: none;
+}
+.tv-region { position: absolute; inset: 0; --tv-vx: 34%; }
+.tv-region:not([data-show]) { visibility: hidden; }
+.tv-region[data-fresh]:not([data-ready]) { opacity: 0; scale: 1.03; }
+.tv-plate { position: absolute; inset: -32px -24px; }
+.tv-plate > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  object-fit: cover;
+  object-position: var(--tv-vx) 50%;
+}
+.tv-plate > img[data-set="day"] {
+  opacity: 0;
+  transition: opacity var(--dur-scene) var(--ease-io);
+}
+html[data-mode="day"] .tv-plate > img[data-set="day"] { opacity: 1; }
+.tv-world[data-vista] .tv-field {
+  background: linear-gradient(to top, color-mix(in srgb, var(--tv-field) 55%, transparent), transparent 40%);
+}
+@media (min-width: 1024px) {
+  .tv-layout { position: static; }
+  .tv-vista { position: absolute; inset: 0; z-index: -3; margin: 0; clip-path: none; }
+  .tv-plate { inset: -72px -48px; }
+  .tv-region[data-region="inazuma"] { --tv-vx: 88%; }
+  .tv-region[data-region="liyue"] { --tv-vx: 80%; }
+  .tv-region[data-region="fontaine"] { --tv-vx: 85%; }
+  .tv-world[data-vista] .tv-scene { background: none; }
+  .tv-world[data-vista] .tv-shade {
+    clip-path: polygon(53% 0, 100% 0, 100% 100%, 39% 100%);
+    background: linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--tv-base) 58%, transparent) 38%,
+      color-mix(in srgb, var(--tv-base) 86%, transparent) 60%,
+      color-mix(in srgb, var(--tv-base) 92%, transparent)
+    );
+  }
+  .tv-world[data-vista] .tv-sky { clip-path: polygon(56% 0, 100% 0, 100% 100%, 42% 100%); }
+}
+
 .tv-sky {
   position: absolute;
   inset: 0;
@@ -139,6 +190,34 @@
 .tv-edge-top { top: 32px; }
 .tv-edge-bottom { bottom: 32px; }
 .tv-edge .tv-divider { width: 96px; flex: none; }
+
+/* the region's plate on the top rule, like an area name coming into view */
+.tv-locale {
+  order: -1;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--tv-line);
+  font: 700 0.8125rem/1 "Cinzel", Georgia, serif;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  /* it sits on the painted sky: a soft halo of the element's ground keeps it legible */
+  text-shadow: 0 0 10px var(--tv-base), 0 0 3px var(--tv-base);
+}
+.tv-locale svg { width: 18px; height: 18px; flex: none; filter: drop-shadow(0 0 4px var(--tv-base)); }
+.tv-locale-place {
+  padding-left: 12px;
+  border-left: 1px solid color-mix(in srgb, var(--tv-line) 45%, transparent);
+  font: 500 0.875rem/1 "Onest", system-ui, sans-serif;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: var(--tv-soft);
+}
+@media (max-width: 479px) {
+  .tv-locale-place { display: none; }
+}
 
 .tv-divider {
   display: block;
@@ -378,7 +457,58 @@
   color: var(--tv-ink);
   text-wrap: balance;
 }
-.tv-info .tv-divider { margin-top: 24px; }
+.tv-info .tv-divider { width: 120px; }
+
+/* rarity: five gold stars on the rule under the name (the row keeps the old rule's height) */
+.tv-rank {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  height: 18px;
+  margin-top: 14px;
+}
+.tv-stars {
+  display: flex;
+  gap: 4px;
+  color: #ffd36b;
+  filter: drop-shadow(0 0 6px rgb(255 196 84 / 0.45));
+}
+.tv-stars svg { width: 18px; height: 18px; fill: currentColor; }
+html[data-mode="day"] .tv-stars { color: #d39a1c; filter: drop-shadow(0 1px 0 rgb(122 76 12 / 0.35)); }
+
+/* the swap's burst, in the motes' layer, behind the character */
+.tv-gust {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  color: var(--tv-el);
+}
+.tv-gust-bit {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: calc(26px * var(--s));
+  height: calc(26px * var(--s));
+  opacity: 0;
+}
+.tv-gust-bit svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.tv-p-pyro .tv-gust-bit.tv-mote-alt { width: calc(32px * var(--s)); }
+
+/* mist lying on the painting's horizon (58% down), between the land and the shore */
+.tv-mist { position: absolute; inset: 0; pointer-events: none; }
+.tv-world:not([data-vista]) .tv-mist { display: none; }
+.tv-mist span {
+  position: absolute;
+  left: -30%;
+  width: 160%;
+  top: 48%;
+  height: 22%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, var(--tv-mist), transparent);
+}
+.tv-mist span + span { top: 57%; height: 13%; opacity: 0.8; }
+.tv-world { --tv-mist: rgb(196 206 255 / 0.13); }
+html[data-mode="day"] .tv-world { --tv-mist: rgb(255 255 255 / 0.3); }
 .tv-line {
   margin-top: 16px;
   font-size: clamp(1.0625rem, 1rem + 0.25vw, 1.1875rem);
@@ -531,12 +661,18 @@
      ([data-in]); the character settles, the astrolabe turns the last 8° into
      place and the switcher follows ([data-staged]). On desktop the info
      column's own rise waits for the stage too. */
-  .tv-world:not([data-in]) .tv-edge-top { transform: scaleX(0); opacity: 0; }
+  .tv-world:not([data-in]) .tv-edge-top { clip-path: inset(0 50%); opacity: 0; }
   .tv-world:not([data-in]) .tv-head > * { transform: translateY(var(--rise)); opacity: 0; }
   .tv-world:not([data-staged]) .tv-par-front { transform: scale(1.04); opacity: 0; }
   .tv-world:not([data-staged]) .tv-astro { rotate: -8deg; opacity: 0; }
   .tv-world:not([data-staged]) .tv-thumb { transform: translateY(var(--rise)); opacity: 0; }
-  .tv-edge-top { transition: transform var(--dur-in) var(--ease), opacity var(--dur-in) var(--ease); }
+  .tv-edge-top { transition: clip-path var(--dur-arrive) var(--ease), opacity var(--dur-in) var(--ease); }
+  /* a new region's name wipes in along the rule */
+  .tv-anim .tv-locale { animation: tv-locale-in var(--dur-scene) var(--ease) both; }
+  .tv-stars svg { animation: tv-star-in 520ms var(--ease-pop) calc(var(--s) * 70ms + 260ms) both; }
+  .tv-gust-bit { animation: tv-gust 1.3s var(--ease) var(--delay) both; }
+  .tv-mist span { animation: tv-mist 37s var(--ease-io) infinite alternate; }
+  .tv-mist span + span { animation-duration: 29s; animation-direction: alternate-reverse; }
   .tv-head > * { transition: transform var(--dur-in) var(--ease), opacity var(--dur-in) var(--ease); }
   .tv-head > :nth-child(2) { transition-delay: 80ms; }
   .tv-par-front { transition: transform var(--dur-scene) var(--ease), opacity var(--dur-scene) var(--ease); }
@@ -545,6 +681,11 @@
     transition: transform var(--dur-in) var(--ease), opacity var(--dur-in) var(--ease);
     transition-delay: calc(280ms + var(--i) * var(--stagger));
   }
+
+  /* the region: its sky and sea drift; a picked one fades in over the last on the swap's clock */
+  .tv-plate-sky > img { animation: tv-cloud 47s var(--ease-io) infinite alternate; }
+  .tv-region { transition: opacity var(--dur-scene) var(--ease-io), scale var(--dur-arrive) var(--ease); }
+  .tv-world:not([data-staged]) .tv-region { scale: 1.05; }
 
   .tv-mote { animation: tv-drift var(--dur) linear var(--delay) infinite; }
   .tv-p-anemo .tv-mote { animation-name: tv-leaf; }
@@ -556,10 +697,11 @@
   .tv-thumb:active .tv-thumb-ring { scale: 0.96; }
 }
 @media (prefers-reduced-motion: no-preference) and (min-width: 1024px) {
-  .tv-world:not([data-staged]) :is(.tv-rise, .tv-glyph-path) { animation-play-state: paused; }
+  .tv-world:not([data-staged]) :is(.tv-rise, .tv-glyph-path, .tv-stars svg) { animation-play-state: paused; }
 }
 
 @keyframes tv-spin { to { transform: rotate(360deg); } }
+@keyframes tv-cloud { to { translate: -1.5% 0; } }
 @keyframes tv-field-in {
   from { transform: translateX(-6%); }
   to { transform: none; }
@@ -579,6 +721,23 @@
 @keyframes tv-char-out {
   from { opacity: 1; transform: none; }
   to { opacity: 0; transform: translateX(-60px); }
+}
+@keyframes tv-locale-in {
+  from { opacity: 0; clip-path: inset(0 100% 0 0); transform: translateX(-6px); }
+  to { opacity: 1; clip-path: inset(0 0 0 0); transform: none; }
+}
+@keyframes tv-star-in {
+  from { opacity: 0; transform: scale(0.4) rotate(-30deg); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes tv-gust {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.5) rotate(0deg); }
+  18% { opacity: 1; transform: translate(calc(var(--dx) * 0.2), calc(var(--dy) * 0.2)) scale(1) rotate(calc(var(--rot) * 0.2)); }
+  100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(0.7) rotate(var(--rot)); }
+}
+@keyframes tv-mist {
+  from { transform: translateX(-4%); }
+  to { transform: translateX(4%); }
 }
 @keyframes tv-rise {
   from { opacity: 0; transform: translateY(16px); }

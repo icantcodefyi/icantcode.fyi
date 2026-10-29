@@ -67,3 +67,19 @@ export interface StageSpec {
   /** GL device-pixel-ratio caps. Default { desktop: 1.5, phone: 2 }. */
   dpr?: { desktop: number; phone: number };
 }
+
+interface SeamLayers {
+  back: string;
+  front: string;
+}
+
+/** The two painted layers of a <Seam> (components/seam.tsx). */
+export interface SeamArt {
+  /** base paths for art(); omit `day` to use the night layers in both modes */
+  night: SeamLayers;
+  day?: SeamLayers;
+  /** half-width files, same shape, offered to 1x screens through halfSet() */
+  half?: { night: SeamLayers; day?: SeamLayers };
+  /** natural px, shared by both layers */
+  size: [number, number];
+}

@@ -4,7 +4,7 @@ import { DepthStage, useDepthLayer } from "@/components/depth-stage";
 import { art, halfSet } from "@/lib/art";
 import { useDayArt } from "@/lib/day-art";
 import { STRENGTH } from "@/lib/depth/camera";
-import type { StageSpec } from "@/lib/depth/types";
+import type { SeamArt, StageSpec } from "@/lib/depth/types";
 import "./seam.css";
 
 /**
@@ -20,21 +20,7 @@ import "./seam.css";
  */
 
 export type SeamKind = "cloud-rise" | "cloud-fall" | "fade";
-
-interface SeamLayers {
-  back: string;
-  front: string;
-}
-
-export interface SeamArt {
-  /** base paths for art(); omit `day` to use the night layers in both modes */
-  night: SeamLayers;
-  day?: SeamLayers;
-  /** half-width files, same shape, offered to 1x screens through halfSet() */
-  half?: { night: SeamLayers; day?: SeamLayers };
-  /** natural px, shared by both layers */
-  size: [number, number];
-}
+export type { SeamArt };
 
 /** Art sizes from the plan (IMG-05..08): the stand-ins take the same box. */
 const SIZE: Record<Exclude<SeamKind, "fade">, [number, number]> = {

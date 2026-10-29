@@ -419,32 +419,36 @@ body {
 }
 
 /* ── Deferred sections: a box of about the right height until the real one
-   mounts (two screens ahead, or before any jump that lands below it) ── */
+   mounts (two screens ahead, or before any jump that lands below it).
+   Measured against the mounted sections at 360–1920 px wide (/tmp/int/ph.mjs);
+   where a section's height follows the width or the height of the screen,
+   so does its box. ── */
 .defer-ph { display: block; height: var(--ph-h, 100vh); }
 .defer-ph[data-ph="hackathons"] { --ph-h: 3140px; }
 .defer-ph[data-ph="teyvat"] { --ph-h: 1470px; }
-.defer-ph[data-ph="valorant"] { --ph-h: 1330px; }
+/* Valorant: the text column wraps taller as phones and tablets get wider, and fills the screen on desktop */
+.defer-ph[data-ph="valorant"] { --ph-h: calc(772px + 163vw); }
 .defer-ph[data-ph="anime"] { --ph-h: 2700px; }
-.defer-ph[data-ph="bts"] { --ph-h: 3030px; }
+/* BTS: a 230svh pinned run, then the overture and the record crate */
+.defer-ph[data-ph="bts"] { --ph-h: calc(230svh + 1180px); }
 .defer-ph[data-ph="guestbook"] { --ph-h: 960px; }
 @media (min-width: 640px) {
   .defer-ph[data-ph="hackathons"] { --ph-h: 2830px; }
   .defer-ph[data-ph="teyvat"] { --ph-h: 1520px; }
-  .defer-ph[data-ph="valorant"] { --ph-h: 1240px; }
+  .defer-ph[data-ph="valorant"] { --ph-h: calc(1062px + 33vw); }
   .defer-ph[data-ph="anime"] { --ph-h: 1900px; }
-  .defer-ph[data-ph="bts"] { --ph-h: 3134px; }
+  .defer-ph[data-ph="bts"] { --ph-h: calc(230svh + 1100px); }
 }
 @media (min-width: 768px) {
   .defer-ph[data-ph="hackathons"] { --ph-h: 2440px; }
   .defer-ph[data-ph="teyvat"] { --ph-h: 1630px; }
-  .defer-ph[data-ph="bts"] { --ph-h: 3206px; }
 }
 @media (min-width: 1024px) {
   .defer-ph[data-ph="hackathons"] { --ph-h: 2610px; }
   .defer-ph[data-ph="teyvat"] { --ph-h: 1000px; }
-  .defer-ph[data-ph="valorant"] { --ph-h: min(100vh, 934px); }
+  .defer-ph[data-ph="valorant"] { --ph-h: clamp(800px, 100vh, 966px); }
   .defer-ph[data-ph="anime"] { --ph-h: 1222px; }
-  .defer-ph[data-ph="bts"] { --ph-h: 2224px; }
+  .defer-ph[data-ph="bts"] { --ph-h: calc(230svh + 1250px); }
   .defer-ph[data-ph="guestbook"] { --ph-h: 640px; }
 }
 /* the list wraps the event names below 1100 (the dock's gutter) */
@@ -452,11 +456,12 @@ body {
   .defer-ph[data-ph="hackathons"] { --ph-h: 2250px; }
 }
 @media (min-width: 1280px) {
-  .defer-ph[data-ph="hackathons"] { --ph-h: 2100px; }
-  .defer-ph[data-ph="bts"] { --ph-h: 2332px; }
+  /* the map and the list both shrink a little as the screen widens */
+  .defer-ph[data-ph="hackathons"] { --ph-h: calc(3017px - 65.6vw); }
+  .defer-ph[data-ph="bts"] { --ph-h: calc(230svh + 1480px); }
 }
 @media (min-width: 1440px) {
-  .defer-ph[data-ph="bts"] { --ph-h: 2484px; }
+  .defer-ph[data-ph="bts"] { --ph-h: calc(230svh + 1610px); }
 }
 @media (min-width: 1800px) {
   .defer-ph[data-ph="hackathons"] { --ph-h: 1825px; }

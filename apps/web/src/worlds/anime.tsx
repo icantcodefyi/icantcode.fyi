@@ -1,5 +1,9 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 
+import { DepthStage, useDepthLayer } from "@/components/depth-stage";
+import { STRENGTH } from "@/lib/depth/camera";
+import type { StageSpec } from "@/lib/depth/types";
+
 type Corner = "tl" | "tr" | "bl" | "br";
 type Pt = [number, number];
 
@@ -14,7 +18,8 @@ type Show = {
   line: string;
   sfx: string;
   sfxVertical?: boolean;
-  sfxFill: "ink" | "pink";
+  /** Riso: black ink, or the one spot ink (Riso Blue) */
+  sfxFill: "ink" | "spot";
   variant: "tall" | "wide" | "narrow";
   side: "left" | "right";
   bubble: "round" | "burst";
@@ -59,7 +64,7 @@ const SHOWS: Show[] = [
     img: "hxh",
     line: "Nen is just TypeScript generics with better marketing.",
     sfx: "ガッ",
-    sfxFill: "pink",
+    sfxFill: "spot",
     variant: "narrow",
     side: "left",
     bubble: "burst",
@@ -99,7 +104,7 @@ const SHOWS: Show[] = [
     img: "bebop",
     line: "The soundtrack ships my code faster. See you, space cowboy.",
     sfx: "バン！",
-    sfxFill: "pink",
+    sfxFill: "spot",
     variant: "wide",
     side: "left",
     bubble: "round",
@@ -140,7 +145,7 @@ const SHOWS: Show[] = [
     img: "jjk",
     line: "Domain expansion: my localhost, where every test passes.",
     sfx: "ズン",
-    sfxFill: "pink",
+    sfxFill: "spot",
     variant: "narrow",
     side: "right",
     bubble: "burst",
@@ -306,12 +311,12 @@ function Defs() {
   return (
     <svg aria-hidden="true" width="0" height="0" className="absolute">
       <defs>
-        {(["ink", "pink"] as const).flatMap((c) =>
+        {(["ink", "spot"] as const).flatMap((c) =>
           Array.from({ length: TONE_STEPS }, (_, i) => {
             const rad = toneRadius(i);
             return (
               <pattern key={`${c}${i}`} id={`an-${c}-${i}`} width="7" height="7" patternUnits="userSpaceOnUse">
-                <g className={c === "ink" ? "an-fill-ink" : "an-fill-pink"}>
+                <g className={c === "ink" ? "an-fill-ink" : "an-fill-spot"}>
                   <circle cx="0" cy="0" r={rad} />
                   <circle cx="7" cy="0" r={rad} />
                   <circle cx="0" cy="7" r={rad} />
@@ -331,7 +336,7 @@ function Defs() {
   );
 }
 
-function Tone({ corner, color, size, max = TONE_STEPS }: { corner: Corner; color: "ink" | "pink"; size: number; max?: number }) {
+function Tone({ corner, color, size, max = TONE_STEPS }: { corner: Corner; color: "ink" | "spot"; size: number; max?: number }) {
   const span = size * 1.42;
   const bw = span / TONE_STEPS;
   return (
@@ -368,7 +373,7 @@ function FocusLines({ id, className = "" }: { id: string; className?: string }) 
   );
 }
 
-function Sfx({ text, vertical, fill }: { text: string; vertical?: boolean; fill: "ink" | "pink" }) {
+function Sfx({ text, vertical, fill }: { text: string; vertical?: boolean; fill: "ink" | "spot" }) {
   const chars = [...text];
   const r = rng(text.length * 97 + text.charCodeAt(0));
   const w = vertical ? 140 : chars.length * 100 + 40;
@@ -395,7 +400,7 @@ function Sfx({ text, vertical, fill }: { text: string; vertical?: boolean; fill:
     >
       {layer("an-sfx-out")}
       {layer("an-sfx-rim")}
-      {layer(fill === "pink" ? "an-sfx-pink" : "an-sfx-ink")}
+      {layer(fill === "spot" ? "an-sfx-spot" : "an-sfx-ink")}
     </svg>
   );
 }
@@ -426,6 +431,29 @@ function Border({ shape, seed }: { shape: Pt[]; seed: number }) {
 
 const clip = (shape: Pt[]) => `polygon(${shape.map(([x, y]) => `${x}% ${y}%`).join(", ")})`;
 
+/**
+ * Each panel is its own camera on the worlds strength: the frame stays rigid
+ * and the art inside it pans ±10 px with scroll, at a distance per panel so
+ * neighbours drift against each other. Scroll only: no pointer, breath or
+ * arrival, so the page itself never floats.
+ */
+const PAN_DEPTH = [12, 14.5, 11.5, 15, 11, 14];
+const PANEL_STAGES: StageSpec[] = SHOWS.map((s) => ({
+  id: `anime-${s.id}`,
+  plates: [],
+  camera: { strength: STRENGTH.world, pointer: 0, breath: 0, arrival: { z: 0, ms: 0 } },
+}));
+
+function Poster({ show, d }: { show: Show; d: number }) {
+  const ref = useRef<HTMLElement>(null);
+  useDepthLayer(ref, d);
+  return (
+    <figure ref={ref} className="an-poster">
+      <img src={`/lobby/anime/${show.img}.webp`} alt={`${show.title} cover art`} width={460} height={650} loading="lazy" decoding="async" />
+    </figure>
+  );
+}
+
 function Panel({ show, index, active, onTap }: { show: Show; index: number; active: boolean; onTap: () => void }) {
   const bubble = BUBBLES[show.id];
   const polygon = clip(show.shape);
@@ -446,20 +474,11 @@ function Panel({ show, index, active, onTap }: { show: Show; index: number; acti
       }
     >
       <div aria-hidden="true" className="an-spot" style={{ clipPath: polygon }} />
-      <div className="an-cell" style={{ clipPath: polygon }}>
+      <DepthStage spec={PANEL_STAGES[index]} className="an-cell" style={{ clipPath: polygon }}>
         <Tone corner={show.tone} color="ink" size={340} />
-        <Tone corner={(show.tone[0] === "t" ? "b" : "t") + (show.tone[1] === "l" ? "r" : "l") as Corner} color="pink" size={210} max={8} />
+        <Tone corner={(show.tone[0] === "t" ? "b" : "t") + (show.tone[1] === "l" ? "r" : "l") as Corner} color="spot" size={210} max={8} />
         <FocusLines id={show.id} />
-        <figure className="an-poster">
-          <img
-            src={`/lobby/anime/${show.img}.webp`}
-            alt={`${show.title} cover art`}
-            width={460}
-            height={650}
-            loading="lazy"
-            decoding="async"
-          />
-        </figure>
+        <Poster show={show} d={PAN_DEPTH[index]} />
         <div className="an-caption">
           <h3 className="an-caption-title">{show.title}</h3>
           <p lang="ja" className="an-caption-ja">
@@ -469,7 +488,7 @@ function Panel({ show, index, active, onTap }: { show: Show; index: number; acti
             {show.year} · {show.eps} episodes · {show.score}%
           </p>
         </div>
-      </div>
+      </DepthStage>
       <Border shape={show.shape} seed={index * 11 + 3} />
       <div className={`an-bubble-wrap an-bubble-${show.bubble}`}>
         <div className="an-bubble">
@@ -496,7 +515,7 @@ function TitlePanel() {
     <div className="an-panel an-title" style={{ gridArea: "t", "--i": 0 } as CSSProperties}>
       <div className="an-cell">
         <FocusLines id="title" className="an-lines-static" />
-        <Tone corner="tr" color="pink" size={240} max={10} />
+        <Tone corner="tr" color="spot" size={240} max={10} />
         <div className="relative z-[1] flex h-full flex-col justify-between gap-5 p-6 pr-14 sm:p-8 sm:pr-16">
           <div>
             <p className="an-kicker">Currently rewatching, again</p>
@@ -518,7 +537,7 @@ function TitlePanel() {
       <Border shape={TITLE_SHAPE} seed={1} />
       <div className="an-sfx-wrap an-title-sfx">
         <div className="an-sfx-hit">
-          <Sfx text="ドン！" fill="pink" />
+          <Sfx text="ドン！" fill="spot" />
         </div>
       </div>
     </div>
@@ -573,7 +592,7 @@ export function AnimeWorld() {
   }, []);
 
   return (
-    <section id="anime" ref={ref} data-phase={phase} aria-labelledby="anime-title" className="an-world">
+    <section id="anime" ref={ref} data-world="anime" data-phase={phase} aria-labelledby="anime-title" className="an-world">
       <Defs />
       <EdgeTone side="top" />
       <svg aria-hidden="true" className="an-grain">

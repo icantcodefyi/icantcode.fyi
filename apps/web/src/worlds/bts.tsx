@@ -5,7 +5,12 @@ import {
   useState,
   type CSSProperties,
   type KeyboardEvent,
+  type ReactNode,
 } from "react";
+
+import { DepthStage, useDepthLayer } from "@/components/depth-stage";
+import { STRENGTH } from "@/lib/depth/camera";
+import type { StageSpec } from "@/lib/depth/types";
 import { useMode } from "@/lib/mode";
 
 /* ───────── data (mirrors public/bts/manifest.json) ───────── */
@@ -191,7 +196,28 @@ const rand = (seed: number) => {
 
 /* ───────── stage illustration ─────────
    Kept deliberately quiet: one clean truss, four heads, a dark screen with a
-   halo, and a glossy deck the members fade into. They are the show. */
+   halo, and a glossy deck the members fade into. They are the show.
+
+   The stage is on the site camera (worlds strength), back to front: the LED
+   wall at 18, the beams and the rig that throws them at 16, the member at
+   12.5. The beams stay behind the member at every depth, so a photo is never
+   lit over. Each SVG layer overscans the stage by OVER viewBox units top and
+   bottom so its drift never opens an edge. */
+
+const STAGE: StageSpec = { id: "bts", plates: [], camera: { strength: STRENGTH.world } };
+const D = { wall: 18, rig: 16, member: 12.5, sleeve: 12, record: 13.5 } as const;
+const OVER = 24;
+const VIEW = `0 ${-OVER} 800 ${720 + OVER * 2}`;
+
+function Layer({ d, className, children }: { d: number; className: string; children: ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useDepthLayer(ref, d);
+  return (
+    <div ref={ref} className={className} aria-hidden="true">
+      {children}
+    </div>
+  );
+}
 
 const FIXTURES = [150, 310, 490, 650];
 const LENS_Y = 74;
@@ -270,8 +296,7 @@ function Beam({ x, angle, k }: { x: number; angle: number; k: number }) {
   );
 }
 
-function StageBack({ index }: { index: number }) {
-  const angles = beamAngles(index);
+function StageBack() {
   const r = rand(7);
   const stars = Array.from({ length: 22 }, () => ({
     x: r() * 800,
@@ -280,12 +305,7 @@ function StageBack({ index }: { index: number }) {
     o: 0.2 + r() * 0.4,
   }));
   return (
-    <svg
-      className="bt-stage-back"
-      viewBox="0 0 800 720"
-      preserveAspectRatio="xMidYMid slice"
-      aria-hidden="true"
-    >
+    <svg className="bt-stage-svg" viewBox={VIEW} preserveAspectRatio="xMidYMid slice">
       <defs>
         <linearGradient id="bt-sky" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" className="bt-sky-0" />
@@ -304,7 +324,7 @@ function StageBack({ index }: { index: number }) {
         </linearGradient>
       </defs>
 
-      <rect width="800" height="720" fill="url(#bt-sky)" />
+      <rect y={-OVER} width="800" height={720 + OVER * 2} fill="url(#bt-sky)" />
 
       {/* night: a few stars over the roof; day: sun and two slow clouds */}
       <g className="bt-night-only">
@@ -339,29 +359,9 @@ function StageBack({ index }: { index: number }) {
 
       {/* screen: a dark panel with a halo behind the performer, running past
           the bottom so no edge cuts across the photo */}
-      <rect
-        x="160"
-        y="100"
-        width="480"
-        height="640"
-        rx="4"
-        className="bt-wall"
-      />
+      <rect x="160" y="100" width="480" height="700" rx="4" className="bt-wall" />
       <circle cx="400" cy="320" r="270" fill="url(#bt-halo)" />
-      <rect
-        x="160.5"
-        y="100.5"
-        width="479"
-        height="639"
-        rx="4"
-        fill="none"
-        className="bt-wall-edge"
-      />
-
-      <Truss />
-      {FIXTURES.map((x, k) => (
-        <MovingHead key={x} x={x} angle={angles[k]} />
-      ))}
+      <rect x="160.5" y="100.5" width="479" height="699" rx="4" fill="none" className="bt-wall-edge" />
     </svg>
   );
 }
@@ -369,14 +369,21 @@ function StageBack({ index }: { index: number }) {
 function StageLight({ index }: { index: number }) {
   const angles = beamAngles(index);
   return (
-    <svg
-      className="bt-stage-light"
-      viewBox="0 0 800 720"
-      preserveAspectRatio="xMidYMid slice"
-      aria-hidden="true"
-    >
+    <svg className="bt-stage-svg" viewBox={VIEW} preserveAspectRatio="xMidYMid slice">
       {FIXTURES.map((x, k) => (
         <Beam key={x} x={x} angle={angles[k]} k={k} />
+      ))}
+    </svg>
+  );
+}
+
+function StageRig({ index }: { index: number }) {
+  const angles = beamAngles(index);
+  return (
+    <svg className="bt-stage-svg" viewBox={VIEW} preserveAspectRatio="xMidYMid slice">
+      <Truss />
+      {FIXTURES.map((x, k) => (
+        <MovingHead key={x} x={x} angle={angles[k]} />
       ))}
     </svg>
   );
@@ -424,8 +431,6 @@ function Record({ slug, label }: { slug: string; label: string }) {
 
 /* ───────── player ───────── */
 
-const RING_R = 47;
-const RING_C = 2 * Math.PI * RING_R;
 const BARS = 30;
 
 function fmt(t: number) {
@@ -440,7 +445,7 @@ function Player({ visible }: { visible: boolean }) {
   const [failed, setFailed] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const ringRef = useRef<SVGCircleElement>(null);
+  const progRef = useRef<HTMLSpanElement>(null);
   const timeRef = useRef<HTMLSpanElement>(null);
   const ctxRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
@@ -555,10 +560,7 @@ function Player({ visible }: { visible: boolean }) {
 
     const d = audio.duration || 30;
     const p = Math.min(1, audio.currentTime / d);
-    ringRef.current?.setAttribute(
-      "stroke-dashoffset",
-      String(RING_C * (1 - p)),
-    );
+    if (progRef.current) progRef.current.style.transform = `scaleX(${p.toFixed(4)})`;
     if (timeRef.current)
       timeRef.current.textContent = `${fmt(audio.currentTime)} / ${fmt(d)}`;
     return moving;
@@ -635,24 +637,12 @@ function Player({ visible }: { visible: boolean }) {
         }}
       />
 
+      {/* the record stands on a low riser; the riser's lip is the progress light */}
       <div className="bt-deck">
         <div className="bt-disc">
           <div className="bt-disc-spin">
             <Record slug="np" label={song.artwork.replace("600x600", "360x360")} />
           </div>
-          <svg className="bt-ring" viewBox="0 0 100 100" aria-hidden="true">
-            <circle cx="50" cy="50" r={RING_R} className="bt-ring-track" />
-            <circle
-              ref={ringRef}
-              cx="50"
-              cy="50"
-              r={RING_R}
-              className="bt-ring-fill"
-              strokeDasharray={RING_C}
-              strokeDashoffset={RING_C}
-              transform="rotate(-90 50 50)"
-            />
-          </svg>
           <button
             type="button"
             className="bt-play"
@@ -670,10 +660,23 @@ function Player({ visible }: { visible: boolean }) {
             </svg>
           </button>
         </div>
+        <div className="bt-riser" aria-hidden="true">
+          <div className="bt-reflect">
+            <div className="bt-disc-spin">
+              <Record slug="np-reflect" label={song.artwork.replace("600x600", "360x360")} />
+            </div>
+          </div>
+          <span className="bt-lip">
+            <span ref={progRef} className="bt-lip-fill" />
+          </span>
+        </div>
       </div>
 
       <div className="bt-np">
-        <h3 className="bt-h3">Now playing</h3>
+        <h3 className="bt-h3">
+          <span className="bt-live" aria-hidden="true" />
+          Now playing
+        </h3>
         <p className="bt-np-title" aria-live="polite">
           {song.title}
         </p>
@@ -703,6 +706,9 @@ function Player({ visible }: { visible: boolean }) {
               <circle cx="17.5" cy="16.3" r="2.8" fill="currentColor" />
             </svg>
             Listen on Apple Music
+            <span className="bt-apple-arrow" aria-hidden="true">
+              ↗
+            </span>
             <span className="sr-only"> (opens in a new tab)</span>
           </a>
         </div>
@@ -712,8 +718,15 @@ function Player({ visible }: { visible: boolean }) {
             Music.
           </p>
         )}
+      </div>
 
-        <ul className="bt-tracks" aria-label="Pick a song">
+      {/* tonight's setlist, taped to the floor: numbers, hairlines, the current song lit */}
+      <div className="bt-setlist">
+        <p className="bt-setlist-head" aria-hidden="true">
+          <span>Setlist</span>
+          <span>{SONGS.length} songs</span>
+        </p>
+        <ol className="bt-tracks" aria-label="Pick a song">
           {SONGS.map((s, i) => (
             <li key={s.title}>
               <button
@@ -722,42 +735,131 @@ function Player({ visible }: { visible: boolean }) {
                 aria-pressed={i === index}
                 onClick={() => pick(i)}
               >
-                <img
-                  src={s.artwork.replace("600x600", "120x120")}
-                  alt=""
-                  width={48}
-                  height={48}
-                  loading="lazy"
-                  decoding="async"
-                />
-                <span className="bt-track-text">
-                  <span className="bt-track-title">{s.title}</span>
-                  <span className="bt-track-year">{s.year}</span>
+                <span className="bt-track-no" aria-hidden="true">
+                  {String(i + 1).padStart(2, "0")}
                 </span>
+                <span className="bt-track-title">{s.title}</span>
                 <svg
                   className="bt-track-eq"
                   viewBox="0 0 16 16"
-                  width="16"
-                  height="16"
+                  width="14"
+                  height="14"
                   aria-hidden="true"
                 >
                   <rect x="1" y="6" width="3" height="10" rx="1" />
                   <rect x="6.5" y="2" width="3" height="14" rx="1" />
                   <rect x="12" y="8" width="3" height="8" rx="1" />
                 </svg>
+                <span className="bt-track-year">{s.year}</span>
                 <span className="sr-only">
                   {i === index && playing ? ", playing" : ""}
                 </span>
               </button>
             </li>
           ))}
-        </ul>
+        </ol>
       </div>
     </div>
   );
 }
 
+/* ───────── shelf ─────────
+   Sleeves at 12 and the records behind them at 13.5, on scroll only (the
+   shelf scrolls sideways on phones, and a still pointer keeps the rail and
+   captions true to their sleeves). */
+
+const SHELF: StageSpec = {
+  id: "bts-shelf",
+  plates: [],
+  camera: { strength: STRENGTH.world, pointer: 0, breath: 0, arrival: { z: 0, ms: 0 } },
+};
+
+function Era({ album: a }: { album: Album }) {
+  const record = useRef<HTMLDivElement>(null);
+  const sleeve = useRef<HTMLDivElement>(null);
+  useDepthLayer(record, D.record);
+  useDepthLayer(sleeve, D.sleeve);
+  return (
+    <li className="bt-era">
+      <div className="bt-sleeve-wrap">
+        <div ref={record} className="bt-record-slot">
+          <Record slug={a.slug} label={`/bts/albums/${a.slug}.jpg`} />
+        </div>
+        <div ref={sleeve} className="bt-sleeve">
+          <img src={`/bts/albums/${a.slug}.jpg`} alt={`${a.title} album cover`} width={600} height={600} loading="lazy" decoding="async" />
+        </div>
+      </div>
+      <span className="bt-node" aria-hidden="true" />
+      <p className="bt-era-year">{a.year}</p>
+      <p className="bt-era-title">{a.title}</p>
+    </li>
+  );
+}
+
+/* ───────── house lights ─────────
+   The threshold into the hall: the dark of the doorway, one hairline truss
+   across the top, and three beams that come up as you walk in. They throw
+   onto the title, never as far down as the stage. */
+
+const HOUSE_BEAMS = [
+  { x: 18, angle: -22 },
+  { x: 50, angle: 4 },
+  { x: 82, angle: 20 },
+];
+
+function HouseLights() {
+  const ref = useRef<HTMLDivElement>(null);
+  const [lit, setLit] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      ([e]) => {
+        if (!e.isIntersecting) return;
+        setLit(true);
+        io.disconnect();
+      },
+      { rootMargin: "0px 0px -18% 0px" },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+  return (
+    <div ref={ref} className="bt-house" data-lit={lit || undefined} aria-hidden="true">
+      <span className="bt-house-truss" />
+      {HOUSE_BEAMS.map((b, i) => (
+        <span key={b.x} className="bt-house-beam" style={{ "--x": `${b.x}%`, "--a": `${b.angle}deg`, "--i": i } as CSSProperties}>
+          <span />
+        </span>
+      ))}
+    </div>
+  );
+}
+
 /* ───────── world ───────── */
+
+function Figures({ index }: { index: number }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useDepthLayer(ref, D.member);
+  return (
+    <div ref={ref} className="bt-figures">
+      {MEMBERS.map((m, i) => (
+        <img
+          key={m.slug}
+          className="bt-figure"
+          data-on={i === index || undefined}
+          src={cutout(m.slug)}
+          alt={i === index ? `${m.name} of BTS` : ""}
+          aria-hidden={i === index ? undefined : true}
+          loading={i === 0 ? "eager" : "lazy"}
+          fetchPriority={i === 0 ? "high" : undefined}
+          decoding="async"
+          style={figureStyle(m.slug)}
+        />
+      ))}
+    </div>
+  );
+}
 
 const ROTATE_MS = 6000;
 const cutout = (slug: string) => `/bts/members/${slug}.webp`;
@@ -928,8 +1030,10 @@ export function BtsWorld() {
       id="bts"
       ref={sectionRef}
       aria-labelledby="bt-title"
+      data-world="bts"
       className="bt relative isolate overflow-hidden"
     >
+      <HouseLights />
       <header className="bt-head bt-wrap bt-enter">
         <h2 id="bt-title" className="bt-display bt-title">
           Borahae, <span className="bt-title-soft">all seven of you</span>
@@ -943,34 +1047,23 @@ export function BtsWorld() {
 
       {/* ── line-up ── */}
       <div className="bt-show bt-wrap">
-        <div className="bt-stage" data-member={member.slug} {...hoverProps}>
-          <StageBack index={index} />
-          <StageLight index={index} />
-          <div
-            className="bt-screen-name"
-            aria-hidden="true"
-            style={
-              { "--bt-len": Math.max(member.name.length, 3) } as CSSProperties
-            }
-          >
-            <span key={member.slug}>{member.name}</span>
-          </div>
-          {MEMBERS.map((m, i) => (
-            <img
-              key={m.slug}
-              className="bt-figure"
-              data-on={i === index || undefined}
-              src={cutout(m.slug)}
-              alt={i === index ? `${m.name} of BTS` : ""}
-              aria-hidden={i === index ? undefined : true}
-              loading={i === 0 ? "eager" : "lazy"}
-              fetchPriority={i === 0 ? "high" : undefined}
-              decoding="async"
-              style={figureStyle(m.slug)}
-            />
-          ))}
+        <DepthStage spec={STAGE} className="bt-stage" data-member={member.slug} {...hoverProps}>
+          <Layer d={D.wall} className="bt-wall-layer">
+            <StageBack />
+            <div className="bt-screen-name" style={{ "--bt-len": Math.max(member.name.length, 3) } as CSSProperties}>
+              <span key={member.slug}>{member.name}</span>
+            </div>
+          </Layer>
+          {/* the beams blend onto the wall, so they are their own layer; the rig that throws them sits on top */}
+          <Layer d={D.rig} className="bt-beam-layer">
+            <StageLight index={index} />
+          </Layer>
+          <Layer d={D.rig} className="bt-rig-layer">
+            <StageRig index={index} />
+          </Layer>
+          <Figures index={index} />
           <div className="bt-floor-fade" aria-hidden="true" />
-        </div>
+        </DepthStage>
 
         <div className="bt-info">
           <div
@@ -1086,30 +1179,13 @@ export function BtsWorld() {
             <span className="bt-touch-copy">Swipe along the shelf.</span>
           </p>
         </div>
-        <ol className="bt-shelf">
-          {ALBUMS.map((a) => (
-            <li key={a.slug} className="bt-era">
-              <div className="bt-sleeve-wrap">
-                <div className="bt-record-slot">
-                  <Record slug={a.slug} label={`/bts/albums/${a.slug}.jpg`} />
-                </div>
-                <div className="bt-sleeve">
-                  <img
-                    src={`/bts/albums/${a.slug}.jpg`}
-                    alt={`${a.title} album cover`}
-                    width={600}
-                    height={600}
-                    loading="lazy"
-                    decoding="async"
-                  />
-                </div>
-              </div>
-              <span className="bt-node" aria-hidden="true" />
-              <p className="bt-era-year">{a.year}</p>
-              <p className="bt-era-title">{a.title}</p>
-            </li>
-          ))}
-        </ol>
+        <DepthStage spec={SHELF}>
+          <ol className="bt-shelf">
+            {ALBUMS.map((a) => (
+              <Era key={a.slug} album={a} />
+            ))}
+          </ol>
+        </DepthStage>
       </div>
     </section>
   );

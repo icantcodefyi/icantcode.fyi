@@ -55,9 +55,6 @@
 
 .tv-world {
   --tv-ink: #ffffff;
-  --tv-px: 0;
-  --tv-py: 0;
-  --tv-ease: cubic-bezier(0.22, 1, 0.36, 1);
   background: var(--tv-base);
   color: var(--tv-ink);
   font-family: "Onest", system-ui, sans-serif;
@@ -505,33 +502,48 @@
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .tv-scene, .tv-glow { transition: opacity 0.9s var(--tv-ease); }
-  .tv-figure, .tv-ghost { transition: opacity 0.7s var(--tv-ease); }
-  .tv-sigil { transition: opacity 0.7s var(--tv-ease), scale 0.9s var(--tv-ease); }
-  .tv-thumb-ring { transition: scale 0.3s var(--tv-ease); }
-  .tv-thumb-ring img { transition: opacity 0.3s var(--tv-ease); }
-  .tv-thumb-ring::after { transition: opacity 0.3s var(--tv-ease), scale 0.4s var(--tv-ease); }
+  /* the element swap: every field, glow, figure, ghost and sigil crossfades on one clock */
+  .tv-scene, .tv-glow, .tv-figure, .tv-ghost { transition: opacity var(--dur-scene) var(--ease-io); }
+  .tv-sigil { transition: opacity var(--dur-scene) var(--ease-io), scale var(--dur-scene) var(--ease-io); }
+  .tv-thumb-ring { transition: scale var(--dur-short) var(--ease); }
+  .tv-thumb-ring img { transition: opacity var(--dur-short) var(--ease); }
+  .tv-thumb-ring::after { transition: opacity var(--dur-short) var(--ease), scale 0.4s var(--ease); }
 
-  .tv-scene[data-on] .tv-field { animation: tv-field-in 1.1s var(--tv-ease) both; }
+  .tv-scene[data-on] .tv-field { animation: tv-field-in var(--dur-scene) var(--ease) both; }
   .tv-scene[data-on] .tv-stripe,
-  .tv-scene[data-on] .tv-hair { animation: tv-field-in 1.3s var(--tv-ease) 80ms both; }
+  .tv-scene[data-on] .tv-hair { animation: tv-field-in 1.3s var(--ease) 80ms both; }
 
   .tv-astro-outer { animation: tv-spin 240s linear infinite; }
   .tv-astro-chart { animation: tv-spin 360s linear infinite reverse; }
 
   .tv-twinkle { animation: tv-twinkle 4.2s ease-in-out var(--d, 0s) infinite; transform-box: fill-box; transform-origin: center; }
 
-  .tv-par { transition: transform 0.9s var(--tv-ease); }
-  .tv-par-back { transform: translate3d(calc(var(--tv-px) * -10px), calc(var(--tv-py) * -8px), 0); }
-  .tv-par-front { transform: translate3d(calc(var(--tv-px) * 16px), calc(var(--tv-py) * 10px), 0); }
-
   .tv-float { animation: tv-bob 7s ease-in-out infinite; }
 
-  .tv-anim .tv-char[data-state="on"] { animation: tv-char-in 0.9s var(--tv-ease) both; }
-  .tv-anim .tv-char[data-state="out"] { animation: tv-char-out 0.5s cubic-bezier(0.4, 0, 1, 1) both; }
+  .tv-anim .tv-char[data-state="on"] { animation: tv-char-in var(--dur-scene) var(--ease) both; }
+  .tv-anim .tv-char[data-state="out"] { animation: tv-char-out 520ms var(--ease-in) both; }
 
-  .tv-rise { animation: tv-rise 0.7s var(--tv-ease) calc(var(--r) * 70ms + 120ms) both; }
-  .tv-glyph-path { animation: tv-draw 1.1s var(--tv-ease) calc(var(--i) * 140ms + 200ms) both; }
+  .tv-rise { animation: tv-rise var(--dur-in) var(--ease) calc(var(--r) * 70ms + 120ms) both; }
+  .tv-glyph-path { animation: tv-draw var(--dur-scene) var(--ease) calc(var(--i) * 140ms + 200ms) both; }
+
+  /* first view: the gold divider draws from its centre and the title rises
+     ([data-in]); the character settles, the astrolabe turns the last 8° into
+     place and the switcher follows ([data-staged]). On desktop the info
+     column's own rise waits for the stage too. */
+  .tv-world:not([data-in]) .tv-edge-top { transform: scaleX(0); opacity: 0; }
+  .tv-world:not([data-in]) .tv-head > * { transform: translateY(var(--rise)); opacity: 0; }
+  .tv-world:not([data-staged]) .tv-par-front { transform: scale(1.04); opacity: 0; }
+  .tv-world:not([data-staged]) .tv-astro { rotate: -8deg; opacity: 0; }
+  .tv-world:not([data-staged]) .tv-thumb { transform: translateY(var(--rise)); opacity: 0; }
+  .tv-edge-top { transition: transform var(--dur-in) var(--ease), opacity var(--dur-in) var(--ease); }
+  .tv-head > * { transition: transform var(--dur-in) var(--ease), opacity var(--dur-in) var(--ease); }
+  .tv-head > :nth-child(2) { transition-delay: 80ms; }
+  .tv-par-front { transition: transform var(--dur-scene) var(--ease), opacity var(--dur-scene) var(--ease); }
+  .tv-astro { transition: rotate var(--dur-arrive) var(--ease), opacity var(--dur-scene) var(--ease); }
+  .tv-thumb {
+    transition: transform var(--dur-in) var(--ease), opacity var(--dur-in) var(--ease);
+    transition-delay: calc(280ms + var(--i) * var(--stagger));
+  }
 
   .tv-mote { animation: tv-drift var(--dur) linear var(--delay) infinite; }
   .tv-p-anemo .tv-mote { animation-name: tv-leaf; }
@@ -541,6 +553,9 @@
   .tv-p-pyro .tv-mote-alt { animation-name: tv-flutter; }
 
   .tv-thumb:active .tv-thumb-ring { scale: 0.96; }
+}
+@media (prefers-reduced-motion: no-preference) and (min-width: 1024px) {
+  .tv-world:not([data-staged]) :is(.tv-rise, .tv-glyph-path) { animation-play-state: paused; }
 }
 
 @keyframes tv-spin { to { transform: rotate(360deg); } }

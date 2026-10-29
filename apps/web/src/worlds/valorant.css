@@ -151,7 +151,13 @@
   pointer-events: none;
 }
 
-/* frame geometry */
+/* frame geometry: the HUD is one layer on the stage glass */
+.vl-hud {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+}
 .vl-brackets {
   position: absolute;
   inset: clamp(12px, 2.4vw, 28px);
@@ -193,6 +199,8 @@
 
 @media (min-width: 1024px) {
   .vl-ladder { display: block; }
+  /* the mode dock lives in the top-right 64px of the section: the radar starts below it */
+  .vl-radar { top: clamp(54px, 4.4vw, 64px); }
 }
 /* phones: radar takes the empty black corner, plate shrinks into the bottom-left */
 @media (max-width: 639px) {
@@ -251,23 +259,62 @@
   box-shadow: inset 0 0 0 3px var(--vl-ink), inset 0 0 0 6px var(--vl-black);
 }
 
-/* crosshair */
-.vl-xhair {
+/* agent-select lock-on: four 8px L-marks just outside the hovered or focused tile */
+.vl-cell { position: relative; display: grid; }
+.vl-marks {
+  --c: var(--vl-ink);
+  --l: 8px;
+  --t: 2px;
   position: absolute;
-  top: 0;
-  left: 0;
-  z-index: 20;
+  inset: -5px;
   pointer-events: none;
+  background:
+    linear-gradient(var(--c), var(--c)) left top / var(--l) var(--t),
+    linear-gradient(var(--c), var(--c)) left top / var(--t) var(--l),
+    linear-gradient(var(--c), var(--c)) right top / var(--l) var(--t),
+    linear-gradient(var(--c), var(--c)) right top / var(--t) var(--l),
+    linear-gradient(var(--c), var(--c)) left bottom / var(--l) var(--t),
+    linear-gradient(var(--c), var(--c)) left bottom / var(--t) var(--l),
+    linear-gradient(var(--c), var(--c)) right bottom / var(--l) var(--t),
+    linear-gradient(var(--c), var(--c)) right bottom / var(--t) var(--l);
+  background-repeat: no-repeat;
+  opacity: 0;
+  transform: scale(1.07);
+}
+.vl-tile:focus-visible + .vl-marks { opacity: 1; transform: none; }
+@media (hover: hover) {
+  .vl-tile:hover + .vl-marks { opacity: 1; transform: none; }
+}
+
+/* the select shot: a tracer crosses the stage low, under every face, with a muzzle bloom at the edge */
+.vl-tracer {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+.vl-tracer span {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 84%;
+  height: 2px;
+  rotate: -1.5deg;
+  background: linear-gradient(90deg, rgb(255 255 255 / 0), rgb(255 255 255 / 0.75) 40%, #fff 96%, rgb(255 255 255 / 0));
+  box-shadow: 0 0 6px 1px rgb(255 70 85 / 0.9), 0 0 18px 2px rgb(255 70 85 / 0.45);
+  clip-path: inset(-12px 100% -12px 0);
+}
+.vl-tracer::before {
+  content: "";
+  position: absolute;
+  left: -6px;
+  top: calc(84% - 10px);
+  width: 64px;
+  height: 22px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, #fff, rgb(255 70 85 / 0.8) 45%, rgb(255 70 85 / 0));
   opacity: 0;
 }
-.vl-hit { opacity: 0; transform-box: view-box; transform-origin: 32px 32px; }
-.vl-xhair-inner, .vl-xhair-outer { transform-box: view-box; transform-origin: 32px 32px; }
-@media (hover: hover) and (pointer: fine) {
-  .vl.vl-aiming, .vl.vl-aiming * { cursor: none; }
-  .vl.vl-aiming .vl-xhair { opacity: 1; }
-}
-.vl-xhair-wide .vl-xhair-outer { transform: scale(1.35); }
-.vl-xhair-wide .vl-xhair-inner { transform: scale(1.2); }
 
 @media (prefers-reduced-motion: no-preference) {
   .vl-hazard > div { animation: vl-tape 1.6s linear infinite; }
@@ -285,9 +332,9 @@
   .vl-tile::before { transition: transform 320ms var(--vl-ease); }
   .vl-tile-img { transition: transform 320ms cubic-bezier(0.16, 1, 0.3, 1); }
   .vl-tile:hover .vl-tile-img { transform: scale(1.06); }
-  .vl-xhair-inner, .vl-xhair-outer { transition: transform 140ms ease-out; }
-  .vl-firing .vl-hit { animation: vl-hit 260ms ease-out; }
-  .vl-firing .vl-xhair-outer { animation: vl-kick 200ms ease-out; }
+  .vl-marks { transition: opacity var(--dur-micro) var(--ease), transform var(--dur-micro) var(--ease); }
+  .vl-tracer span { animation: vl-tracer 520ms cubic-bezier(0.3, 0, 0.2, 1) 60ms both; }
+  .vl-tracer::before { animation: vl-muzzle 220ms ease-out 40ms both; }
 
   .vl-js:not(.vl-in) .vl-enter,
   .vl-js:not(.vl-in) .vl-info,
@@ -337,12 +384,15 @@
   from { opacity: 0; transform: translateY(16px); }
   to { opacity: 1; transform: translateY(0); }
 }
-@keyframes vl-hit {
-  0% { opacity: 1; transform: scale(0.7); }
-  100% { opacity: 0; transform: scale(1.15); }
+@keyframes vl-tracer {
+  0% { clip-path: inset(-12px 100% -12px 0); }
+  45% { clip-path: inset(-12px 0 -12px 0); }
+  100% { clip-path: inset(-12px 0 -12px 100%); }
 }
-@keyframes vl-kick {
-  50% { transform: scale(1.5); }
+@keyframes vl-muzzle {
+  0% { opacity: 0; transform: scale(0.4); }
+  25% { opacity: 1; transform: scale(1.1); }
+  100% { opacity: 0; transform: scale(0.8); }
 }
 
 @media (min-width: 640px) and (max-width: 1023px) {
@@ -352,7 +402,7 @@
 /* ───────── Day: Riot's bright agent screens ─────────
    Bone ground, Valorant red, deep navy ink. Every SVG mark draws in
    currentColor, so flipping the section colour redraws the radar, brackets,
-   ladder, crosshair and plate in navy; `.vl-ko` parts are the knockouts. */
+   ladder, tracer and plate in navy; `.vl-ko` parts are the knockouts. */
 html[data-mode="day"] .vl {
   --vl-ink: #0f1923;
   --vl-black: #0f1923;
@@ -364,7 +414,6 @@ html[data-mode="day"] .vl {
   color: var(--vl-ink);
 }
 html[data-mode="day"] .vl .vl-ko { fill: var(--vl-paper); }
-html[data-mode="day"] .vl .vl-kos { stroke: var(--vl-paper); }
 
 html[data-mode="day"] .vl-title { color: var(--vl-red-text); }
 html[data-mode="day"] .vl-muted { color: #3b4653; }
@@ -407,5 +456,8 @@ html[data-mode="day"] .vl-ability {
 }
 html[data-mode="day"] .vl-ability-icon { filter: brightness(0); opacity: 0.85; }
 
-/* crosshair: navy arms with a paper keyline so it holds on red and bone */
-html[data-mode="day"] .vl-xhair { color: var(--vl-ink); }
+/* the tracer by day: a navy core through the red, so the shot reads on bone */
+html[data-mode="day"] .vl-tracer span {
+  background: linear-gradient(90deg, rgb(15 25 35 / 0), rgb(15 25 35 / 0.6) 40%, var(--vl-ink) 96%, rgb(15 25 35 / 0));
+  box-shadow: 0 0 6px 1px rgb(255 70 85 / 0.7), 0 0 16px 2px rgb(255 70 85 / 0.3);
+}

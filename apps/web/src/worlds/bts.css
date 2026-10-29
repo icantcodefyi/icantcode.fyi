@@ -11,7 +11,20 @@
   --bt-accent: #a77bff;
   --bt-on-accent: #160a29;
   --bt-line: rgb(201 167 255 / 0.2);
+  --bt-line-strong: rgb(201 167 255 / 0.4);
   --bt-ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* house lights: the doorway's dark, the truss hairline, the beams */
+  --bt-house: #0b0a0d;
+  --bt-house-line: rgb(201 167 255 / 0.3);
+  --bt-house-beam: rgb(206 178 255 / 0.3);
+
+  /* the riser the record stands on */
+  --bt-riser-0: #2c1656;
+  --bt-riser-1: #120822;
+  --bt-face-0: #110824;
+  --bt-face-1: #07030d;
+  --bt-pool: rgb(124 62 226 / 0.3);
 
   /* stage */
   --bt-sky-0: #05020b;
@@ -122,18 +135,26 @@
   .bt-stage { height: 540px; border-radius: 22px; }
 }
 
-.bt-stage > svg,
 .bt-stage > div {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
 }
-.bt-stage-back { z-index: 0; }
+/* each SVG layer overscans the stage (OVER in bts.tsx) so its drift never shows an edge */
+.bt-stage-svg {
+  position: absolute;
+  left: -16px;
+  top: -24px;
+  width: calc(100% + 32px);
+  height: calc(100% + 48px);
+}
+.bt-wall-layer { z-index: 0; }
 /* beams live behind the members, never over them */
-.bt-stage-light { z-index: 1; mix-blend-mode: screen; pointer-events: none; }
-.bt-screen-name { z-index: 1; }
-.bt-figure { z-index: 2; }
+.bt-beam-layer { z-index: 1; mix-blend-mode: screen; }
+.bt-rig-layer { z-index: 1; }
+.bt-figures { z-index: 2; }
+.bt-stage > div { pointer-events: none; }
 /* no deck: the member runs to the bottom of the stage and fades into it,
    like a poster, so the photo is never cut by a floor line */
 .bt-stage > .bt-floor-fade {
@@ -173,6 +194,8 @@
 
 /* member name on the LED wall, in dot matrix */
 .bt-screen-name {
+  position: absolute;
+  inset: 0;
   display: flex;
   justify-content: center;
   align-items: flex-start;
@@ -198,7 +221,7 @@
 @media (max-width: 639px) {
   .bt-stage { --bt-headroom: 0.16; --bt-sink: 0; }
 }
-.bt-stage > .bt-figure {
+.bt-figures > .bt-figure {
   position: absolute;
   left: 50%;
   bottom: calc(var(--bt-sink) * -100%);
@@ -216,7 +239,7 @@
   mask-image: linear-gradient(to right, transparent, #000 9%, #000 91%, transparent), linear-gradient(to bottom, #000 74%, transparent 100%);
   mask-composite: intersect;
 }
-.bt-stage > .bt-figure[data-on] { opacity: 1; translate: 0 0; }
+.bt-figures > .bt-figure[data-on] { opacity: 1; translate: 0 0; }
 
 
 /* ───────── info ───────── */
@@ -391,37 +414,136 @@
   .bt-tab:focus-visible { box-shadow: 0 0 0 3px var(--bt-ground), 0 0 0 5px var(--bt-ink); }
 }
 
-/* ───────── player ───────── */
+/* ───────── player ─────────
+   No widget chrome: the record stands on a low riser at the side of the
+   stage, its lip a strip of light that fills as the preview plays, and the
+   songs are tonight's setlist, numbered and ruled like the sheet taped to
+   the floor. */
 .bt-player-wrap { margin-top: clamp(72px, 9vw, 128px); }
 .bt-player {
+  --disc: min(76vw, 340px);
+  /* riser geometry: the top surface's depth, the front face, and where the record stands on it */
+  --top: clamp(44px, 4.6vw, 62px);
+  --face: 22px;
+  --contact: calc(var(--top) * 0.45);
   display: grid;
-  gap: 32px;
-  padding: clamp(20px, 3.4vw, 48px);
-  border-radius: 32px;
-  background:
-    radial-gradient(70% 90% at 0% 50%, rgb(124 62 226 / 0.28), transparent 70%),
-    var(--bt-panel);
-  box-shadow: inset 0 0 0 1px var(--bt-line);
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: "deck" "np" "list";
+  gap: 40px;
 }
 @media (min-width: 900px) {
-  .bt-player { grid-template-columns: minmax(280px, 400px) minmax(0, 1fr); gap: clamp(32px, 5vw, 72px); align-items: center; }
+  .bt-player {
+    grid-template-columns: minmax(300px, 5fr) minmax(0, 7fr);
+    grid-template-areas: "deck np" "deck list";
+    column-gap: clamp(40px, 6vw, 96px);
+    row-gap: 36px;
+  }
+  .bt-deck { align-self: center; }
 }
-.bt-deck { display: grid; place-items: center; }
+
+.bt-deck {
+  grid-area: deck;
+  position: relative;
+  display: grid;
+  justify-items: center;
+}
+/* a pool of floor light behind the riser */
+.bt-deck::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: min(140%, 560px);
+  height: 62%;
+  translate: -50% 0;
+  background: radial-gradient(50% 50% at 50% 70%, var(--bt-pool), transparent);
+  pointer-events: none;
+}
 .bt-disc {
   position: relative;
-  width: min(100%, 380px);
+  z-index: 1;
+  width: var(--disc);
   aspect-ratio: 1;
 }
-.bt-disc-spin { position: absolute; inset: 7%; }
-.bt-disc-spin .bt-record { width: 100%; height: 100%; display: block; filter: drop-shadow(0 24px 40px rgb(0 0 0 / 0.5)); }
-.bt-ring { position: absolute; inset: 0; width: 100%; height: 100%; }
-.bt-ring-track { fill: none; stroke: var(--bt-line); stroke-width: 1.6; }
-.bt-ring-fill {
-  fill: none;
-  stroke: var(--bt-soft);
-  stroke-width: 2.6;
-  stroke-linecap: round;
+/* contact shadow where the record meets the riser */
+.bt-disc::after {
+  content: "";
+  position: absolute;
+  left: 22%;
+  right: 22%;
+  bottom: -7px;
+  height: 14px;
+  z-index: -1;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgb(0 0 0 / 0.6), transparent);
 }
+/* the house light catching the record's top edge, kept off the label */
+.bt-disc::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: 50%;
+  pointer-events: none;
+  box-shadow: inset 0 0 0 1px var(--bt-line), inset 0 22px 30px -24px rgb(214 190 255 / 0.5);
+}
+.bt-disc-spin { position: absolute; inset: 0; }
+.bt-disc-spin .bt-record { width: 100%; height: 100%; display: block; }
+
+.bt-riser {
+  position: relative;
+  width: min(100%, calc(var(--disc) * 1.24));
+  height: calc(var(--top) + var(--face));
+  margin-top: calc(-1 * var(--contact));
+}
+/* the top surface in perspective, and the front face below the lip */
+.bt-riser::before,
+.bt-reflect {
+  content: "";
+  position: absolute;
+  inset: 0 0 var(--face);
+  clip-path: polygon(6% 0, 94% 0, 100% 100%, 0 100%);
+}
+.bt-riser::before { background: linear-gradient(var(--bt-riser-0), var(--bt-riser-1)); }
+.bt-riser::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  height: var(--face);
+  background: linear-gradient(var(--bt-face-0), var(--bt-face-1));
+}
+/* the record mirrored in the riser's gloss from where it stands, 12% and gone by the lip */
+.bt-reflect {
+  overflow: hidden;
+  opacity: 0.12;
+  -webkit-mask-image: linear-gradient(transparent var(--contact), #000 var(--contact), transparent);
+  mask-image: linear-gradient(transparent var(--contact), #000 var(--contact), transparent);
+}
+.bt-reflect .bt-disc-spin {
+  inset: var(--contact) auto auto 50%;
+  width: var(--disc);
+  aspect-ratio: 1;
+  translate: -50% 0;
+  transform: scaleY(-1);
+}
+.bt-lip {
+  position: absolute;
+  z-index: 1;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--face) - 1px);
+  height: 2px;
+  background: var(--bt-line);
+}
+.bt-lip-fill {
+  position: absolute;
+  inset: 0;
+  background: var(--bt-soft);
+  box-shadow: 0 0 10px var(--bt-accent);
+  transform-origin: left;
+  transform: scaleX(0);
+}
+
 .bt-play {
   position: absolute;
   left: 50%;
@@ -436,7 +558,7 @@
   background: var(--bt-soft);
   color: var(--bt-on-accent);
   cursor: pointer;
-  box-shadow: 0 0 0 5px var(--bt-panel);
+  box-shadow: 0 0 0 5px rgb(11 8 18 / 0.85);
   transition: transform 200ms var(--bt-ease);
 }
 .bt-play svg { fill: currentColor; }
@@ -444,85 +566,150 @@
 .bt-play:active { transform: scale(0.96); }
 .bt-play:focus-visible { outline: 3px solid var(--bt-ink); outline-offset: 6px; }
 
+.bt-np { grid-area: np; }
 .bt-h3 {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
   margin: 0;
-  font: 600 18px/1.2 "Unbounded", system-ui, sans-serif;
+  font: 600 14px/1 "Unbounded", system-ui, sans-serif;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   color: var(--bt-soft);
 }
+/* the tally light: dim on standby, lit while a preview plays */
+.bt-live {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--bt-line-strong);
+}
+.bt-player[data-playing] .bt-live {
+  background: var(--bt-soft);
+  box-shadow: 0 0 0 3px rgb(167 123 255 / 0.22), 0 0 12px var(--bt-accent);
+}
 .bt-np-title {
-  margin: 10px 0 0;
+  margin: 16px 0 0;
   font: 800 clamp(34px, 4.4vw, 64px) / 0.98 "Unbounded", system-ui, sans-serif;
   letter-spacing: -0.02em;
   color: var(--bt-ink);
 }
 .bt-np-meta { margin: 10px 0 0; color: var(--bt-muted); font-size: 17px; }
-.bt-eq { display: block; width: 100%; height: 120px; margin-top: 24px; }
+.bt-eq { display: block; width: 100%; height: 120px; margin-top: 20px; }
 @media (max-width: 639px) { .bt-eq { height: 92px; } }
 .bt-np-row {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 12px 20px;
-  margin-top: 4px;
+  gap: 8px 20px;
 }
-.bt-time { font-variant-numeric: tabular-nums; color: var(--bt-muted); font-size: 16px; }
+.bt-time {
+  font: 600 15px/1 "Unbounded", system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  color: var(--bt-muted);
+}
 .bt-apple {
   display: inline-flex;
   align-items: center;
   gap: 10px;
   min-height: 44px;
-  padding: 0 18px;
-  border-radius: 999px;
-  border: 1px solid var(--bt-soft);
   color: var(--bt-ink);
   font-weight: 600;
   font-size: 16px;
-  text-decoration: none;
-  transition: background-color 200ms var(--bt-ease), color 200ms var(--bt-ease);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-decoration-color: var(--bt-line-strong);
+  text-underline-offset: 6px;
+  transition: text-decoration-color var(--dur-micro) var(--bt-ease), color var(--dur-micro) var(--bt-ease);
 }
-.bt-apple:hover { background: var(--bt-soft); color: var(--bt-on-accent); }
-.bt-apple:focus-visible { outline: 3px solid var(--bt-ink); outline-offset: 3px; }
+.bt-apple svg { color: var(--bt-soft); }
+.bt-apple-arrow { display: inline-block; color: var(--bt-soft); transition: transform var(--dur-short) var(--bt-ease); }
+.bt-apple:hover { text-decoration-color: var(--bt-soft); }
+.bt-apple:hover .bt-apple-arrow { transform: translate(2px, -2px); }
+.bt-apple:focus-visible { outline: 3px solid var(--bt-ink); outline-offset: 3px; border-radius: 4px; }
 .bt-fail { margin: 12px 0 0; color: var(--bt-soft); font-size: 16px; }
 
+/* setlist */
+.bt-setlist { grid-area: list; }
+.bt-setlist-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin: 0;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--bt-line-strong);
+  font: 600 14px/1 "Unbounded", system-ui, sans-serif;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--bt-soft);
+}
+.bt-setlist-head span + span {
+  font: 500 15px/1 "Onest", system-ui, sans-serif;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--bt-muted);
+}
 .bt-tracks {
   list-style: none;
-  margin: 28px 0 0;
+  margin: 0;
   padding: 0;
   display: grid;
-  gap: 6px;
 }
-@media (min-width: 560px) { .bt-tracks { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 639px) {
-  .bt-track { gap: 12px; padding: 6px 10px 6px 6px; }
-  .bt-track img { width: 40px; height: 40px; }
-  .bt-track-title { font-size: 16px; }
-  .bt-track-eq { display: none; }
+@media (min-width: 560px) {
+  .bt-tracks {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: repeat(4, auto);
+    grid-auto-flow: column;
+    column-gap: 32px;
+  }
 }
 .bt-track {
+  position: relative;
   display: flex;
-  align-items: center;
+  align-items: baseline;
   gap: 14px;
   width: 100%;
-  padding: 8px 14px 8px 8px;
+  min-height: 52px;
+  padding: 16px 2px 14px;
   border: 0;
-  border-radius: 16px;
-  background: transparent;
+  border-bottom: 1px solid var(--bt-line);
+  background: none;
   color: var(--bt-ink);
   text-align: left;
   cursor: pointer;
-  transition: background-color 200ms var(--bt-ease);
 }
-.bt-track img { width: 48px; height: 48px; border-radius: 10px; flex: none; object-fit: cover; background: var(--bt-ground-2); }
-.bt-track-text { display: flex; flex-direction: column; min-width: 0; flex: 1; }
-.bt-track-title { font-weight: 600; font-size: 17px; line-height: 1.25; }
-.bt-track-year { font-size: 16px; color: var(--bt-muted); line-height: 1.3; }
-.bt-track-eq { fill: var(--bt-soft); opacity: 0; flex: none; }
-.bt-track:hover { background: rgb(201 167 255 / 0.08); }
-.bt-track[aria-pressed="true"] { background: rgb(201 167 255 / 0.14); box-shadow: inset 0 0 0 1px var(--bt-line); }
-.bt-track[aria-pressed="true"] .bt-track-eq { opacity: 1; }
-.bt-track:focus-visible { outline: 3px solid var(--bt-ink); outline-offset: 2px; }
+.bt-track-no {
+  flex: none;
+  width: 2.2em;
+  font: 700 15px/1 "Unbounded", system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+  color: var(--bt-muted);
+  transition: color var(--dur-micro) var(--bt-ease);
+}
+.bt-track-title { flex: 1; min-width: 0; font-weight: 600; font-size: 17px; line-height: 1.25; }
+.bt-track-year { font-size: 15px; line-height: 1.25; color: var(--bt-muted); font-variant-numeric: tabular-nums; }
+.bt-track-eq { flex: none; align-self: center; fill: var(--bt-soft); opacity: 0; }
 .bt-track-eq rect { transform-box: fill-box; transform-origin: bottom; }
+/* the current song: its number in the light colour and its rule lit like the riser's lip */
+.bt-track::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  background: var(--bt-soft);
+  box-shadow: 0 0 10px var(--bt-accent);
+  transform: scaleX(0);
+  transform-origin: left;
+}
+.bt-track[aria-pressed="true"]::after { transform: none; }
+.bt-track[aria-pressed="true"] .bt-track-no,
+.bt-track:hover .bt-track-no { color: var(--bt-soft); }
+.bt-player[data-playing] .bt-track[aria-pressed="true"] .bt-track-eq { opacity: 1; }
+.bt-track:focus-visible { outline: 2px solid var(--bt-ink); outline-offset: 2px; border-radius: 4px; }
 
 /* ───────── discography ───────── */
 .bt-disco { margin-top: clamp(80px, 10vw, 140px); }
@@ -577,12 +764,13 @@
 
 .bt-era { position: relative; }
 .bt-sleeve-wrap { position: relative; aspect-ratio: 1; }
+/* the record slot and the sleeve are depth layers (they own `translate`), so their pull-out rides on transform */
 .bt-record-slot {
   position: absolute;
   inset: 4%;
   z-index: 0;
-  translate: 0 -18%;
-  transition: translate 620ms var(--bt-ease), rotate 900ms var(--bt-ease);
+  transform: translateY(-18%);
+  transition: transform 620ms var(--bt-ease), rotate 900ms var(--bt-ease);
 }
 .bt-record-slot .bt-record { width: 100%; height: 100%; display: block; filter: drop-shadow(0 6px 14px rgb(0 0 0 / 0.45)); }
 .bt-sleeve {
@@ -592,7 +780,7 @@
   border-radius: 4px;
   overflow: hidden;
   box-shadow: 0 1px 0 rgb(255 255 255 / 0.12) inset, 0 18px 34px -12px rgb(0 0 0 / 0.7), 0 0 0 1px rgb(0 0 0 / 0.3);
-  transition: translate 620ms var(--bt-ease);
+  transition: transform 620ms var(--bt-ease);
 }
 .bt-sleeve img { display: block; width: 100%; height: 100%; object-fit: cover; }
 /* sleeve opening, ring wear and a cardboard sheen */
@@ -614,11 +802,11 @@
   pointer-events: none;
 }
 @media (hover: hover) {
-  .bt-era:hover .bt-record-slot { translate: 0 -52%; rotate: 120deg; }
-  .bt-era:hover .bt-sleeve { translate: 0 6px; }
+  .bt-era:hover .bt-record-slot { transform: translateY(-52%); rotate: 120deg; }
+  .bt-era:hover .bt-sleeve { transform: translateY(6px); }
 }
 @media (hover: none) {
-  .bt-record-slot { translate: 0 -34%; }
+  .bt-record-slot { transform: translateY(-34%); }
 }
 
 /* timeline rail and nodes */
@@ -657,9 +845,72 @@
 .bt-label-ring { fill: none; stroke: rgb(0 0 0 / 0.5); stroke-width: 1.2; }
 .bt-spindle { fill: #d8d0e6; stroke: #0b0812; stroke-width: 1; }
 
+/* ───────── house lights and the way out ─────────
+   In: the dark of the doorway, one hairline truss and three beams that come
+   up on the title as you enter. Out: the last 120px settle into the main
+   stage's ground for the finale. Both sit behind the content. */
+.bt-house {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 520px;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+  background: linear-gradient(var(--bt-house), transparent 140px);
+}
+.bt-house-truss {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 34px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--bt-house-line) 12%, var(--bt-house-line) 88%, transparent);
+}
+.bt-house-beam {
+  position: absolute;
+  top: 34px;
+  left: var(--x);
+}
+/* the fixture on the truss */
+.bt-house-beam::before {
+  content: "";
+  position: absolute;
+  left: -6px;
+  top: -2px;
+  width: 12px;
+  height: 7px;
+  border-radius: 2px 2px 4px 4px;
+  background: var(--bt-fix);
+  box-shadow: 0 0 0 1px var(--bt-fix-ring);
+}
+.bt-house-beam > span {
+  position: absolute;
+  left: calc(clamp(160px, 24vw, 360px) / -2);
+  top: 4px;
+  width: clamp(160px, 24vw, 360px);
+  height: clamp(220px, 24vw, 340px);
+  transform-origin: 50% 0;
+  rotate: var(--a);
+  /* a cone from the lens, brightest on its axis, soft at its edges, gone before the stage */
+  background: conic-gradient(from 180deg at 50% 0, var(--bt-house-beam), color-mix(in srgb, var(--bt-house-beam) 45%, transparent) 9deg, transparent 20deg 340deg, color-mix(in srgb, var(--bt-house-beam) 45%, transparent) 351deg, var(--bt-house-beam));
+  -webkit-mask-image: linear-gradient(#000, transparent 86%);
+  mask-image: linear-gradient(#000, transparent 86%);
+  opacity: 0;
+}
+.bt-house[data-lit] .bt-house-beam > span { opacity: 1; }
+.bt::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  height: 120px;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(transparent, var(--bg));
+}
+
 /* ───────── motion ───────── */
 @media (prefers-reduced-motion: no-preference) {
-  .bt-stage > .bt-figure { transition: opacity 800ms var(--bt-ease), translate 900ms var(--bt-ease); }
+  .bt-figures > .bt-figure { transition: opacity 800ms var(--bt-ease), translate 900ms var(--bt-ease); }
   .bt-swap { animation: bt-rise 560ms var(--bt-ease) both; }
   .bt-screen-name span { animation: bt-flicker 700ms steps(6) both; }
   .bt-star { animation: bt-twinkle 3.6s ease-in-out infinite; animation-delay: var(--bt-d); }
@@ -667,9 +918,15 @@
   .bt-cloud path { animation: bt-drift 22s ease-in-out infinite alternate; }
   .bt-player[data-playing] .bt-disc-spin { animation: bt-spin 3.6s linear infinite; }
   .bt-disc-spin { animation: bt-spin 3.6s linear infinite paused; }
+  /* a mirror turns the other way */
+  .bt-reflect .bt-disc-spin { animation-direction: reverse; }
+  .bt-track::after { transition: transform 520ms var(--bt-ease); }
+  .bt-player[data-playing] .bt-live { animation: bt-breathe 2.4s ease-in-out infinite; }
   .bt-player[data-playing] .bt-track[aria-pressed="true"] .bt-track-eq rect { animation: bt-bar 900ms ease-in-out infinite alternate; }
   .bt-track-eq rect:nth-child(2) { animation-delay: -300ms !important; }
   .bt-track-eq rect:nth-child(3) { animation-delay: -600ms !important; }
+
+  .bt-house-beam > span { transition: opacity var(--dur-in) var(--ease) calc(var(--i) * 120ms); }
 
   .bt-js:not(.bt-in) .bt-enter,
   .bt-js:not(.bt-in) .bt-show { opacity: 0; translate: 0 28px; }
@@ -706,6 +963,17 @@ html[data-mode="day"] .bt {
   --bt-accent: #7c3aed;
   --bt-on-accent: #ffffff;
   --bt-line: rgb(90 43 184 / 0.2);
+  --bt-line-strong: rgb(90 43 184 / 0.36);
+
+  --bt-house: #ffffff;
+  --bt-house-line: rgb(74 47 130 / 0.28);
+  --bt-house-beam: rgb(255 255 255 / 0.85);
+
+  --bt-riser-0: #ffffff;
+  --bt-riser-1: #e6dafd;
+  --bt-face-0: #d4c3f8;
+  --bt-face-1: #bfa8ee;
+  --bt-pool: rgb(255 255 255 / 0.75);
 
   --bt-sky-0: #a98ced;
   --bt-sky-1: #d9cbfa;
@@ -739,7 +1007,7 @@ html[data-mode="day"] .bt-sun { fill: #fffaf2; }
 html[data-mode="day"] .bt-sun-glow { fill: rgb(255 250 242 / 0.45); filter: blur(18px); }
 html[data-mode="day"] .bt-cloud path { fill: rgb(255 255 255 / 0.8); }
 html[data-mode="day"] .bt-stage { box-shadow: 0 0 0 1px var(--bt-line), 0 40px 80px -44px rgb(90 43 184 / 0.55); }
-html[data-mode="day"] .bt-stage-light { mix-blend-mode: soft-light; }
+html[data-mode="day"] .bt-beam-layer { mix-blend-mode: soft-light; }
 html[data-mode="day"] .bt-position { background: #ffffff; }
 html[data-mode="day"] .bt-tab-face { background: radial-gradient(circle at 50% 30%, #ffffff, #dccdfb); }
 html[data-mode="day"] .bt-tab[aria-selected="true"] .bt-tab-face { box-shadow: 0 0 0 3px var(--bt-ground), 0 0 0 5px var(--bt-soft); }
@@ -749,9 +1017,7 @@ html[data-mode="day"] .bt-lineup[data-auto] .bt-tab[aria-selected="true"] .bt-ta
   html[data-mode="day"] .bt-tab[aria-selected="true"] .bt-tab-face,
   html[data-mode="day"] .bt-lineup[data-auto] .bt-tab[aria-selected="true"] .bt-tab-face { box-shadow: 0 0 0 3px var(--bt-soft), 0 0 0 5px rgb(255 255 255 / 0.35); }
 }
-html[data-mode="day"] .bt-player {
-  background: radial-gradient(70% 90% at 0% 50%, rgb(196 168 255 / 0.4), transparent 70%), #ffffff;
-  box-shadow: inset 0 0 0 1px var(--bt-line), 0 30px 60px -40px rgb(90 43 184 / 0.5);
-}
+html[data-mode="day"] .bt-disc::after { background: radial-gradient(closest-side, rgb(42 22 82 / 0.4), transparent); }
+html[data-mode="day"] .bt-live { box-shadow: none; }
 html[data-mode="day"] .bt-sleeve { box-shadow: 0 1px 0 rgb(255 255 255 / 0.3) inset, 0 18px 30px -14px rgb(42 22 82 / 0.5), 0 0 0 1px rgb(42 22 82 / 0.12); }
 html[data-mode="day"] .bt-node::after { box-shadow: 0 0 0 4px var(--bt-ground), 0 0 10px rgb(124 58 237 / 0.5); }

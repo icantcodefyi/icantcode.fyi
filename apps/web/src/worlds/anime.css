@@ -1,7 +1,11 @@
+/* A two-colour riso page: black ink and one spot ink, Riso Blue, which no
+   other part of the site prints in. --an-spot fills tones, SFX and the
+   offset block; --an-spot-ink is the same blue deepened for text on paper. */
 .an-world {
   --an-ink: #0b0a0d;
   --an-paper: #f4f1ea;
-  --an-pink: #ff2e88;
+  --an-spot: #0078bf;
+  --an-spot-ink: #005a90;
   --an-gap: 16px;
   position: relative;
   overflow: hidden;
@@ -12,7 +16,7 @@
 }
 
 .an-fill-ink { fill: var(--an-ink); }
-.an-fill-pink { fill: var(--an-pink); }
+.an-fill-spot { fill: var(--an-spot); }
 
 .an-grain {
   position: absolute;
@@ -103,7 +107,7 @@
   }
 }
 .an-panel:focus-visible .an-spot {
-  outline: 3px solid var(--an-pink);
+  outline: 3px solid var(--an-spot);
 }
 
 .an-cell {
@@ -116,7 +120,7 @@
 .an-spot {
   position: absolute;
   inset: 0;
-  background: var(--an-pink);
+  background: var(--an-spot);
   transform: translate(10px, 10px);
   opacity: var(--on);
 }
@@ -274,7 +278,7 @@
 .an-sfx-out { fill: var(--an-ink); stroke: var(--an-ink); stroke-width: 30px; }
 .an-sfx-rim { fill: #fff; stroke: #fff; stroke-width: 15px; }
 .an-sfx-ink { fill: var(--an-ink); }
-.an-sfx-pink { fill: var(--an-pink); }
+.an-sfx-spot { fill: var(--an-spot); }
 
 [data-panel="sg"] .an-sfx-wrap { left: 5%; bottom: 31%; font-size: 44px; }
 [data-panel="hxh"] .an-sfx-wrap { left: -3%; bottom: -7%; font-size: 46px; }
@@ -329,10 +333,14 @@
 /* title */
 .an-title .an-cell { background: var(--an-ink); color: #fff; }
 .an-title { min-height: 0; }
+/* the kicker is a spot-ink tag with the paper knocked out of it */
 .an-kicker {
+  display: inline-block;
+  padding: 2px 10px 3px;
   font-weight: 600;
-  font-size: 17px;
-  color: var(--an-pink);
+  font-size: 16px;
+  color: #fff;
+  background: var(--an-spot);
 }
 .an-display {
   margin-top: 10px;
@@ -356,7 +364,7 @@
   font-weight: 900;
   font-size: 28px;
   letter-spacing: 0.1em;
-  color: var(--an-pink);
+  color: var(--an-spot);
   z-index: 1;
 }
 .an-title-sfx { right: -14px; top: -44px; font-size: 42px; }
@@ -457,7 +465,6 @@
    paper rather than flooded with ink, and a gentler screentone margin. */
 html[data-mode="day"] .an-world {
   --an-paper: #fdfcfa;
-  --an-pink-ink: #d1006a;
 }
 html[data-mode="day"] .an-grain { opacity: 0.14; }
 
@@ -467,8 +474,7 @@ html[data-mode="day"] .an-title .an-cell {
   background: var(--an-paper);
   color: var(--an-ink);
 }
-html[data-mode="day"] .an-title .an-kicker,
-html[data-mode="day"] .an-title .an-vertical { color: var(--an-pink-ink); }
+html[data-mode="day"] .an-title .an-vertical { color: var(--an-spot-ink); }
 html[data-mode="day"] .an-title .an-lede { color: #2c2932; }
 html[data-mode="day"] .an-lines-static { opacity: 0.1; }
 html[data-mode="day"] .an-lines-static .an-wedges { fill: var(--an-ink); }

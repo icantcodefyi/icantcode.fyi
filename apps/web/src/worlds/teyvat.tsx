@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { CSSProperties, KeyboardEvent, PointerEvent } from "react";
+import type { CSSProperties, KeyboardEvent, ReactNode } from "react";
+
+import { DepthStage, useDepthLayer } from "@/components/depth-stage";
+import { STRENGTH } from "@/lib/depth/camera";
+import type { StageSpec } from "@/lib/depth/types";
 
 type Element = "anemo" | "geo" | "hydro" | "pyro";
 
@@ -397,13 +401,32 @@ function Divider() {
   );
 }
 
+/**
+ * The stage on the site camera (worlds strength): the astrolabe and its glow
+ * hang far at 17, the ghost name at 15, the motes at 12.5 and the character
+ * stands forward at 11.5. Every layer moves against the pointer by 1/d.
+ */
+const STAGE: StageSpec = { id: "teyvat", plates: [], camera: { strength: STRENGTH.world } };
+const D = { astro: 17, ghost: 15, motes: 12.5, char: 11.5 } as const;
+
+function Layer({ d, className, children }: { d: number; className: string; children: ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useDepthLayer(ref, d);
+  return (
+    <div ref={ref} className={className}>
+      {children}
+    </div>
+  );
+}
+
 export function Teyvat() {
   const [active, setActive] = useState(0);
   const [prev, setPrev] = useState<number | null>(null);
   const [moved, setMoved] = useState(false);
-  const stageRef = useRef<HTMLDivElement>(null);
+  const [entered, setEntered] = useState(false);
+  const [staged, setStaged] = useState(false);
+  const sectionRef = useRef<HTMLElement>(null);
   const tabsRef = useRef<(HTMLButtonElement | null)[]>([]);
-  const frame = useRef(0);
   const c = CAST[active];
 
   const pick = useCallback(
@@ -422,27 +445,37 @@ export function Teyvat() {
       img.src = `/lobby/gi/${ch.id}-portrait.webp`;
       img.decode?.().catch(() => {});
     }
-    return () => cancelAnimationFrame(frame.current);
   }, []);
 
-  const onPointerMove = (e: PointerEvent<HTMLDivElement>) => {
-    if (e.pointerType !== "mouse") return;
-    const el = stageRef.current;
-    if (!el) return;
-    const box = el.getBoundingClientRect();
-    const x = ((e.clientX - box.left) / box.width) * 2 - 1;
-    const y = ((e.clientY - box.top) / box.height) * 2 - 1;
-    cancelAnimationFrame(frame.current);
-    frame.current = requestAnimationFrame(() => {
-      el.style.setProperty("--tv-px", x.toFixed(3));
-      el.style.setProperty("--tv-py", y.toFixed(3));
-    });
-  };
-
-  const onPointerLeave = () => {
-    stageRef.current?.style.setProperty("--tv-px", "0");
-    stageRef.current?.style.setProperty("--tv-py", "0");
-  };
+  // first view: the divider and title play once the section's top is a fifth of the way up
+  // the screen, the stage once it is 15% in (on phones it sits below the title)
+  useEffect(() => {
+    const el = sectionRef.current;
+    const stage = el?.querySelector(".tv-stage");
+    if (!el || !stage) return;
+    const io = new IntersectionObserver(
+      ([e]) => {
+        if (!e.isIntersecting) return;
+        setEntered(true);
+        io.disconnect();
+      },
+      { rootMargin: "0px 0px -20% 0px" },
+    );
+    const io2 = new IntersectionObserver(
+      ([e]) => {
+        if (!e.isIntersecting) return;
+        setStaged(true);
+        io2.disconnect();
+      },
+      { threshold: 0.15 },
+    );
+    io.observe(el);
+    io2.observe(stage);
+    return () => {
+      io.disconnect();
+      io2.disconnect();
+    };
+  }, []);
 
   const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
     const step = e.key === "ArrowRight" || e.key === "ArrowDown" ? 1 : e.key === "ArrowLeft" || e.key === "ArrowUp" ? -1 : 0;
@@ -456,8 +489,12 @@ export function Teyvat() {
   return (
     <section
       id="teyvat"
+      ref={sectionRef}
       aria-labelledby="teyvat-title"
+      data-world="teyvat"
       data-element={c.element}
+      data-in={entered || undefined}
+      data-staged={staged || undefined}
       className={`tv-world relative isolate overflow-hidden ${moved ? "tv-anim" : ""}`}
     >
       {ELEMENTS.map((el) => (
@@ -493,12 +530,7 @@ export function Teyvat() {
           </p>
         </header>
 
-        <div
-          ref={stageRef}
-          className="tv-stage [grid-area:stage]"
-          onPointerMove={onPointerMove}
-          onPointerLeave={onPointerLeave}
-        >
+        <DepthStage spec={STAGE} className="tv-stage [grid-area:stage]">
           {ELEMENTS.map((el) => (
             <div key={el} className={`tv-scene tv-scene-stage tv-scene-${el}`} data-on={el === c.element || undefined} aria-hidden="true">
               <span className="tv-field" />
@@ -506,21 +538,23 @@ export function Teyvat() {
               <span className="tv-hair" />
             </div>
           ))}
-          {ELEMENTS.map((el) => (
-            <div key={el} className={`tv-glow tv-glow-${el}`} data-on={el === c.element || undefined} aria-hidden="true" />
-          ))}
-          <div className="tv-par tv-par-back">
+          <Layer d={D.astro} className="tv-par tv-par-back">
+            {ELEMENTS.map((el) => (
+              <div key={el} className={`tv-glow tv-glow-${el}`} data-on={el === c.element || undefined} aria-hidden="true" />
+            ))}
             <Astrolabe active={active} />
-          </div>
-          <div className="tv-ghosts" aria-hidden="true">
+          </Layer>
+          <Layer d={D.ghost} className="tv-ghosts">
             {CAST.map((ch, i) => (
-              <span key={ch.id} className="tv-ghost tv-display" data-on={i === active || undefined}>
+              <span key={ch.id} className="tv-ghost tv-display" data-on={i === active || undefined} aria-hidden="true">
                 {ch.short}
               </span>
             ))}
-          </div>
-          <Particles key={c.element} element={c.element} />
-          <div className="tv-par tv-par-front">
+          </Layer>
+          <Layer d={D.motes} className="tv-par">
+            <Particles key={c.element} element={c.element} />
+          </Layer>
+          <Layer d={D.char} className="tv-par tv-par-front">
             <div className="tv-float">
               {CAST.map((ch, i) => (
                 <img
@@ -534,8 +568,8 @@ export function Teyvat() {
                 />
               ))}
             </div>
-          </div>
-        </div>
+          </Layer>
+        </DepthStage>
 
         <div key={c.id} className="tv-info [grid-area:info]" aria-live="polite">
           <div className="tv-rise tv-element" style={{ "--r": 0 } as CSSProperties}>
@@ -584,6 +618,7 @@ export function Teyvat() {
               aria-pressed={i === active}
               onClick={() => pick(i)}
               className={`tv-thumb tv-thumb-${ch.element}`}
+              style={{ "--i": i } as CSSProperties}
             >
               <span className="tv-thumb-ring">
                 <img src={`/lobby/gi/${ch.id}-icon.webp`} alt="" width={256} height={256} loading="lazy" decoding="async" />

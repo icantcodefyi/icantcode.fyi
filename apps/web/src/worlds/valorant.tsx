@@ -1,4 +1,9 @@
-import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type PointerEvent } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
+
+import { DepthStage, useDepthLayer } from "@/components/depth-stage";
+import { STRENGTH } from "@/lib/depth/camera";
+import type { StageSpec } from "@/lib/depth/types";
+import { kick } from "@/lib/scroll-loop";
 
 type Agent = {
   id: string;
@@ -66,7 +71,27 @@ const AGENTS: Agent[] = [
 
 const src = (file: string) => `/lobby/val/${file}.webp`;
 
+/**
+ * The stage on the site camera (worlds strength): the outline name hangs
+ * behind at 16, the HUD sits on the glass at 12.5 and the agent stands
+ * forward at 11.5, all shifting against the pointer by 1/d.
+ */
+const STAGE: StageSpec = { id: "valorant", plates: [], camera: { strength: STRENGTH.world } };
+const D = { name: 16, hud: 12.5, agent: 11.5 } as const;
+
+function Layer({ d, className, style, children }: { d: number; className: string; style?: CSSProperties; children?: ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useDepthLayer(ref, d);
+  return (
+    <div ref={ref} className={className} style={style} aria-hidden="true">
+      {children}
+    </div>
+  );
+}
+
 function StageLayer({ agent, wipe }: { agent: Agent; wipe?: boolean }) {
+  const portrait = useRef<HTMLImageElement>(null);
+  useDepthLayer(portrait, D.agent);
   const style = { "--vl-a": agent.colors[0], "--vl-b": agent.colors[1] } as CSSProperties;
   const word = agent.name.toUpperCase();
   return (
@@ -74,10 +99,11 @@ function StageLayer({ agent, wipe }: { agent: Agent; wipe?: boolean }) {
       <div className="vl-field" />
       <div className="vl-seam" />
       <img className="vl-texture" src={src(`${agent.id}-bg`)} alt="" width={700} height={1024} decoding="async" />
-      <div className="vl-bigname" aria-hidden="true" style={{ "--vl-len": word.length } as CSSProperties}>
+      <Layer d={D.name} className="vl-bigname" style={{ "--vl-len": word.length } as CSSProperties}>
         <span>{word}</span>
-      </div>
+      </Layer>
       <img
+        ref={portrait}
         className="vl-portrait"
         src={src(agent.id)}
         alt={wipe ? `${agent.name}, full portrait` : ""}
@@ -93,7 +119,7 @@ const BRACKETS = ["tl", "tr", "br", "bl"] as const;
 
 function Brackets() {
   return (
-    <div className="vl-brackets" aria-hidden="true">
+    <div className="vl-brackets">
       {BRACKETS.map((c) => (
         <svg key={c} className={`vl-bracket vl-bracket-${c}`} width="96" height="96" viewBox="0 0 96 96" shapeRendering="crispEdges">
           <path d="M1 56V13L13 1h43" fill="none" stroke="currentColor" strokeWidth="2" shapeRendering="geometricPrecision" />
@@ -232,60 +258,11 @@ function Radar() {
   );
 }
 
-const HIT = "M17 17l7 7M47 17l-7 7M17 47l7-7M47 47l-7-7";
-
-const ARMS = [
-  [0, -1],
-  [0, 1],
-  [-1, 0],
-  [1, 0],
-] as const;
-
-function Crosshair({ innerRef }: { innerRef: React.RefObject<SVGSVGElement | null> }) {
-  const bar = (dx: number, dy: number, gap: number, len: number, w: number) =>
-    dx === 0
-      ? { x: 32 - w / 2, y: dy < 0 ? 32 - gap - len : 32 + gap, width: w, height: len }
-      : { x: dx < 0 ? 32 - gap - len : 32 + gap, y: 32 - w / 2, width: len, height: w };
-  return (
-    <svg ref={innerRef} className="vl-xhair" width="64" height="64" viewBox="0 0 64 64" aria-hidden="true" shapeRendering="crispEdges">
-      <g className="vl-xhair-outer" fill="currentColor" fillOpacity="0.7">
-        {ARMS.map(([dx, dy]) => {
-          const r = bar(dx, dy, 12, 4, 2);
-          return (
-            <g key={`o${dx}${dy}`}>
-              <rect x={r.x - 1} y={r.y - 1} width={r.width + 2} height={r.height + 2} fill="#0b0b0d" className="vl-ko" fillOpacity="0.8" />
-              <rect {...r} />
-            </g>
-          );
-        })}
-      </g>
-      <g className="vl-xhair-inner" fill="currentColor">
-        {ARMS.map(([dx, dy]) => {
-          const r = bar(dx, dy, 4, 6, 2);
-          return (
-            <g key={`i${dx}${dy}`}>
-              <rect x={r.x - 1} y={r.y - 1} width={r.width + 2} height={r.height + 2} fill="#0b0b0d" className="vl-ko" />
-              <rect {...r} />
-            </g>
-          );
-        })}
-      </g>
-      <rect x="30" y="30" width="4" height="4" fill="#0b0b0d" className="vl-ko" />
-      <rect x="31" y="31" width="2" height="2" fill="#ff4655" />
-      <g className="vl-hit" shapeRendering="geometricPrecision" strokeLinecap="square">
-        <path d={HIT} stroke="#0b0b0d" className="vl-kos" strokeWidth="4.5" />
-        <path d={HIT} stroke="#ff4655" strokeWidth="2.5" />
-      </g>
-    </svg>
-  );
-}
-
 export function Valorant() {
   const [index, setIndex] = useState(0);
   const [prev, setPrev] = useState<number | null>(null);
   const [swap, setSwap] = useState(0);
   const sectionRef = useRef<HTMLElement>(null);
-  const xhairRef = useRef<SVGSVGElement>(null);
   const tileRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const agent = AGENTS[index];
 
@@ -306,6 +283,10 @@ export function Valorant() {
     return () => io.disconnect();
   }, []);
 
+  useEffect(() => {
+    if (swap) kick();
+  }, [swap]);
+
   const select = (i: number) => {
     if (i === index) return;
     setPrev(index);
@@ -322,37 +303,13 @@ export function Valorant() {
     select(next);
   };
 
-  const aim = (e: PointerEvent<HTMLElement>) => {
-    const el = sectionRef.current;
-    const x = xhairRef.current;
-    if (!el || !x) return;
-    if (e.pointerType !== "mouse") {
-      el.classList.remove("vl-aiming");
-      return;
-    }
-    const r = el.getBoundingClientRect();
-    x.style.transform = `translate3d(${e.clientX - r.left - 24}px, ${e.clientY - r.top - 24}px, 0)`;
-    el.classList.add("vl-aiming");
-    x.classList.toggle("vl-xhair-wide", !!(e.target as Element).closest("button"));
-  };
-
-  const fire = (e: PointerEvent<HTMLElement>) => {
-    const x = xhairRef.current;
-    if (e.pointerType !== "mouse" || !x) return;
-    x.classList.remove("vl-firing");
-    void x.getBoundingClientRect();
-    x.classList.add("vl-firing");
-  };
-
   return (
     <section
       id="valorant"
       ref={sectionRef}
       aria-labelledby="vl-title"
+      data-world="valorant"
       className="vl relative isolate overflow-hidden bg-[#0b0b0d] text-[#f4f2f0]"
-      onPointerMove={aim}
-      onPointerDown={fire}
-      onPointerLeave={() => sectionRef.current?.classList.remove("vl-aiming")}
     >
       <div className="vl-hazard" aria-hidden="true">
         <div />
@@ -368,15 +325,25 @@ export function Valorant() {
           </p>
         </header>
 
-        <div className="vl-stage" aria-live="polite">
+        <DepthStage spec={STAGE} className="vl-stage" aria-live="polite">
           {prev !== null && <StageLayer agent={AGENTS[prev]} />}
           <StageLayer key={`${agent.id}-${swap}`} agent={agent} wipe={swap > 0} />
-          {swap > 0 && <div key={`slash-${swap}`} className="vl-slash" aria-hidden="true" onAnimationEnd={() => setPrev(null)} />}
-          <Brackets />
-          <Radar />
-          <Ladder />
-          <HazardPlate />
-        </div>
+          {swap > 0 && (
+            <>
+              <div key={`slash-${swap}`} className="vl-slash" aria-hidden="true" onAnimationEnd={() => setPrev(null)} />
+              {/* one tracer across the stage with the slash: the select "shot", anchored to the stage */}
+              <div key={`tracer-${swap}`} className="vl-tracer" aria-hidden="true">
+                <span />
+              </div>
+            </>
+          )}
+          <Layer d={D.hud} className="vl-hud">
+            <Brackets />
+            <Radar />
+            <Ladder />
+            <HazardPlate />
+          </Layer>
+        </DepthStage>
 
         <div className="vl-info px-[var(--vl-pad)]">
           <Divider />
@@ -405,26 +372,27 @@ export function Valorant() {
         <div className="vl-tiles px-[var(--vl-pad)]" role="group" aria-label="Choose an agent">
           <div className="grid grid-cols-4 gap-2 sm:gap-3">
             {AGENTS.map((a, i) => (
-              <button
-                key={a.id}
-                ref={(el) => {
-                  tileRefs.current[i] = el;
-                }}
-                type="button"
-                aria-pressed={i === index}
-                onClick={() => select(i)}
-                onKeyDown={(e) => onTileKey(e, i)}
-                className="vl-tile group"
-              >
-                <img src={src(`${a.id}-icon`)} alt="" width={512} height={512} loading="lazy" decoding="async" className="vl-tile-img" />
-                <span className="vl-display vl-tile-name">{a.name}</span>
-              </button>
+              <div key={a.id} className="vl-cell">
+                <button
+                  ref={(el) => {
+                    tileRefs.current[i] = el;
+                  }}
+                  type="button"
+                  aria-pressed={i === index}
+                  onClick={() => select(i)}
+                  onKeyDown={(e) => onTileKey(e, i)}
+                  className="vl-tile group"
+                >
+                  <img src={src(`${a.id}-icon`)} alt="" width={512} height={512} loading="lazy" decoding="async" className="vl-tile-img" />
+                  <span className="vl-display vl-tile-name">{a.name}</span>
+                </button>
+                {/* agent-select lock-on: four L-marks close in on the hovered or focused tile */}
+                <span className="vl-marks" aria-hidden="true" />
+              </div>
             ))}
           </div>
         </div>
       </div>
-
-      <Crosshair innerRef={xhairRef} />
     </section>
   );
 }

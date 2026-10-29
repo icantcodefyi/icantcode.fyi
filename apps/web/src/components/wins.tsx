@@ -389,6 +389,28 @@ function Trophy(props: MapProps) {
     io.observe(el);
     return () => io.disconnect();
   }, []);
+  // The travellers (SMIL) and the pins' pulses are SVG animations: they run on the main thread, every frame,
+  // so they only run while the map shows. The page's off-screen pause leaves the map to this ([data-own-pause]).
+  useEffect(() => {
+    const el = map.current;
+    const svg = el?.querySelector("svg");
+    if (!el || !svg) return;
+    const io = new IntersectionObserver(
+      ([e]) => {
+        const go = e.isIntersecting;
+        if (go) svg.unpauseAnimations();
+        else svg.pauseAnimations();
+        for (const a of svg.getAnimations({ subtree: true })) {
+          if (!(a instanceof CSSAnimation) || a.effect?.getTiming().iterations !== Infinity) continue;
+          if (go && a.playState === "paused") a.play();
+          else if (!go && a.playState === "running") a.pause();
+        }
+      },
+      { rootMargin: "10% 0px" },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
   const on = drawn ? "" : undefined;
 
   return (
@@ -396,7 +418,7 @@ function Trophy(props: MapProps) {
       <div ref={numeral} className="ws-numeral" data-drawn={on} aria-hidden="true">
         <span>{WINS.length}</span>
       </div>
-      <div ref={map} className="ws-map-wrap">
+      <div ref={map} className="ws-map-wrap" data-own-pause="">
         <IndiaMap {...props} drawn={drawn} />
       </div>
       <div ref={glints} className="ws-glints" aria-hidden="true">

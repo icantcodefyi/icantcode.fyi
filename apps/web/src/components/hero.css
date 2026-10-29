@@ -310,8 +310,9 @@
   transform-origin: left;
 }
 
-/* day ⇄ night switch */
+/* day ⇄ night switch: the track is one drawing; what moves is HTML boxes over it (see sky-toggle.tsx) */
 .hero-toggle {
+  position: relative;
   display: block;
   padding: 0;
   border: 0;
@@ -324,6 +325,31 @@
 .hero-toggle:active { transform: scale(0.96); }
 .hero-toggle:focus-visible { outline: 2px solid #ff2e88; outline-offset: 3px; }
 .hero-toggle svg { display: block; overflow: visible; }
+.hero-toggle-stars,
+.hero-toggle-star,
+.hero-toggle-over,
+.hero-toggle-knob,
+.hero-toggle-sunface,
+.hero-toggle-moonface,
+.hero-toggle-rays,
+.hero-toggle-sunface > svg,
+.hero-toggle-moonface > svg,
+.hero-toggle-rays > svg,
+.hero-toggle-star > svg {
+  position: absolute;
+  pointer-events: none;
+}
+.hero-toggle-stars,
+.hero-toggle-over { inset: 0; }
+.hero-toggle-over { width: 100%; height: 100%; }
+.hero-toggle-knob { left: 0; top: 0; width: 50%; height: 100%; }
+.hero-toggle-sunface,
+.hero-toggle-moonface,
+.hero-toggle-rays,
+.hero-toggle-sunface > svg,
+.hero-toggle-moonface > svg,
+.hero-toggle-rays > svg,
+.hero-toggle-star > svg { inset: 0; width: 100%; height: 100%; }
 
 .hero-toggle-day { fill: #8ec9ff; transition: opacity 0.6s var(--hero-ease); }
 .hero-toggle-night { fill: #1c0d22; opacity: 0; transition: opacity 0.6s var(--hero-ease); }
@@ -349,7 +375,7 @@
 
 @media (prefers-reduced-motion: no-preference) {
   .hero-toggle:not([data-night]) .hero-toggle-rays { animation: hero-ray-spin 18s linear infinite; }
-  .hero-toggle[data-night] .hero-toggle-stars path { animation: hero-twinkle 2.4s ease-in-out infinite; animation-delay: calc(var(--s) * 0.37s); transform-box: fill-box; transform-origin: center; }
+  .hero-toggle[data-night] .hero-toggle-star { animation: hero-twinkle 2.4s ease-in-out infinite; animation-delay: calc(var(--s) * 0.37s); }
   @keyframes hero-ray-spin { to { transform: rotate(360deg); } }
   @keyframes hero-twinkle { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.35; transform: scale(0.6); } }
 }

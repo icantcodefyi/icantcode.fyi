@@ -38,7 +38,8 @@ const BtsWorld = deferred(() => import("@/worlds/bts").then((m) => ({ default: m
 // the guestbook carries the auth + RPC client (zod, better-auth, oRPC, TanStack Query, sonner)
 const GuestbookWall = deferred(
   () => import("@/components/guestbook-wall").then((m) => ({ default: m.GuestbookWall })),
-  (ref) => <div ref={ref as React.Ref<HTMLDivElement>} className="defer-ph" data-ph="guestbook" aria-hidden="true" />,
+  // keeps the id, so /#guestbook resolves before the wall has loaded
+  (ref) => <div ref={ref as React.Ref<HTMLDivElement>} id="guestbook" className="defer-ph" data-ph="guestbook" aria-hidden="true" />,
 );
 
 export default function Home() {

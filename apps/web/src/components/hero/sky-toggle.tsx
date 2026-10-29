@@ -4,6 +4,13 @@ import { useId } from "react";
  * Day ⇄ night switch drawn as a tiny sky. The track holds clouds by day and
  * stars by night; the knob slides across and turns from a haloed sun with
  * fine rays into a full moon with shaded craters.
+ *
+ * Everything that moves (the twinkling stars, the turning rays, the knob and
+ * its two faces) is an HTML box over the track, each holding its own bit of
+ * SVG, stacked in the order the single drawing had. Animations of SVG
+ * children run on the main thread and restyle, relayout and repaint the
+ * page on every frame, and the dock shows this switch on every screen;
+ * animations of HTML boxes run on the compositor.
  */
 
 const STARS: [number, number, number][] = [
@@ -79,19 +86,50 @@ export function SkyToggle({
               d="M53 13.5h10a3 3 0 0 0 .2-6 4.1 4.1 0 0 0-7.8-.9A3.4 3.4 0 0 0 53 13.5Z"
             />
           </g>
-
-          <g className="hero-toggle-stars">
-            {STARS.map(([x, y, r], i) => (
-              <path key={i} d={sparkle(x, y, r * 2)} style={{ "--s": i } as React.CSSProperties} />
-            ))}
-          </g>
         </g>
-        <rect className="hero-toggle-rim" x="1" y="1" width="74" height="36" rx="18" fill="none" />
+      </svg>
 
-        <g className="hero-toggle-knob">
-          <g className="hero-toggle-sunface">
+      {/* the stars sit well inside the track's rounded ends, so they need no clip */}
+      <span className="hero-toggle-stars" aria-hidden="true">
+        {STARS.map(([x, y, r], i) => {
+          const k = r * 2;
+          // a whole-pixel box (an animated box is drawn on whole device pixels), the star where it always was in it
+          const [bx, by] = [Math.floor(x - k), Math.floor(y - k)];
+          const [bw, bh] = [Math.ceil(x + k) - bx, Math.ceil(y + k) - by];
+          return (
+            <span
+              key={i}
+              className="hero-toggle-star"
+              style={
+                {
+                  "--s": i,
+                  left: bx,
+                  top: by,
+                  width: bw,
+                  height: bh,
+                  transformOrigin: `${x - bx}px ${y - by}px`,
+                } as React.CSSProperties
+              }
+            >
+              <svg viewBox={`${bx} ${by} ${bw} ${bh}`} focusable="false">
+                <path d={sparkle(x, y, k)} />
+              </svg>
+            </span>
+          );
+        })}
+      </span>
+
+      <svg className="hero-toggle-over" viewBox="0 0 76 38" width="76" height="38" aria-hidden="true" focusable="false">
+        <rect className="hero-toggle-rim" x="1" y="1" width="74" height="36" rx="18" fill="none" />
+      </svg>
+
+      <span className="hero-toggle-knob" aria-hidden="true">
+        <span className="hero-toggle-sunface">
+          <svg viewBox="0 0 38 38" focusable="false">
             <circle cx="19" cy="19" r="15" fill={`url(#${id}-halo)`} />
-            <g className="hero-toggle-rays">
+          </svg>
+          <span className="hero-toggle-rays">
+            <svg viewBox="0 0 38 38" focusable="false">
               {rays.map((i) => (
                 <line
                   key={i}
@@ -102,11 +140,15 @@ export function SkyToggle({
                   transform={`rotate(${i * 30} 19 19)`}
                 />
               ))}
-            </g>
+            </svg>
+          </span>
+          <svg viewBox="0 0 38 38" focusable="false">
             <circle cx="19" cy="19" r="8.6" fill={`url(#${id}-sun)`} />
             <circle cx="16.4" cy="16.2" r="2.4" fill="#fff" opacity="0.55" />
-          </g>
-          <g className="hero-toggle-moonface">
+          </svg>
+        </span>
+        <span className="hero-toggle-moonface">
+          <svg viewBox="0 0 38 38" focusable="false">
             <circle cx="19" cy="19" r="11.5" fill="#ff8fc0" opacity="0.18" />
             <circle cx="19" cy="19" r="10" fill={`url(#${id}-moon)`} />
             <circle cx="15.6" cy="16.4" r="2.6" fill={`url(#${id}-crater)`} />
@@ -114,9 +156,9 @@ export function SkyToggle({
             <circle cx="21.6" cy="14.6" r="1.1" fill={`url(#${id}-crater)`} />
             <circle cx="14.8" cy="22.8" r="0.9" fill={`url(#${id}-crater)`} />
             <path d="M27.6 13.8a10 10 0 0 1-9.4 15.2 10 10 0 0 0 9.4-15.2Z" fill="#e383af" opacity="0.45" />
-          </g>
-        </g>
-      </svg>
+          </svg>
+        </span>
+      </span>
     </button>
   );
 }

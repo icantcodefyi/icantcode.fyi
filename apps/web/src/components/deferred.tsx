@@ -78,9 +78,10 @@ export function scrollToSection(id: string, behavior?: ScrollBehavior) {
 export function useInitialHash() {
   useEffect(() => {
     const id = decodeURIComponent(location.hash.slice(1));
-    const el = id ? document.getElementById(id) : null;
-    if (!el) return;
-    void mountBefore(el).then(() => requestAnimationFrame(() => glide(id, "instant")));
+    if (!id) return;
+    const el = document.getElementById(id);
+    // an id that only exists inside a section still to mount: mount them all, then look again
+    void mountBefore(el).then(() => requestAnimationFrame(() => document.getElementById(id) && glide(id, "instant")));
   }, []);
 }
 

@@ -139,10 +139,13 @@ function Pane({ p, i, on, shots, h }: { p: Work; i: number; on: boolean; shots: 
       ref={ref}
       className="wk-pane-slot"
       data-on={on ? "" : undefined}
-      style={{ left: `${g.x}%`, top: `${g.y}%`, width: `${g.w}%`, "--r": `${g.r}deg`, "--ry": `${g.ry}deg` } as CSSProperties}
+      style={{ left: `${g.x}%`, top: `${g.y}%`, width: `${g.w}%` }}
     >
+      {/* the tilt lives on the pane, not on the slot the camera writes every frame: custom properties on the
+          slot would restyle the whole pane with each write */}
       <a
         className="wk-pane"
+        style={{ "--r": `${g.r}deg`, "--ry": `${g.ry}deg` } as CSSProperties}
         href={p.url}
         target="_blank"
         rel="noopener noreferrer"

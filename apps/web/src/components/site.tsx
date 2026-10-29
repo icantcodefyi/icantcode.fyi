@@ -63,13 +63,53 @@ export function useReveal() {
  * Every top-level section gets [data-off] while it is well outside the
  * viewport: its infinite CSS animations and SMIL timelines pause, and resume
  * from the same frame well before it scrolls back in. Finite animations
- * (entrances) are left alone so they always finish exactly as before. */
+ * (entrances) are left alone so they always finish exactly as before.
+ * An animation far off screen has nothing painted to run on the compositor
+ * with, so a single one left running ticks the main thread every frame: the
+ * ones that start while their section is off (a box that appears late, like
+ * the hero's switch) are held as they start.
+ * Each section's infinite animations are kept in a list as they start, so a
+ * section going off or coming back touches only its own (asking the page
+ * for its animations at each crossing cost a long frame while scrolling).
+ * A subtree marked [data-own-pause] pauses itself (the hackathon map, by
+ * its own visibility) and is left to it. */
+
+const ownPause = (n: Element | null | undefined) => !!n?.closest("[data-own-pause]");
 
 export function useOffscreenPause(root: React.RefObject<HTMLElement | null>) {
   useEffect(() => {
     const host = root.current;
     if (!host) return;
+    const loops = new Map<Element, Set<Animation>>();
     const held = new Set<Animation>();
+    const sectionOf = (t: Element) => {
+      let n: Element | null = t;
+      while (n && n.parentElement !== host) n = n.parentElement;
+      return n;
+    };
+    const track = (a: Animation) => {
+      if (!(a instanceof CSSAnimation)) return;
+      const t = (a.effect as KeyframeEffect | null)?.target;
+      if (!t || a.effect?.getTiming().iterations !== Infinity || ownPause(t)) return;
+      const sec = sectionOf(t);
+      if (!sec) return;
+      let set = loops.get(sec);
+      if (!set) loops.set(sec, (set = new Set()));
+      set.add(a);
+      if (sec.hasAttribute("data-off") && a.playState === "running") {
+        a.pause();
+        held.add(a);
+      }
+    };
+    for (const a of document.getAnimations()) track(a);
+    const started = (ev: AnimationEvent) => {
+      const t = ev.target as Element;
+      for (const a of ev.pseudoElement ? t.getAnimations({ subtree: true }) : t.getAnimations()) {
+        const fx = a.effect as KeyframeEffect | null;
+        if (a instanceof CSSAnimation && a.animationName === ev.animationName && fx?.target === t && (fx.pseudoElement ?? "") === ev.pseudoElement) track(a);
+      }
+    };
+    host.addEventListener("animationstart", started, true);
     const io = new IntersectionObserver(
       (entries) => {
         for (const e of entries) {
@@ -77,14 +117,18 @@ export function useOffscreenPause(root: React.RefObject<HTMLElement | null>) {
           const off = !e.isIntersecting;
           if (off === el.hasAttribute("data-off")) continue;
           el.toggleAttribute("data-off", off);
-          for (const a of el.getAnimations({ subtree: true })) {
-            if (!(a instanceof CSSAnimation) || a.effect?.getTiming().iterations !== Infinity) continue;
-            if (off && a.playState === "running") {
+          for (const a of loops.get(el) ?? []) {
+            // gone (its element left, or restarted as a new animation)
+            if (a.playState === "idle") {
+              loops.get(el)?.delete(a);
+              held.delete(a);
+            } else if (off && a.playState === "running") {
               a.pause();
               held.add(a);
             } else if (!off && held.delete(a)) a.play();
           }
           for (const svg of el.querySelectorAll("svg")) {
+            if (ownPause(svg)) continue;
             if (off) svg.pauseAnimations();
             else svg.unpauseAnimations();
           }
@@ -99,7 +143,12 @@ export function useOffscreenPause(root: React.RefObject<HTMLElement | null>) {
     // deferred sections swap their placeholder for the real element
     const mo = new MutationObserver((records) => {
       for (const r of records) {
-        for (const n of r.removedNodes) if (n instanceof Element) io.unobserve(n);
+        for (const n of r.removedNodes) {
+          if (!(n instanceof Element)) continue;
+          io.unobserve(n);
+          for (const a of loops.get(n) ?? []) held.delete(a);
+          loops.delete(n);
+        }
         for (const n of r.addedNodes) if (n instanceof Element) io.observe(n);
       }
     });
@@ -107,6 +156,7 @@ export function useOffscreenPause(root: React.RefObject<HTMLElement | null>) {
     return () => {
       io.disconnect();
       mo.disconnect();
+      host.removeEventListener("animationstart", started, true);
     };
   }, [root]);
 }

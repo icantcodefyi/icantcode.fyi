@@ -56,8 +56,6 @@ export interface DepthScene {
   /** upload one mode's plates; false if anything failed */
   load(mode: Mode, src: Sources): Promise<boolean>;
   has(mode: Mode): boolean;
-  /** free a mode's plates (textures the other mode shares stay) */
-  drop(mode: Mode): void;
   /** show `mode`: a crossfade, or at once when `instant`; false if its plates aren't loaded */
   setMode(mode: Mode, instant: boolean): boolean;
   layout(groups: GroupLayout[]): void;
@@ -316,20 +314,6 @@ export async function createDepthScene(defs: SceneGroup[], opts: { id: string; m
       }));
     },
     has: (m) => !!sets[m],
-    drop(m) {
-      const s = sets[m];
-      if (!s || m === mode) return;
-      const other = sets[m === "day" ? "night" : "day"];
-      for (const [id, ps] of s) {
-        ps.mesh.material.dispose();
-        const o = other?.get(id);
-        if (ps.map !== o?.map) ps.map.dispose();
-        if (ps.depth !== o?.depth && ps.depth.image instanceof ImageBitmap) ps.depth.dispose();
-      }
-      delete sets[m];
-      delete loading[m];
-      dirty = true;
-    },
     setMode(next, instant) {
       if (!sets[next]) return false;
       mode = next;

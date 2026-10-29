@@ -20,7 +20,8 @@ import type { AmbientSpec, PlateSpec, StageSpec } from "./types";
  *   swap     on the next frame the plates draw flat, exactly where the
  *            <img>s are, and [data-depth] hides the <img>s in that same
  *            frame; the relief then eases in over --dur-arrive
- *   run      drawn from the rig's camera each frame, only when it changed
+ *   run      drawn from the rig's camera each frame, only when it changed;
+ *            the other mode's plates go up in idle time, for the switch
  *   far      (2.5 screens away, or evicted, or given up) flattened first
  *            if on screen, then the <img>s back, everything disposed
  *   lost     a lost context hands back at once and retries on the next
@@ -111,8 +112,11 @@ type State = "idle" | "loading" | "ready" | "live" | "leaving" | "off";
 type Reason = "far" | "evict" | "spent" | "lost" | "fail" | "dispose";
 
 const FLATTEN_MS = 700;
-/** the other mode's plates stay this long after a switch's crossfade, then go */
-const DROP_MS = 1100 + 4000;
+
+/** Resolves in idle time (or after a second at the latest). */
+function idle() {
+  return new Promise<void>((r) => (window.requestIdleCallback ? window.requestIdleCallback(() => r(), { timeout: 1000 }) : window.setTimeout(r, 1)));
+}
 
 function loaded(img: HTMLImageElement) {
   if (img.complete) return Promise.resolve(img.naturalWidth > 0);
@@ -142,7 +146,6 @@ export function createGL(stage: HTMLElement, spec: StageSpec, runs: Group[], rig
   let visible = false;
   let lost = 0;
   let swap = false;
-  let dropTimer = 0;
   // geometry, from measure(): the stage's document offset and height, each canvas's box on the stage
   let docX = 0;
   let docY = 0;
@@ -344,13 +347,22 @@ export function createGL(stage: HTMLElement, spec: StageSpec, runs: Group[], rig
     state = "ready";
     swap = true;
     kick();
-    later();
+    void other(g);
   }
 
-  /** The mode not showing keeps its plates through a switch's crossfade, then lets them go. */
-  function later() {
-    window.clearTimeout(dropTimer);
-    dropTimer = window.setTimeout(() => scene?.drop(mode === "day" ? "night" : "day"), DROP_MS);
+  /**
+   * The other mode's plates go up too, in idle time once these are in (its
+   * <img>s are already there or come with useDayArt), and both stay while
+   * the stage is near: a switch is then a crossfade on the reliefs, never a
+   * step back to the <img>s.
+   */
+  async function other(g: number) {
+    await idle();
+    const s = scene;
+    const m: Mode = mode === "day" ? "night" : "day";
+    if (!s || g !== gen || s.has(m)) return;
+    const src = await sources(m, g);
+    if (src && g === gen) await s.load(m, src);
   }
 
   async function approach() {
@@ -359,7 +371,7 @@ export function createGL(stage: HTMLElement, spec: StageSpec, runs: Group[], rig
     const g = ++gen;
     // nothing of this loads while the page itself is still loading
     await firstScroll();
-    await new Promise<void>((r) => (window.requestIdleCallback ? window.requestIdleCallback(() => r(), { timeout: 1000 }) : window.setTimeout(r, 1)));
+    await idle();
     if (g !== gen) return;
     groups = merge(runs, stage);
     wraps = groups.map((gr) => slots[gr.slot]);
@@ -407,7 +419,6 @@ export function createGL(stage: HTMLElement, spec: StageSpec, runs: Group[], rig
     }
     const g = ++gen;
     poke();
-    window.clearTimeout(dropTimer);
     const s = scene;
     const cvs = canvases;
     const finish = () => {
@@ -466,13 +477,11 @@ export function createGL(stage: HTMLElement, spec: StageSpec, runs: Group[], rig
     mode(m, instant) {
       if (m === mode) return;
       mode = m;
-      window.clearTimeout(dropTimer);
       const s = scene;
       if (!s || (state !== "live" && state !== "ready")) return; // a load in flight picks the new mode up
       if (s.setMode(m, instant)) {
         if (instant) s.draw();
         else kick();
-        later();
         return;
       }
       // not uploaded: the <img>s show the new mode now, and the plates take over again once it's up

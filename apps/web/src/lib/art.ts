@@ -8,6 +8,8 @@
  * getting exactly the WebP it always got.
  */
 
+import type { SeamArt } from "@/lib/depth/types";
+
 declare global {
   interface Window {
     __avif?: boolean;
@@ -52,6 +54,22 @@ const AVIF = new Set([
   "/site/finale/meadow-day-1200",
   "/site/finale/meadow-depth-night",
   "/site/finale/meadow-depth-day",
+  "/site/seams/cloud-rise-night-back",
+  "/site/seams/cloud-rise-night-back-1200",
+  "/site/seams/cloud-rise-night-front",
+  "/site/seams/cloud-rise-night-front-1200",
+  "/site/seams/cloud-rise-day-back",
+  "/site/seams/cloud-rise-day-back-1200",
+  "/site/seams/cloud-rise-day-front",
+  "/site/seams/cloud-rise-day-front-1200",
+  "/site/seams/cloud-fall-night-back",
+  "/site/seams/cloud-fall-night-back-1200",
+  "/site/seams/cloud-fall-night-front",
+  "/site/seams/cloud-fall-night-front-1200",
+  "/site/seams/cloud-fall-day-back",
+  "/site/seams/cloud-fall-day-back-1200",
+  "/site/seams/cloud-fall-day-front",
+  "/site/seams/cloud-fall-day-front-1200",
 ]);
 
 export const avif = () => typeof window !== "undefined" && window.__avif === true;
@@ -187,3 +205,19 @@ export const TROPHY_LAYERS = [
   { id: "confetti", art: TROPHY_ART.confetti, half: TROPHY_ART.confettiHalf,
     size: [1122, 1402], halfSize: [600, 750], distance: 7 },
 ] as const;
+
+/** The painted cloud seams above and below Hackathons (components/seam.tsx). */
+export const SEAM_ART = {
+  "cloud-rise": {
+    night: { back: "/site/seams/cloud-rise-night-back", front: "/site/seams/cloud-rise-night-front" },
+    day: { back: "/site/seams/cloud-rise-day-back", front: "/site/seams/cloud-rise-day-front" },
+    half: { night: { back: "/site/seams/cloud-rise-night-back-1200", front: "/site/seams/cloud-rise-night-front-1200" }, day: { back: "/site/seams/cloud-rise-day-back-1200", front: "/site/seams/cloud-rise-day-front-1200" } },
+    size: [2400, 720],
+  },
+  "cloud-fall": {
+    night: { back: "/site/seams/cloud-fall-night-back", front: "/site/seams/cloud-fall-night-front" },
+    day: { back: "/site/seams/cloud-fall-day-back", front: "/site/seams/cloud-fall-day-front" },
+    half: { night: { back: "/site/seams/cloud-fall-night-back-1200", front: "/site/seams/cloud-fall-night-front-1200" }, day: { back: "/site/seams/cloud-fall-day-back-1200", front: "/site/seams/cloud-fall-day-front-1200" } },
+    size: [2400, 640],
+  },
+} satisfies Record<"cloud-rise" | "cloud-fall", SeamArt>;

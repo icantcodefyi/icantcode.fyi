@@ -1,0 +1,42 @@
+{
+  "night-back": {
+    "before": {
+      "lower_max_adjacent_alpha_jump": 140,
+      "footer_max_alpha": 0
+    },
+    "after": {
+      "lower_max_adjacent_alpha_jump": 20,
+      "footer_max_alpha": 0
+    }
+  },
+  "night-front": {
+    "before": {
+      "lower_max_adjacent_alpha_jump": 91,
+      "footer_max_alpha": 0
+    },
+    "after": {
+      "lower_max_adjacent_alpha_jump": 13,
+      "footer_max_alpha": 0
+    }
+  },
+  "day-back": {
+    "before": {
+      "lower_max_adjacent_alpha_jump": 117,
+      "footer_max_alpha": 1
+    },
+    "after": {
+      "lower_max_adjacent_alpha_jump": 11,
+      "footer_max_alpha": 0
+    }
+  },
+  "day-front": {
+    "before": {
+      "lower_max_adjacent_alpha_jump": 89,
+      "footer_max_alpha": 0
+    },
+    "after": {
+      "lower_max_adjacent_alpha_jump": 7,
+      "footer_max_alpha": 0
+    }
+  }
+}

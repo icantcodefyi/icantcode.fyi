@@ -1,0 +1,54 @@
+{
+  "rise-night": {
+    "threshold_percentile": 55,
+    "normalized_threshold": 0.6058075437975001,
+    "size": [
+      2400,
+      720
+    ],
+    "band_px": [
+      576,
+      720
+    ]
+  },
+  "rise-day": {
+    "threshold_percentile": 55,
+    "normalized_threshold": 0.36643773241988453,
+    "size": [
+      2400,
+      720
+    ],
+    "band_px": [
+      576,
+      720
+    ]
+  },
+  "fall-night": {
+    "threshold_percentile": 55,
+    "normalized_threshold": 0.6953164391861745,
+    "size": [
+      2400,
+      640
+    ],
+    "band_px": [
+      0,
+      128
+    ],
+    "depth_feather_px": 80,
+    "outer_feather_px": 100
+  },
+  "fall-day": {
+    "threshold_percentile": 55,
+    "normalized_threshold": 0.6925981883021955,
+    "size": [
+      2400,
+      640
+    ],
+    "band_px": [
+      0,
+      128
+    ],
+    "depth_feather_px": 80,
+    "outer_feather_px": 100
+  }
+}

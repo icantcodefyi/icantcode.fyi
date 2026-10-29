@@ -1,0 +1,428 @@
+[
+  {
+    "file": "cloud-rise-night-back.avif",
+    "px": [
+      2400,
+      720
+    ],
+    "bytes": 39284,
+    "KB": 38.36,
+    "alpha_zero_pixels": 768441,
+    "encoding_quality_or_crf": 40,
+    "sha256": "cd55321685e5b2e6f11bac57053f49017efc5ba873e2e50b800a1e4e4feab7b8"
+  },
+  {
+    "file": "cloud-rise-night-back-1200.avif",
+    "px": [
+      1200,
+      360
+    ],
+    "bytes": 17286,
+    "KB": 16.88,
+    "alpha_zero_pixels": 190969,
+    "encoding_quality_or_crf": 40,
+    "sha256": "3b8ec55f45c5162e47ca8da0b1117884f999e7348581abb78b8c7032b30708a7"
+  },
+  {
+    "file": "cloud-rise-night-front.avif",
+    "px": [
+      2400,
+      720
+    ],
+    "bytes": 37557,
+    "KB": 36.68,
+    "alpha_zero_pixels": 541878,
+    "encoding_quality_or_crf": 52,
+    "band_max_rgb_error": 0,
+    "band_alpha_min": 255,
+    "sha256": "3ffc51101231c94eec2201976b09170889608629a7e2c509999cf2cbd5f1c01f"
+  },
+  {
+    "file": "cloud-rise-night-front-1200.avif",
+    "px": [
+      1200,
+      360
+    ],
+    "bytes": 15910,
+    "KB": 15.54,
+    "alpha_zero_pixels": 133961,
+    "encoding_quality_or_crf": 53,
+    "band_max_rgb_error": 0,
+    "band_alpha_min": 255,
+    "sha256": "c1a7f924cf84dac5ad6bcef6a79b8871893c6d88446ee16318e4926f1c5bb3a9"
+  },
+  {
+    "file": "cloud-rise-day-back.avif",
+    "px": [
+      2400,
+      720
+    ],
+    "bytes": 32178,
+    "KB": 31.42,
+    "alpha_zero_pixels": 676203,
+    "encoding_quality_or_crf": 40,
+    "sha256": "4699820d5c951243af558ebdb452c0df68232cbe3211056f6e8055c410f87e81"
+  },
+  {
+    "file": "cloud-rise-day-back-1200.avif",
+    "px": [
+      1200,
+      360
+    ],
+    "bytes": 14664,
+    "KB": 14.32,
+    "alpha_zero_pixels": 164837,
+    "encoding_quality_or_crf": 40,
+    "sha256": "4f922776884c54c3a602a010d89bb55b1e12c90945ff2f72ab820941631b2351"
+  },
+  {
+    "file": "cloud-rise-day-front.avif",
+    "px": [
+      2400,
+      720
+    ],
+    "bytes": 34149,
+    "KB": 33.35,
+    "alpha_zero_pixels": 375061,
+    "encoding_quality_or_crf": 48,
+    "band_max_rgb_error": 0,
+    "band_alpha_min": 255,
+    "sha256": "99f451fcd9d212b781665265739f402ce0e1b14087be7fe13cf4002177b8abc4"
+  },
+  {
+    "file": "cloud-rise-day-front-1200.avif",
+    "px": [
+      1200,
+      360
+    ],
+    "bytes": 14995,
+    "KB": 14.64,
+    "alpha_zero_pixels": 92368,
+    "encoding_quality_or_crf": 53,
+    "band_max_rgb_error": 0,
+    "band_alpha_min": 255,
+    "sha256": "fadc00e0fdf7aa892ad867f194bc5625d11a87edad6ef0897cadf91799191db4"
+  },
+  {
+    "file": "cloud-rise-night-back.webp",
+    "px": [
+      2400,
+      720
+    ],
+    "bytes": 120326,
+    "KB": 117.51,
+    "alpha_zero_pixels": 784259,
+    "encoder": "cwebp -q 82 -alpha_q 90 -m 6 -sharp_yuv",
+    "sha256": "066bef53072c67e09f50b687e9236e72e35d40fd3852f21170fa470d47e6deb4"
+  },
+  {
+    "file": "cloud-rise-night-back-1200.webp",
+    "px": [
+      1200,
+      360
+    ],
+    "bytes": 57592,
+    "KB": 56.24,
+    "alpha_zero_pixels": 194999,
+    "encoder": "cwebp -q 82 -alpha_q 90 -m 6 -sharp_yuv",
+    "sha256": "510ea067b8ad8fa6f63457f46a498cf194e089668200b7a90d9ae7e262cdd789"
+  },
+  {
+    "file": "cloud-rise-night-front.webp",
+    "px": [
+      2400,
+      720
+    ],
+    "bytes": 106328,
+    "KB": 103.84,
+    "alpha_zero_pixels": 547035,
+    "encoder": "cwebp -q 82 -alpha_q 90 -m 6 -sharp_yuv",
+    "band_max_rgb_error": 1,
+    "band_alpha_min": 255,
+    "sha256": "3a0e218e7672e22d0f0444ef3189635b876048fc368759d7e7a8ef99383e501d"
+  },
+  {
+    "file": "cloud-rise-night-front-1200.webp",
+    "px": [
+      1200,
+      360
+    ],
+    "bytes": 49808,
+    "KB": 48.64,
+    "alpha_zero_pixels": 136295,
+    "encoder": "cwebp -q 82 -alpha_q 90 -m 6 -sharp_yuv",
+    "band_max_rgb_error": 1,
+    "band_alpha_min": 255,
+    "sha256": "8503bd46a4e690c6f80ff2b546dd07d899c739a31067c578558c7a9ef42963e6"
+  },
+  {
+    "file": "cloud-rise-day-back.webp",
+    "px": [
+      2400,
+      720
+    ],
+    "bytes": 84618,
+    "KB": 82.63,
+    "alpha_zero_pixels": 698503,
+    "encoder": "cwebp -q 82 -alpha_q 90 -m 6 -sharp_yuv",
+    "sha256": "5b134d01ee4d1e487807813cbc7fe8b9ed0e9c92ab57ad585612dbeeccb9f95e"
+  },
+  {
+    "file": "cloud-rise-day-back-1200.webp",
+    "px": [
+      1200,
+      360
+    ],
+    "bytes": 43020,
+    "KB": 42.01,
+    "alpha_zero_pixels": 172159,
+    "encoder": "cwebp -q 82 -alpha_q 90 -m 6 -sharp_yuv",
+    "sha256": "70a3083aa848d165f0cf5b2f8cb27cdabec0b78090af669e348046e75d0faa60"
+  },
+  {
+    "file": "cloud-rise-day-front.webp",
+    "px": [
+      2400,
+      720
+    ],
+    "bytes": 92850,
+    "KB": 90.67,
+    "alpha_zero_pixels": 388930,
+    "encoder": "cwebp -q 82 -alpha_q 90 -m 6 -sharp_yuv",
+    "band_max_rgb_error": 1,
+    "band_alpha_min": 255,
+    "sha256": "6fad9b50754c8c9d5496fc38fb15186b59b45461116875309a552d02676f0cfc"
+  },
+  {
+    "file": "cloud-rise-day-front-1200.webp",
+    "px": [
+      1200,
+      360
+    ],
+    "bytes": 47312,
+    "KB": 46.2,
+    "alpha_zero_pixels": 95310,
+    "encoder": "cwebp -q 82 -alpha_q 90 -m 6 -sharp_yuv",
+    "band_max_rgb_error": 1,
+    "band_alpha_min": 255,
+    "sha256": "3a57bce08d397ceb1608f681b38e6f21018216afc3921ec7c1af2256d7624c13"
+  },
+  {
+    "file": "cloud-fall-night-back.avif",
+    "px": [
+      2400,
+      640
+    ],
+    "bytes": 32490,
+    "KB": 31.73,
+    "alpha_zero_pixels": 725371,
+    "encoding_quality_or_crf": 40,
+    "sha256": "e25a468c0e7059343d48b8107b699b8913b0c9dcc89ebeee021ef90b68d4f63c",
+    "lower_max_adjacent_alpha_jump": 20
+  },
+  {
+    "file": "cloud-fall-night-back.webp",
+    "px": [
+      2400,
+      640
+    ],
+    "bytes": 138644,
+    "KB": 135.39,
+    "alpha_zero_pixels": 732150,
+    "encoder": "cwebp -q 82 -alpha_q 90 -m 6 -sharp_yuv",
+    "sha256": "b055a7e8fa827077782db0091ee899b28d9205d02ad4194db29f2eea679d04c0",
+    "lower_max_adjacent_alpha_jump": 21
+  },
+  {
+    "file": "cloud-fall-night-back-1200.avif",
+    "px": [
+      1200,
+      320
+    ],
+    "bytes": 13087,
+    "KB": 12.78,
+    "alpha_zero_pixels": 178685,
+    "encoding_quality_or_crf": 40,
+    "sha256": "ad6584721fef98af4a0432df9c24c08f9fdcfd5b1785002009e2094cf1db5616"
+  },
+  {
+    "file": "cloud-fall-night-back-1200.webp",
+    "px": [
+      1200,
+      320
+    ],
+    "bytes": 57488,
+    "KB": 56.14,
+    "alpha_zero_pixels": 183850,
+    "encoder": "cwebp -q 82 -alpha_q 90 -m 6 -sharp_yuv",
+    "sha256": "22932449686d62b7a201053bb49bb895945ddab16e65fea3db7c34fce468f85c"
+  },
+  {
+    "file": "cloud-fall-night-front.avif",
+    "px": [
+      2400,
+      640
+    ],
+    "bytes": 17816,
+    "KB": 17.4,
+    "alpha_zero_pixels": 615748,
+    "encoding_quality_or_crf": 52,
+    "band_max_rgb_error": 0,
+    "band_alpha_min": 255,
+    "sha256": "eee7ca427f87c98d65dff6d9c2bd1d32155274c1b32a0aceb9c47741679ae765",
+    "lower_max_adjacent_alpha_jump": 13
+  },
+  {
+    "file": "cloud-fall-night-front.webp",
+    "px": [
+      2400,
+      640
+    ],
+    "bytes": 100500,
+    "KB": 98.14,
+    "alpha_zero_pixels": 615400,
+    "encoder": "cwebp -q 82 -alpha_q 90 -m 6 -sharp_yuv",
+    "band_max_rgb_error": 2,
+    "band_alpha_min": 255,
+    "sha256": "6dd9309cb5798a0a66b022f2cd6bd8e7f55f4c4f642c4361c5499d13adf31209",
+    "lower_max_adjacent_alpha_jump": 15
+  },
+  {
+    "file": "cloud-fall-night-front-1200.avif",
+    "px": [
+      1200,
+      320
+    ],
+    "bytes": 11165,
+    "KB": 10.9,
+    "alpha_zero_pixels": 153195,
+    "encoding_quality_or_crf": 36,
+    "rgb_prefilter_sigma": 1.0,
+    "band_max_rgb_error": 0,
+    "band_alpha_min": 255,
+    "sha256": "69390422ba839aa48556372f45fed94d6fa1d62bab54234d03f595b87ecd56cd"
+  },
+  {
+    "file": "cloud-fall-night-front-1200.webp",
+    "px": [
+      1200,
+      320
+    ],
+    "bytes": 41284,
+    "KB": 40.32,
+    "alpha_zero_pixels": 153961,
+    "encoder": "cwebp -q 82 -alpha_q 90 -m 6 -sharp_yuv",
+    "band_max_rgb_error": 2,
+    "band_alpha_min": 255,
+    "sha256": "d8ab92ce7ab7c1c1cd3dd59abd13a6b6db049f876d95abfc112e50a7aea5c77e"
+  },
+  {
+    "file": "cloud-fall-day-back.avif",
+    "px": [
+      2400,
+      640
+    ],
+    "bytes": 29365,
+    "KB": 28.68,
+    "alpha_zero_pixels": 597501,
+    "encoding_quality_or_crf": 40,
+    "sha256": "ba3deb5316aa6b1a86c04597b09607aec3179c533a16036b307114a872000b71",
+    "lower_max_adjacent_alpha_jump": 11
+  },
+  {
+    "file": "cloud-fall-day-back.webp",
+    "px": [
+      2400,
+      640
+    ],
+    "bytes": 126136,
+    "KB": 123.18,
+    "alpha_zero_pixels": 603388,
+    "encoder": "cwebp -q 82 -alpha_q 90 -m 6 -sharp_yuv",
+    "sha256": "4f33d51c18c18a6ca4ffd37d2da75e61caedae9a13b5a7c16981dab6d577c9bd",
+    "lower_max_adjacent_alpha_jump": 11
+  },
+  {
+    "file": "cloud-fall-day-back-1200.avif",
+    "px": [
+      1200,
+      320
+    ],
+    "bytes": 12848,
+    "KB": 12.55,
+    "alpha_zero_pixels": 148726,
+    "encoding_quality_or_crf": 40,
+    "sha256": "5e400dcfc01e97ca4ae97599cf22173127c4614ec82f7d90bf8531c283e9d03f"
+  },
+  {
+    "file": "cloud-fall-day-back-1200.webp",
+    "px": [
+      1200,
+      320
+    ],
+    "bytes": 51652,
+    "KB": 50.44,
+    "alpha_zero_pixels": 151611,
+    "encoder": "cwebp -q 82 -alpha_q 90 -m 6 -sharp_yuv",
+    "sha256": "5047714e98344f980b8994134f05bce58755c6511ef10ee79c3e7b5cb4f56b2e"
+  },
+  {
+    "file": "cloud-fall-day-front.avif",
+    "px": [
+      2400,
+      640
+    ],
+    "bytes": 10836,
+    "KB": 10.58,
+    "alpha_zero_pixels": 630765,
+    "encoding_quality_or_crf": 49,
+    "band_max_rgb_error": 0,
+    "band_alpha_min": 255,
+    "sha256": "04facf622c6d8fb094a442778f9874646ed109952381ab6ac69848efb8ef0b98",
+    "lower_max_adjacent_alpha_jump": 7
+  },
+  {
+    "file": "cloud-fall-day-front.webp",
+    "px": [
+      2400,
+      640
+    ],
+    "bytes": 60142,
+    "KB": 58.73,
+    "alpha_zero_pixels": 633136,
+    "encoder": "cwebp -q 82 -alpha_q 90 -m 6 -sharp_yuv",
+    "band_max_rgb_error": 1,
+    "band_alpha_min": 255,
+    "sha256": "ff6aab7e46c6d4c158ad90b1d1fd56f3ce95aa66288b4785f10cb0bcc9766f7f",
+    "lower_max_adjacent_alpha_jump": 10
+  },
+  {
+    "file": "cloud-fall-day-front-1200.avif",
+    "px": [
+      1200,
+      320
+    ],
+    "bytes": 9254,
+    "KB": 9.04,
+    "alpha_zero_pixels": 157813,
+    "encoding_quality_or_crf": 31,
+    "rgb_prefilter_sigma": 1.0,
+    "band_max_rgb_error": 0,
+    "band_alpha_min": 255,
+    "sha256": "326bb04896ad8c12563e06aa975c332fa66c6509d98b2f5a678e39d932e761ce"
+  },
+  {
+    "file": "cloud-fall-day-front-1200.webp",
+    "px": [
+      1200,
+      320
+    ],
+    "bytes": 29278,
+    "KB": 28.59,
+    "alpha_zero_pixels": 158369,
+    "encoder": "cwebp -q 82 -alpha_q 90 -m 6 -sharp_yuv -sns 0",
+    "band_max_rgb_error": 2,
+    "band_alpha_min": 255,
+    "sha256": "4eea8e70defc3360524c5722fd64d3fd30aa385cb68cae1165dbc38356d50687"
+  }
+]

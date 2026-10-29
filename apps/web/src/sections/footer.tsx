@@ -191,7 +191,7 @@ export function SiteFooter() {
         </ul>
         <div className="ft-legal">
           <p>© 2026 Aniruddh Dubge. Press ⌘K to jump around, or ` for a terminal.</p>
-          <p>Character art © Riot Games, HoYoverse and the anime studios. Photos are mine.</p>
+          <p>Character art © Riot Games, HoYoverse and the anime studios. BTS photos © BIGHIT MUSIC.</p>
         </div>
       </div>
     </footer>

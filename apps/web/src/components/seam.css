@@ -41,12 +41,23 @@
 }
 .seam[data-kind="cloud-rise"] .seam-layer > img { object-position: 50% 100%; }
 .seam[data-kind="cloud-fall"] .seam-layer > img { object-position: 50% 0%; }
+/* The day paintings have gaps where the night ones don't, so by day the
+   night layer goes once the day one is in. Each mode's layer comes in
+   first and the other leaves after it, so the two never both show half. */
 .seam-layer > img[data-set="day"] {
   opacity: 0;
-  transition: opacity var(--dur-scene) var(--ease-io);
+  transition: opacity var(--dur-scene) var(--ease-io) var(--dur-scene);
 }
 html[data-mode="day"] .seam-layer > img[data-set="day"] {
   opacity: 1;
+  transition-delay: 0s;
+}
+.seam-layer > img[data-set="night"] {
+  transition: opacity var(--dur-scene) var(--ease-io);
+}
+html[data-mode="day"] .seam-layer:has(> img[data-set="day"]) > img[data-set="night"] {
+  opacity: 0;
+  transition-delay: var(--dur-scene);
 }
 
 /* the front layer's solid ground runs on past the weld, so its drift never opens a gap there */

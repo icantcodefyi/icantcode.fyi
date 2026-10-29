@@ -382,12 +382,6 @@ body {
   .wm-traveller { display: none; }
 }
 
-/* ── Off-the-clock gates ── */
-.gate { transition: transform 400ms var(--ease); }
-.gate:hover { transform: translateY(-6px) rotate(-0.6deg); }
-.gate-art { transition: transform 700ms var(--ease); transform-origin: bottom right; }
-.gate:hover .gate-art { transform: scale(1.06) translateX(-4%); }
-
 /* ⌘K search field: the palette itself is the focus indicator */
 .cmdk-input:focus,
 .cmdk-input:focus-visible {

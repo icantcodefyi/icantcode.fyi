@@ -147,7 +147,8 @@ function Wall({ index, set, nameRef, songRef }: { index: number; set: Setlist; n
       <div className="bt-led">
         <div ref={nameRef} className="bt-led-line bt-led-name">
           <div key={m.slug} className="bt-led-boot">
-            <Marquee parts={[m.name.toUpperCase(), m.hangul]} lang="ko" />
+            {/* in capitals, but a name styled all lower-case stays that way (j-hope, as he writes it) */}
+            <Marquee parts={[m.name === m.name.toLowerCase() ? m.name : m.name.toUpperCase(), m.hangul]} lang="ko" />
           </div>
         </div>
         <div ref={songRef} className="bt-led-line bt-led-song" style={{ opacity: 0 }}>
@@ -161,9 +162,12 @@ function Wall({ index, set, nameRef, songRef }: { index: number; set: Setlist; n
   );
 }
 
-/* A few pieces of paper confetti still coming down behind the lift long after the encore. Each rides
-   a column the stage's height, so its fall is a plain percentage, and takes one of three drifts and
-   tumbles: every keyframe is a constant, so all of it runs on the compositor. */
+/* A few pieces of paper confetti still coming down either side of the lift long after the encore. Each
+   rides a column the stage's height, so its fall is a plain percentage, and takes one of three drifts and
+   tumbles: every keyframe is a constant, so all of it runs on the compositor. The columns keep to the
+   outer fifths and drift outwards, so no piece ever shows through the photo's feathered edges or behind
+   the record, and they are spent by mid-stage, above the type (bts.css; on phones the photo spans the
+   stage, so they wait for act two). */
 const rand = (seed: number) => {
   let s = seed;
   return () => {
@@ -174,15 +178,20 @@ const rand = (seed: number) => {
 const CONFETTI = (() => {
   const r = rand(71);
   const colors = ["var(--bt-soft)", "var(--bt-accent)", "var(--bt-confetti-light)"];
-  return Array.from({ length: 12 }, (_, i) => ({
-    x: Math.round(4 + ((i + r()) / 12) * 92),
-    dur: +(19 + r() * 15).toFixed(1),
-    delay: -+(r() * 34).toFixed(1),
-    flip: +(1.6 + r() * 1.8).toFixed(1),
-    fall: "abc"[i % 3],
-    tumble: "abc"[(i + 1) % 3],
-    color: colors[i % 3],
-  }));
+  return Array.from({ length: 12 }, (_, i) => {
+    const right = i % 2 === 1;
+    const slot = (i >> 1) + r();
+    return {
+      x: Math.round(right ? 78 + (slot / 6) * 19 : 3 + (slot / 6) * 19),
+      dur: +(19 + r() * 15).toFixed(1),
+      delay: -+(r() * 34).toFixed(1),
+      flip: +(1.6 + r() * 1.8).toFixed(1),
+      // a: drifts left, b and c: right
+      fall: right ? "bc"[(i >> 1) % 2] : "a",
+      tumble: "abc"[(i + 1) % 3],
+      color: colors[i % 3],
+    };
+  });
 })();
 
 /* ───────── house lights ─────────
@@ -414,8 +423,8 @@ export function BtsWorld() {
           Borahae, <span className="bt-title-soft">all seven of you</span>
         </h2>
         <p className="bt-lede">
-          Borahae means “I purple you”: I'll love you for a long, long time. This is my little concert hall for the band on repeat behind most
-          of my late-night code.
+          Borahae means “I purple you”: I’ll love you for <span className="bt-nowrap">a long, long time</span>. This is my little
+          concert hall for the band on repeat behind most of my late-night code.
         </p>
       </header>
 

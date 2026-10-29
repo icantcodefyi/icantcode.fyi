@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type PointerEvent } from "react";
+import { Fragment, useEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type PointerEvent } from "react";
 
 import type { Setlist } from "./audio";
 import { ALBUMS, sleeve, SONGS } from "./data";
@@ -26,6 +26,12 @@ function place(k: number, open: boolean) {
   // with a record out, the front sleeve moves left and the stacks part around sleeve and record
   const room = open ? (s < 0 ? -0.34 : 0.56) : 0;
   return { x: s * (0.66 + (a - 1) * 0.17) + room, z: -0.5 - Math.min(a - 1, 3) * 0.04, ry: -s * 62 };
+}
+
+/** A long title breaks after its colon, never inside "Map of the Soul:", and never leaves a "7" on its own. */
+function titleLines(title: string) {
+  const parts = title.split(": ");
+  return parts[parts.length - 1].length > 2 ? parts : [title];
 }
 
 export function Eras({ set }: { set: Setlist }) {
@@ -180,7 +186,17 @@ export function Eras({ set }: { set: Setlist }) {
               {String(focus + 1).padStart(2, "0")} / {String(n).padStart(2, "0")}
             </span>
           </p>
-          <p className="bt-display bt-era-title">{a.title}</p>
+          <p className="bt-display bt-era-title">
+            {titleLines(a.title).map((part, i, all) => (
+              <Fragment key={part}>
+                {i > 0 ? " " : null}
+                <span className="bt-nowrap">
+                  {part}
+                  {i < all.length - 1 ? ":" : null}
+                </span>
+              </Fragment>
+            ))}
+          </p>
           <p className="bt-era-track">
             Title track <span>{a.track}</span>
           </p>

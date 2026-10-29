@@ -1,9 +1,10 @@
-/* The band, the setlist and the shelf (the photos mirror public/bts/manifest.json). */
+/* The band, the setlist and the shelf. Names are styled the way BIGHIT MUSIC writes them (RM, Jin, SUGA, j-hope,
+   Jimin, V, Jung Kook; FAKE LOVE, IDOL, ON); albums by their English titles. The photos are in public/bts/members. */
 
 export type Member = {
   slug: string;
   name: string;
-  /** given name in Hangul */
+  /** birth name in Hangul, family name first */
   hangul: string;
   position: string;
   line: string;
@@ -30,7 +31,7 @@ export const MEMBERS: Member[] = [
   },
   {
     slug: "suga",
-    name: "Suga",
+    name: "SUGA",
     hangul: "민윤기",
     position: "Rapper and producer",
     line: "Quiet until the beat drops, then every word lands. My favourite kind of focus.",
@@ -49,7 +50,7 @@ export const MEMBERS: Member[] = [
     name: "Jimin",
     hangul: "박지민",
     position: "Vocalist and dancer",
-    line: "He moves like the music starts somewhere inside him. I rewind his parts more than I'd admit.",
+    line: "He moves like the music starts somewhere inside him. I rewind his parts more than I’d admit.",
     aim: 2.4,
   },
   {
@@ -57,12 +58,12 @@ export const MEMBERS: Member[] = [
     name: "V",
     hangul: "김태형",
     position: "Vocalist",
-    line: "That low, warm voice and an artist's eye for everything. Calm, curious and a little bit of a mystery.",
+    line: "That low, warm voice and an artist’s eye for everything. Calm, curious and a little bit of a mystery.",
     aim: 6,
   },
   {
     slug: "jungkook",
-    name: "Jungkook",
+    name: "Jung Kook",
     hangul: "전정국",
     position: "Vocalist",
     line: "Makes the hard things look easy and still seems to be having the most fun on stage.",
@@ -93,14 +94,14 @@ export const SONGS: Song[] = [
   },
   {
     title: "DNA",
-    album: "Love Yourself 承 'Her'",
+    album: "Love Yourself: Her",
     year: 2017,
     previewUrl: `${A}AudioPreview211/v4/c7/13/e4/c713e4f5-632f-5afd-31dd-2c103af851e1/mzaf_237511262542737989.plus.aac.p.m4a`,
     artwork: `${I}Music126/v4/34/a5/93/34a59372-3ebd-ae5f-269d-4c9506864d3f/8804775083280_Cover.jpg/600x600bb.jpg`,
   },
   {
-    title: "Fake Love",
-    album: "Love Yourself 轉 'Tear'",
+    title: "FAKE LOVE",
+    album: "Love Yourself: Tear",
     year: 2018,
     previewUrl: `${A}AudioPreview221/v4/83/6f/0f/836f0f3c-fb8d-a70e-5e77-5c87e2d37d62/mzaf_1406277017641177283.plus.aac.p.m4a`,
     artwork: `${I}Music126/v4/02/c5/18/02c518f5-ac06-3321-622e-08d9429fd968/192562556672_Cover.jpg/600x600bb.jpg`,
@@ -158,8 +159,8 @@ export type Album = {
 
 export const ALBUMS: Album[] = [
   { slug: "wings", title: "Wings", year: 2016, track: "Blood Sweat & Tears", tone: "#d9d6d2" },
-  { slug: "love-yourself-tear", title: "Love Yourself: Tear", year: 2018, track: "Fake Love", song: 2, tone: "#22252e" },
-  { slug: "love-yourself-answer", title: "Love Yourself: Answer", year: 2018, track: "Idol", tone: "#e8b9cc" },
+  { slug: "love-yourself-tear", title: "Love Yourself: Tear", year: 2018, track: "FAKE LOVE", song: 2, tone: "#22252e" },
+  { slug: "love-yourself-answer", title: "Love Yourself: Answer", year: 2018, track: "IDOL", tone: "#e8b9cc" },
   { slug: "map-of-the-soul-persona", title: "Map of the Soul: Persona", year: 2019, track: "Boy With Luv", song: 3, tone: "#f4729a" },
   { slug: "map-of-the-soul-7", title: "Map of the Soul: 7", year: 2020, track: "ON", tone: "#dfe7ec" },
   { slug: "be", title: "BE", year: 2020, track: "Life Goes On", song: 6, tone: "#ecebe8" },

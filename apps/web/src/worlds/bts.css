@@ -74,6 +74,7 @@
   background: currentColor;
   opacity: 0.6;
 }
+.bt-nowrap { white-space: nowrap; }
 .bt-touch-copy { display: none; }
 @media (hover: none) {
   .bt-hover-copy { display: none; }
@@ -207,9 +208,13 @@
      truss and its heads stay in frame (the floor runs off the bottom instead), overscanned for the camera's drift */
   --bt-art-top: -40px;
   --bt-art-w: max(calc(100cqw + 64px), calc((100cqh + 84px) * 10 / 7));
-  /* the lift's framing: the figure's foot on the stage (from the bottom), its height, where it has faded out */
+  /* the lift's framing: the figure's foot on the stage (from the bottom), its height, where it has faded out.
+     The height is also capped by the room between the cue and the cue sheet (the centre column and its gaps,
+     see .bt-act): the widest photo (SUGA, 0.87 of its height) fits it with only its outermost, almost
+     transparent feather under the type, so on a squarer or taller screen nobody's shoulder runs under a word. */
   --bt-fig-bottom: 0%;
   --bt-fig-h: 90%;
+  --bt-fig-room: calc(min(44cqw, 620px) + 2 * clamp(16px, 2vw, 32px));
   --bt-fade-to: 97%;
   --bt-fade-len: 26%;
   /* the record on the lift */
@@ -237,7 +242,12 @@
 .bt-dip,
 .bt-curtain { z-index: 1; }
 .bt-lift { z-index: 2; }
-.bt-confetti { overflow: hidden; }
+/* the confetti hangs in the rig's half of the stage and is spent before it reaches the type */
+.bt-confetti {
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(#000 30%, transparent 52%);
+  mask-image: linear-gradient(#000 30%, transparent 52%);
+}
 
 .bt-art {
   position: absolute;
@@ -380,7 +390,7 @@ html[data-mode="day"] .bt-art img[data-set="day"] { opacity: 1; }
   position: absolute;
   left: 50%;
   bottom: var(--bt-fig-bottom);
-  height: calc(var(--bt-fig-h) * var(--fs, 1));
+  height: calc(min(var(--bt-fig-h), var(--bt-fig-room) / 0.8) * var(--fs, 1));
   width: auto;
   max-width: none;
   transform: translateX(-50%);
@@ -498,7 +508,9 @@ html[data-mode="day"] .bt-art img[data-set="day"] { opacity: 1; }
   position: absolute;
   top: 0;
   bottom: 0;
-  width: 34%;
+  /* the side column, the page's padding and the gap: full under the type, letting go across the gap, never over the lift */
+  --bt-gap: clamp(16px, 2vw, 32px);
+  width: calc((100% - min(44cqw, 620px)) / 2 + var(--bt-gap));
   pointer-events: none;
   z-index: -1;
   /* it rises behind the type only, and lets go at the stage's edge with the floor: the truss and its heads
@@ -506,8 +518,8 @@ html[data-mode="day"] .bt-art img[data-set="day"] { opacity: 1; }
   -webkit-mask-image: linear-gradient(transparent 6%, #000 44%, #000 94%, transparent);
   mask-image: linear-gradient(transparent 6%, #000 44%, #000 94%, transparent);
 }
-.bt-act::before { left: 0; background: linear-gradient(90deg, rgb(var(--bt-shade) / 0.62), rgb(var(--bt-shade) / 0.38) 55%, transparent); }
-.bt-act::after { right: 0; background: linear-gradient(270deg, rgb(var(--bt-shade) / 0.62), rgb(var(--bt-shade) / 0.38) 55%, transparent); }
+.bt-act::before { left: 0; background: linear-gradient(90deg, rgb(var(--bt-shade) / 0.62), rgb(var(--bt-shade) / 0.42) calc(100% - 2.5 * var(--bt-gap)), transparent); }
+.bt-act::after { right: 0; background: linear-gradient(270deg, rgb(var(--bt-shade) / 0.62), rgb(var(--bt-shade) / 0.42) calc(100% - 2.5 * var(--bt-gap)), transparent); }
 
 /* act one: the cue at the left */
 .bt-cue {
@@ -529,7 +541,7 @@ html[data-mode="day"] .bt-art img[data-set="day"] { opacity: 1; }
 .bt-cue-of { color: var(--bt-stage-muted); font-weight: 600; opacity: 0.8; }
 .bt-name {
   margin: 14px 0 0;
-  font-size: min(104px, calc(132cqw / var(--bt-len)));
+  font-size: min(104px, calc(132cqw / var(--bt-word, var(--bt-len))));
   line-height: 0.9;
   color: var(--bt-stage-ink);
 }
@@ -544,6 +556,11 @@ html[data-mode="day"] .bt-art img[data-set="day"] { opacity: 1; }
   color: var(--bt-stage-soft);
 }
 .bt-hangul { font-family: system-ui, sans-serif; font-weight: 700; letter-spacing: 0.06em; color: var(--bt-stage-ink); }
+/* a narrow cue (a 1024 screen) has no room for name · role on one line: stacked, with no dot left hanging */
+@container (max-width: 270px) {
+  .bt-role { flex-direction: column; align-items: flex-start; }
+  .bt-role .bt-dot { display: none; }
+}
 .bt-line {
   margin: 22px 0 0;
   max-width: 34ch;
@@ -665,6 +682,7 @@ html[data-mode="day"] .bt-art img[data-set="day"] { opacity: 1; }
   grid-row: 1 / 3;
   align-self: end;
   max-width: 420px;
+  container-type: inline-size;
 }
 .bt-np-head { display: inline-flex; align-items: center; gap: 10px; }
 .bt-tally {
@@ -745,6 +763,9 @@ html[data-mode="day"] .bt-art img[data-set="day"] { opacity: 1; }
 .bt-apple:hover { text-decoration-color: var(--bt-stage-soft); }
 .bt-apple:hover .bt-apple-arrow { transform: translate(2px, -2px); }
 .bt-apple:focus-visible { outline: 2px solid var(--bt-stage-ink); outline-offset: 3px; border-radius: 4px; }
+@container (max-width: 300px) {
+  .bt-apple { margin-left: 0; }
+}
 .bt-fail { margin: 12px 0 0; color: var(--bt-stage-soft); font-size: 15px; }
 
 .bt-setlist {
@@ -756,14 +777,15 @@ html[data-mode="day"] .bt-art img[data-set="day"] { opacity: 1; }
 }
 .bt-setlist-head {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: baseline;
-  gap: 12px;
+  gap: 8px 12px;
   margin: 0;
   padding-bottom: 12px;
   border-bottom: 1px solid var(--bt-stage-line);
 }
-.bt-setlist-head span + span { font-size: 13px; color: var(--bt-stage-muted); }
+.bt-setlist-head span + span { font-size: 13px; color: var(--bt-stage-muted); white-space: nowrap; }
 .bt-tracks { list-style: none; margin: 0; padding: 0; display: grid; }
 .bt-track {
   position: relative;
@@ -810,6 +832,7 @@ html[data-mode="day"] .bt-art img[data-set="day"] { opacity: 1; }
   transform-origin: left;
 }
 .bt-track[aria-pressed="true"]::after { transform: none; }
+.bt-track:hover:not([aria-pressed="true"])::after { transform: scaleX(0.14); }
 .bt-track[aria-pressed="true"] .bt-track-no,
 .bt-track:hover .bt-track-no { color: var(--bt-stage-soft); }
 .bt-pin[data-playing] .bt-track[aria-pressed="true"] .bt-track-eq { opacity: 1; }
@@ -820,12 +843,15 @@ html[data-mode="day"] .bt-art img[data-set="day"] { opacity: 1; }
   .bt-stage {
     --bt-fig-bottom: 30%;
     --bt-fig-h: 62%;
+    --bt-fig-room: 1000cqh;
     --bt-fade-to: 69%;
     --bt-fade-len: 17%;
     --bt-disc: min(62cqw, 33cqh);
     --bt-disc-y: 26%;
   }
   .bt-led { --bt-pitch: 3px; }
+  .bt-confetti { transition: opacity 600ms var(--ease); }
+  .bt-pin[data-act="lineup"] .bt-confetti { opacity: 0; }
   .bt-act {
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: 1fr auto auto;
@@ -846,7 +872,7 @@ html[data-mode="day"] .bt-art img[data-set="day"] { opacity: 1; }
   .bt-np { grid-column: 1; grid-row: 2; max-width: none; }
   .bt-sheet,
   .bt-setlist { grid-column: 1; grid-row: 3; justify-self: stretch; width: auto; }
-  .bt-name { margin-top: 8px; font-size: min(64px, calc(128cqw / var(--bt-len)), 12cqh); }
+  .bt-name { margin-top: 8px; font-size: min(64px, calc(128cqw / var(--bt-len)), 12cqh); white-space: nowrap; }
   .bt-line { margin-top: 14px; padding-top: 14px; font-size: 16px; max-width: 40ch; }
   .bt-role { margin-top: 10px; font-size: 15px; }
   /* the cue sheet becomes a row of faces, the clock a ring around the current one */
@@ -1018,7 +1044,7 @@ html[data-mode="day"] .bt-art img[data-set="day"] { opacity: 1; }
   align-items: center;
   gap: 16px clamp(16px, 3vw, 40px);
 }
-.bt-era-text { min-width: 0; }
+.bt-era-text { min-width: 0; container-type: inline-size; }
 .bt-era-year {
   display: flex;
   align-items: baseline;
@@ -1028,9 +1054,10 @@ html[data-mode="day"] .bt-art img[data-set="day"] { opacity: 1; }
   color: var(--bt-soft);
 }
 .bt-era-count { font-size: 13px; font-weight: 600; color: var(--bt-muted); font-variant-numeric: tabular-nums; }
-.bt-era-title { margin: 10px 0 0; font-size: clamp(26px, 3vw, 44px); line-height: 1; color: var(--bt-ink); text-wrap: balance; }
+/* "Map of the Soul: 7" (about 10.9em) always fits its line, down to a 360 phone */
+.bt-era-title { margin: 10px 0 0; font-size: min(clamp(26px, 3vw, 44px), 9.1cqw); line-height: 1; color: var(--bt-ink); text-wrap: balance; }
 .bt-era-track { margin: 10px 0 0; color: var(--bt-muted); font-size: 16px; }
-.bt-era-track span { color: var(--bt-ink); font-weight: 600; margin-left: 6px; }
+.bt-era-track span { color: var(--bt-ink); font-weight: 600; margin-left: 6px; white-space: nowrap; }
 .bt-era-actions { display: flex; flex-wrap: wrap; gap: 10px; }
 .bt-era-pull,
 .bt-era-play {
@@ -1047,6 +1074,7 @@ html[data-mode="day"] .bt-art img[data-set="day"] { opacity: 1; }
 .bt-era-pull { border: 1px solid var(--bt-line-strong); background: none; color: var(--bt-ink); }
 .bt-era-pull:hover { border-color: var(--bt-soft); }
 .bt-era-play { border: 0; background: var(--bt-soft); color: var(--bt-on-accent); }
+.bt-era-play:hover { background: color-mix(in srgb, var(--bt-soft) 86%, var(--bt-ink)); }
 .bt-era-play svg { fill: currentColor; }
 .bt-era-play:active,
 .bt-era-pull:active { scale: 0.97; }
@@ -1070,6 +1098,10 @@ html[data-mode="day"] .bt-art img[data-set="day"] { opacity: 1; }
 .bt-era-step:focus-visible { outline: 2px solid var(--bt-ink); outline-offset: 3px; }
 @media (max-width: 719px) {
   .bt-crate { --S: min(52vw, 220px); height: calc(var(--S) * 1.62); }
+}
+/* below 900 the title shares its row with the buttons in too narrow a column ("Map of / the Soul: / Persona"):
+   the buttons go under it */
+@media (max-width: 899px) {
   .bt-era-card { grid-template-columns: auto minmax(0, 1fr) auto; text-align: center; }
   .bt-era-year { justify-content: center; }
   .bt-era-actions { grid-column: 1 / -1; grid-row: 2; justify-content: center; }

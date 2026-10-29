@@ -163,7 +163,7 @@ export function MusicAct({ set }: { set: Setlist }) {
             <span className="sr-only"> (opens in a new tab)</span>
           </a>
         </div>
-        {set.failed && <p className="bt-fail">That preview wouldn't load. Try another song, or open it on Apple Music.</p>}
+        {set.failed && <p className="bt-fail">That preview wouldn’t load. Try another song, or open it on Apple Music.</p>}
       </div>
 
       <div className="bt-setlist">

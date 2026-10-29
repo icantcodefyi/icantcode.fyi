@@ -19,6 +19,8 @@ type Hold = { hover: boolean; focus: boolean; hidden: boolean; offscreen: boolea
 export function useCues(setIndex: (fn: (i: number) => number) => void, stage: RefObject<HTMLElement | null>) {
   const [auto, setAuto] = useState(false);
   const [paused, setPaused] = useState(false);
+  /** bumped to restart the current cue's clock (its rule and ring remount) */
+  const [lap, setLap] = useState(0);
   const hold = useRef<Hold>({ hover: false, focus: false, hidden: false, offscreen: true, act: false, paused: false });
   const autoRef = useRef(auto);
   autoRef.current = auto;
@@ -40,9 +42,14 @@ export function useCues(setIndex: (fn: (i: number) => number) => void, stage: Re
     [mark],
   );
 
-  /** the current rule has run out */
+  /**
+   * The current rule has run out. If something took hold in the same moment (the pointer landing on the
+   * stage, the tab going away), the rule has still ended and would never end again: the line-up would
+   * stay on this member for good. So the clock starts over instead, held at zero until the hold lets go.
+   */
   const next = useCallback(() => {
     if (!held()) setIndex((i) => (i + 1) % MEMBERS.length);
+    else setLap((l) => l + 1);
   }, [setIndex]);
 
   // reduced motion: no rotation at all, the cue sheet is plain tabs
@@ -66,7 +73,7 @@ export function useCues(setIndex: (fn: (i: number) => number) => void, stage: Re
     set("paused", paused);
   }, [paused, set]);
 
-  return { auto, paused, setPaused, set, next };
+  return { auto, paused, setPaused, set, next, lap };
 }
 
 /** Warm the next member's cutout while this one is on. */
@@ -131,6 +138,13 @@ export function Figures({ index, hoverProps }: { index: number; hoverProps: Hove
 
 /* ───────── act one: the cue, and the cue sheet ───────── */
 
+/**
+ * A name's length for its fitted size (bts.css): a capital is about a quarter wider than a lower-case
+ * letter. On the stage the name is sized by its longest word and may break at a space (Jung / Kook,
+ * as big as everyone else's); on phones it stays on one line, sized by the whole name.
+ */
+const fitLength = (name: string) => [...name].reduce((n, c) => n + (c !== c.toLowerCase() ? 1.25 : 1), 0);
+
 export function LineupAct({
   index,
   setIndex,
@@ -167,7 +181,10 @@ export function LineupAct({
             <span>{String(index + 1).padStart(2, "0")}</span>
             <span className="bt-cue-of">/ {String(n).padStart(2, "0")}</span>
           </p>
-          <h3 className="bt-display bt-name" style={{ "--bt-len": Math.max(m.name.length, 4) } as CSSProperties}>
+          <h3
+            className="bt-display bt-name"
+            style={{ "--bt-len": Math.max(fitLength(m.name), 4), "--bt-word": Math.max(...m.name.split(" ").map(fitLength), 4) } as CSSProperties}
+          >
             {m.name}
           </h3>
           <p className="bt-role">
@@ -195,7 +212,7 @@ export function LineupAct({
                 {cues.paused ? <path d="M4 2.5v11l9-5.5z" /> : <path d="M3.5 2.5h3v11h-3zM9.5 2.5h3v11h-3z" />}
               </svg>
               {cues.paused ? "Resume" : "Hold"}
-              <span className="sr-only"> the line-up's rotation</span>
+              <span className="sr-only"> the line-up’s rotation</span>
             </button>
           ) : null}
         </div>
@@ -234,8 +251,19 @@ export function LineupAct({
               </span>
               <span className="bt-tab-name">{mm.name}</span>
               {/* the clock: a rule that runs out on desktop, a ring around the face on phones */}
-              <span className="bt-tab-rule" aria-hidden="true" onAnimationEnd={i === index ? onRunOut : undefined} />
-              <svg className="bt-tab-ring" viewBox="0 0 40 40" aria-hidden="true" onAnimationEnd={i === index ? onRunOut : undefined}>
+              <span
+                key={`rule-${i === index ? cues.lap : "idle"}`}
+                className="bt-tab-rule"
+                aria-hidden="true"
+                onAnimationEnd={i === index ? onRunOut : undefined}
+              />
+              <svg
+                key={`ring-${i === index ? cues.lap : "idle"}`}
+                className="bt-tab-ring"
+                viewBox="0 0 40 40"
+                aria-hidden="true"
+                onAnimationEnd={i === index ? onRunOut : undefined}
+              >
                 <circle cx="20" cy="20" r="19" pathLength="1" />
               </svg>
             </button>

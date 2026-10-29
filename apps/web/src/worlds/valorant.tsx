@@ -77,7 +77,52 @@ const src = (file: string) => `/lobby/val/${file}.webp`;
  * forward at 11.5, all shifting against the pointer by 1/d.
  */
 const STAGE: StageSpec = { id: "valorant", plates: [], camera: { strength: STRENGTH.world } };
-const D = { name: 16, hud: 12.5, agent: 11.5 } as const;
+const D = { name: 16, air: 14, hud: 12.5, agent: 11.5 } as const;
+
+const seeded = (seed: number) => () => {
+  seed = (seed * 16807) % 2147483647;
+  return (seed - 1) / 2147483646;
+};
+const PERIODS = [13.7, 17.9, 23.1];
+
+/** Dust turning in the light shaft behind the agent; never in front of her, so never over a face. */
+const DUST = (() => {
+  const r = seeded(29);
+  return Array.from({ length: 18 }, (_, i) => ({
+    x: +(46 + r() * 44).toFixed(1),
+    y: +(6 + r() * 86).toFixed(1),
+    s: +(1.4 + r() * 1.8).toFixed(1),
+    dx: Math.round(-18 + r() * 36),
+    dy: Math.round(-30 - r() * 50),
+    dur: PERIODS[i % 3] + +(r() * 2).toFixed(1),
+    delay: -+(r() * 23).toFixed(1),
+  }));
+})();
+
+/** Radianite: three glints that catch now and then, away from the agent's face. */
+const GLINTS = [
+  { x: 90, y: 70, dur: 9.7, delay: -2.1 },
+  { x: 47, y: 88, dur: 12.3, delay: -7.4 },
+  { x: 95, y: 27, dur: 15.1, delay: -11.8 },
+];
+
+function Air() {
+  return (
+    <Layer d={D.air} className="vl-air">
+      <span className="vl-shaft" />
+      {DUST.map((p, i) => (
+        <span
+          key={i}
+          className="vl-dust"
+          style={{ "--x": `${p.x}%`, "--y": `${p.y}%`, "--s": `${p.s}px`, "--dx": `${p.dx}px`, "--dy": `${p.dy}px`, "--dur": `${p.dur}s`, "--delay": `${p.delay}s` } as CSSProperties}
+        />
+      ))}
+      {GLINTS.map((g) => (
+        <span key={g.x} className="vl-glint" style={{ "--x": `${g.x}%`, "--y": `${g.y}%`, "--dur": `${g.dur}s`, "--delay": `${g.delay}s` } as CSSProperties} />
+      ))}
+    </Layer>
+  );
+}
 
 function Layer({ d, className, style, children }: { d: number; className: string; style?: CSSProperties; children?: ReactNode }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -102,6 +147,7 @@ function StageLayer({ agent, wipe }: { agent: Agent; wipe?: boolean }) {
       <Layer d={D.name} className="vl-bigname" style={{ "--vl-len": word.length } as CSSProperties}>
         <span>{word}</span>
       </Layer>
+      <Air />
       <img
         ref={portrait}
         className="vl-portrait"

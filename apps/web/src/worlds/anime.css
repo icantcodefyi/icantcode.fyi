@@ -141,15 +141,15 @@
   stroke-dashoffset: 0;
 }
 
-/* tone */
+/* tone: each sheet overhangs its corner by 8px, so its slow drift never uncovers the edge */
 .an-tone {
   position: absolute;
   pointer-events: none;
 }
-.an-tone-br { right: 0; bottom: 0; }
-.an-tone-bl { left: 0; bottom: 0; transform: scaleX(-1); }
-.an-tone-tr { right: 0; top: 0; transform: scaleY(-1); }
-.an-tone-tl { left: 0; top: 0; transform: scale(-1, -1); }
+.an-tone-br { right: -8px; bottom: -8px; }
+.an-tone-bl { left: -8px; bottom: -8px; transform: scaleX(-1); }
+.an-tone-tr { right: -8px; top: -8px; transform: scaleY(-1); }
+.an-tone-tl { left: -8px; top: -8px; transform: scale(-1, -1); }
 
 /* focus lines */
 .an-lines {
@@ -390,7 +390,9 @@
     animation: an-rush 0.7s linear infinite;
     animation-play-state: var(--play);
   }
-  .an-drift { animation: an-drift 9s ease-in-out infinite alternate; }
+  /* the screentone sheets slide a few px on the compositor, each on its own clock, so the dots shimmer against the frame */
+  .an-tone { animation: an-drift 10.3s ease-in-out infinite alternate; }
+  .an-tone + .an-tone { animation-duration: 13.7s; animation-direction: alternate-reverse; }
   .an-bubble { animation: var(--pop) 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
   .an-sfx-hit { animation: var(--stamp) 0.42s cubic-bezier(0.2, 1.4, 0.4, 1); }
 
@@ -403,9 +405,17 @@
     animation: an-draw 0.4s cubic-bezier(0.7, 0, 0.3, 1) both;
     animation-delay: calc(var(--i) * 110ms + var(--e) * 85ms);
   }
+  /* each panel prints in through a halftone screen whose dots swell until they close up */
   [data-phase="in"] .an-cell {
-    animation: an-ink 0.5s ease-out both;
+    -webkit-mask: radial-gradient(circle, #000 var(--an-dot), transparent calc(var(--an-dot) + 0.6px)) 0 0 / 8px 8px;
+    mask: radial-gradient(circle, #000 var(--an-dot), transparent calc(var(--an-dot) + 0.6px)) 0 0 / 8px 8px;
+    animation: an-ink 0.52s cubic-bezier(0.5, 0, 0.75, 0) both;
     animation-delay: calc(var(--i) * 110ms + 300ms);
+  }
+  /* and its speed lines burst once as the SFX lands */
+  [data-phase="in"] .an-panel:not(.an-title) .an-lines {
+    animation: an-burst 0.7s ease-out backwards;
+    animation-delay: calc(var(--i) * 110ms + 640ms);
   }
   [data-phase="in"] .an-bubble-wrap {
     animation: an-pop-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
@@ -421,9 +431,19 @@
   from { stroke-dashoffset: 1; }
   to { stroke-dashoffset: 0; }
 }
+@property --an-dot {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 6px;
+}
 @keyframes an-ink {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from { --an-dot: 0px; }
+  to { --an-dot: 6px; }
+}
+@keyframes an-burst {
+  0% { opacity: 0; transform: scale(1.14); }
+  22% { opacity: 0.9; }
+  100% { opacity: 0; transform: scale(1); }
 }
 @keyframes an-pop-in {
   from { opacity: 0; transform: scale(0.6) translateY(12px); }
@@ -455,8 +475,8 @@
   to { stroke-dashoffset: -1.16; }
 }
 @keyframes an-drift {
-  from { transform: translate(0, 0); }
-  to { transform: translate(-5px, 4px); }
+  from { translate: 0 0; }
+  to { translate: 6px 5px; }
 }
 
 /* ───────── Day: the clean classic page ─────────

@@ -341,19 +341,17 @@ function Tone({ corner, color, size, max = TONE_STEPS }: { corner: Corner; color
   const bw = span / TONE_STEPS;
   return (
     <svg aria-hidden="true" className={`an-tone an-tone-${corner}`} width={size} height={size}>
-      <g className="an-drift">
-        <g transform={`translate(${size} ${size}) rotate(225)`}>
-          {Array.from({ length: TONE_STEPS }, (_, i) => (
-            <rect
-              key={i}
-              x={f(i * bw)}
-              y={-size}
-              width={f(bw + 0.6)}
-              height={size * 2}
-              fill={`url(#an-${color}-${Math.max(0, max - 1 - i)})`}
-            />
-          ))}
-        </g>
+      <g transform={`translate(${size} ${size}) rotate(225)`}>
+        {Array.from({ length: TONE_STEPS }, (_, i) => (
+          <rect
+            key={i}
+            x={f(i * bw)}
+            y={-size}
+            width={f(bw + 0.6)}
+            height={size * 2}
+            fill={`url(#an-${color}-${Math.max(0, max - 1 - i)})`}
+          />
+        ))}
       </g>
     </svg>
   );
@@ -554,26 +552,35 @@ function EdgeTone({ side }: { side: "top" | "bottom" }) {
   );
 }
 
+/** The last panel's speed-line burst ends at about 2 s (anime.css): then the page is at rest. */
+const ENTRANCE_MS = 2400;
+
 export function AnimeWorld() {
   const ref = useRef<HTMLElement>(null);
-  const [phase, setPhase] = useState<"static" | "armed" | "in">("static");
+  // armed: hidden, waiting; in: the page prints itself; done: at rest (the entrance's masks and fills are dropped)
+  const [phase, setPhase] = useState<"static" | "armed" | "in" | "done">("static");
   const [active, setActive] = useState<string | null>(null);
 
   useEffect(() => {
     const el = ref.current;
     if (!el || !window.matchMedia("(prefers-reduced-motion: no-preference)").matches) return;
     setPhase("armed");
+    let done = 0;
     const io = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
           setPhase("in");
+          done = window.setTimeout(() => setPhase("done"), ENTRANCE_MS);
           io.disconnect();
         }
       },
       { threshold: 0.12 },
     );
     io.observe(el);
-    return () => io.disconnect();
+    return () => {
+      io.disconnect();
+      clearTimeout(done);
+    };
   }, []);
 
   useEffect(() => {

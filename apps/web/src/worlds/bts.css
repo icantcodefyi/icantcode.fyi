@@ -25,6 +25,8 @@
   --bt-face-0: #110824;
   --bt-face-1: #07030d;
   --bt-pool: rgb(124 62 226 / 0.3);
+  --bt-haze: rgb(176 140 255 / 0.2);
+  --bt-confetti-light: #f3ecff;
 
   /* stage */
   --bt-sky-0: #05020b;
@@ -154,6 +156,35 @@
 .bt-beam-layer { z-index: 1; mix-blend-mode: screen; }
 .bt-rig-layer { z-index: 1; }
 .bt-figures { z-index: 2; }
+.bt-confetti { z-index: 1; overflow: hidden; }
+
+/* haze hanging in the beams, behind the member; it lives in the beams' screen-blended layer */
+.bt-haze { position: absolute; inset: 0; }
+.bt-haze span {
+  position: absolute;
+  left: -20%;
+  width: 140%;
+  height: 34%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, var(--bt-haze), transparent);
+}
+.bt-haze span:first-child { top: 44%; }
+.bt-haze span:last-child { top: 62%; height: 28%; opacity: 0.8; }
+
+/* confetti: each piece falls the stage's height (cqh) with a slow drift, flipping as it goes */
+.bt-confetti span {
+  position: absolute;
+  left: var(--x);
+  top: -4%;
+  opacity: 0;
+}
+.bt-confetti i {
+  display: block;
+  width: 7px;
+  height: 11px;
+  border-radius: 1px;
+  background: var(--c);
+}
 .bt-stage > div { pointer-events: none; }
 /* no deck: the member runs to the bottom of the stage and fades into it,
    like a poster, so the photo is never cut by a floor line */
@@ -927,6 +958,14 @@
   .bt-track-eq rect:nth-child(3) { animation-delay: -600ms !important; }
 
   .bt-house-beam > span { transition: opacity var(--dur-in) var(--ease) calc(var(--i) * 120ms); }
+  .bt-sway {
+    transform-box: view-box;
+    animation: bt-sway calc(13.7s + var(--bt-k) * 3.1s) ease-in-out calc(var(--bt-k) * -4.3s) infinite alternate;
+  }
+  .bt-haze span:first-child { animation: bt-haze 23.1s ease-in-out -6s infinite alternate; }
+  .bt-haze span:last-child { animation: bt-haze 17.9s ease-in-out -11s infinite alternate-reverse; }
+  .bt-confetti span { animation: bt-fall var(--dur) linear var(--delay) infinite; }
+  .bt-confetti i { animation: bt-flip var(--flip) ease-in-out infinite alternate; }
 
   .bt-js:not(.bt-in) .bt-enter,
   .bt-js:not(.bt-in) .bt-show { opacity: 0; translate: 0 28px; }
@@ -947,6 +986,17 @@
 @keyframes bt-wave { 0%, 100% { rotate: -6deg; } 50% { rotate: 6deg; } }
 @keyframes bt-drift { to { translate: 40px 0; } }
 @keyframes bt-spin { to { rotate: 360deg; } }
+@keyframes bt-sway { from { rotate: -3.5deg; } to { rotate: 3.5deg; } }
+@keyframes bt-haze { from { transform: translateX(-7%); } to { transform: translateX(7%); } }
+@keyframes bt-fall {
+  0% { opacity: 0; transform: translate(0, 0); }
+  8%, 88% { opacity: 0.85; }
+  100% { opacity: 0; transform: translate(var(--drift), 108cqh); }
+}
+@keyframes bt-flip {
+  from { transform: rotate(-35deg) scaleX(1); }
+  to { transform: rotate(40deg) scaleX(0.25); }
+}
 @keyframes bt-bar { from { scale: 1 0.35; } to { scale: 1 1; } }
 
 /* ───────── Day: an open-air stage on a lilac afternoon ─────────
@@ -974,6 +1024,8 @@ html[data-mode="day"] .bt {
   --bt-face-0: #d4c3f8;
   --bt-face-1: #bfa8ee;
   --bt-pool: rgb(255 255 255 / 0.75);
+  --bt-haze: rgb(255 255 255 / 0.4);
+  --bt-confetti-light: #ffffff;
 
   --bt-sky-0: #a98ced;
   --bt-sky-1: #d9cbfa;

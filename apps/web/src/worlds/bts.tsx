@@ -205,7 +205,21 @@ const rand = (seed: number) => {
    bottom so its drift never opens an edge. */
 
 const STAGE: StageSpec = { id: "bts", plates: [], camera: { strength: STRENGTH.world } };
-const D = { wall: 18, rig: 16, member: 12.5, sleeve: 12, record: 13.5 } as const;
+const D = { wall: 18, rig: 16, confetti: 14, member: 12.5, sleeve: 12, record: 13.5 } as const;
+
+/** A few pieces of confetti still falling behind the member long after the encore. */
+const CONFETTI = (() => {
+  const r = rand(53);
+  const colors = ["var(--bt-soft)", "var(--bt-accent)", "var(--bt-confetti-light)"];
+  return Array.from({ length: 10 }, (_, i) => ({
+    x: Math.round(6 + ((i + r()) / 10) * 88),
+    dur: +(23 + r() * 17).toFixed(1),
+    delay: -+(r() * 40).toFixed(1),
+    drift: Math.round(-40 + r() * 80),
+    flip: +(2.4 + r() * 1.6).toFixed(1),
+    color: colors[i % 3],
+  }));
+})();
 const OVER = 24;
 const VIEW = `0 ${-OVER} 800 ${720 + OVER * 2}`;
 
@@ -244,7 +258,10 @@ function Truss() {
   );
 }
 
-function MovingHead({ x, angle }: { x: number; angle: number }) {
+/* every head and its beam sway together, a few degrees, on their own slow clock */
+const sway = (x: number, y: number, k: number) => ({ transformOrigin: `${x}px ${y}px`, "--bt-k": k }) as CSSProperties;
+
+function MovingHead({ x, angle, k }: { x: number; angle: number; k: number }) {
   const style = {
     transformOrigin: `${x}px ${LENS_Y - 10}px`,
     transform: `rotate(${angle}deg)`,
@@ -260,19 +277,21 @@ function MovingHead({ x, angle }: { x: number; angle: number }) {
         rx="1.5"
       />
       <g className="bt-swing" style={style}>
-        <path
-          className="bt-fix-body"
-          d={`M${x - 13} 57h26v3h-3v12h-2.5v-12h-15v12H${x - 10}v-12h-3z`}
-        />
-        <rect
-          className="bt-fix-body"
-          x={x - 9.5}
-          y="60"
-          width="19"
-          height="14"
-          rx="4.5"
-        />
-        <ellipse className="bt-fix-lens" cx={x} cy={LENS_Y + 1} rx="6" ry="2" />
+        <g className="bt-sway" style={sway(x, LENS_Y, k)}>
+          <path
+            className="bt-fix-body"
+            d={`M${x - 13} 57h26v3h-3v12h-2.5v-12h-15v12H${x - 10}v-12h-3z`}
+          />
+          <rect
+            className="bt-fix-body"
+            x={x - 9.5}
+            y="60"
+            width="19"
+            height="14"
+            rx="4.5"
+          />
+          <ellipse className="bt-fix-lens" cx={x} cy={LENS_Y + 1} rx="6" ry="2" />
+        </g>
       </g>
     </g>
   );
@@ -286,12 +305,14 @@ function Beam({ x, angle, k }: { x: number; angle: number; k: number }) {
   const spread = k % 2 ? 96 : 76;
   return (
     <g className="bt-swing" style={style}>
-      <path
-        className="bt-beam"
-        style={{ "--bt-k": k } as CSSProperties}
-        d={`M${x - 4} ${LENS_Y + 2}L${x + 4} ${LENS_Y + 2}L${x + spread} 720L${x - spread} 720Z`}
-        fill="url(#bt-beam-g)"
-      />
+      <g className="bt-sway" style={sway(x, LENS_Y, k)}>
+        <path
+          className="bt-beam"
+          style={{ "--bt-k": k } as CSSProperties}
+          d={`M${x - 4} ${LENS_Y + 2}L${x + 4} ${LENS_Y + 2}L${x + spread} 720L${x - spread} 720Z`}
+          fill="url(#bt-beam-g)"
+        />
+      </g>
     </g>
   );
 }
@@ -383,7 +404,7 @@ function StageRig({ index }: { index: number }) {
     <svg className="bt-stage-svg" viewBox={VIEW} preserveAspectRatio="xMidYMid slice">
       <Truss />
       {FIXTURES.map((x, k) => (
-        <MovingHead key={x} x={x} angle={angles[k]} />
+        <MovingHead key={x} x={x} angle={angles[k]} k={k} />
       ))}
     </svg>
   );
@@ -1057,9 +1078,20 @@ export function BtsWorld() {
           {/* the beams blend onto the wall, so they are their own layer; the rig that throws them sits on top */}
           <Layer d={D.rig} className="bt-beam-layer">
             <StageLight index={index} />
+            <div className="bt-haze">
+              <span />
+              <span />
+            </div>
           </Layer>
           <Layer d={D.rig} className="bt-rig-layer">
             <StageRig index={index} />
+          </Layer>
+          <Layer d={D.confetti} className="bt-confetti">
+            {CONFETTI.map((c, i) => (
+              <span key={i} style={{ "--x": `${c.x}%`, "--dur": `${c.dur}s`, "--delay": `${c.delay}s`, "--drift": `${c.drift}px`, "--c": c.color } as CSSProperties}>
+                <i style={{ "--flip": `${c.flip}s` } as CSSProperties} />
+              </span>
+            ))}
           </Layer>
           <Figures index={index} />
           <div className="bt-floor-fade" aria-hidden="true" />

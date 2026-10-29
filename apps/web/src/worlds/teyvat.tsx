@@ -356,21 +356,23 @@ function Particle({ element, alt }: { element: Element; alt: boolean }) {
   );
 }
 
-const MOTES = (() => {
-  const rnd = seeded(31);
-  return Array.from({ length: 12 }, () => ({
+const motes = (seed: number, n: number, scale: number, slow: number) => {
+  const rnd = seeded(seed);
+  return Array.from({ length: n }, () => ({
     x: round(6 + rnd() * 88),
     y: round(8 + rnd() * 84),
-    s: round(0.6 + rnd() * 0.9),
-    dur: round(7 + rnd() * 7),
-    delay: round(-rnd() * 14),
+    s: round((0.6 + rnd() * 0.9) * scale),
+    dur: round((7 + rnd() * 7) * slow),
+    delay: round(-rnd() * 14 * slow),
   }));
-})();
+};
+/** The selected element in the air at two depths: near motes round the character, smaller and slower ones out by the astrolabe. */
+const MOTES = { near: motes(31, 12, 1, 1), far: motes(47, 8, 0.6, 1.6) };
 
-function Particles({ element }: { element: Element }) {
+function Particles({ element, far = false }: { element: Element; far?: boolean }) {
   return (
-    <div className={`tv-particles tv-p-${element}`} aria-hidden="true">
-      {MOTES.map((m, i) => (
+    <div className={`tv-particles tv-p-${element}${far ? " tv-particles-far" : ""}`} aria-hidden="true">
+      {MOTES[far ? "far" : "near"].map((m, i) => (
         <span
           key={i}
           className={`tv-mote ${i % 2 ? "tv-mote-alt" : ""}`}
@@ -543,6 +545,7 @@ export function Teyvat() {
               <div key={el} className={`tv-glow tv-glow-${el}`} data-on={el === c.element || undefined} aria-hidden="true" />
             ))}
             <Astrolabe active={active} />
+            <Particles key={c.element} element={c.element} far />
           </Layer>
           <Layer d={D.ghost} className="tv-ghosts">
             {CAST.map((ch, i) => (

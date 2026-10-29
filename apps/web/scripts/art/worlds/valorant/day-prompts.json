@@ -1,0 +1,20 @@
+[
+  {
+    "key": "day-sky",
+    "source": "night-sky",
+    "alpha": false,
+    "prompt": "Relight this SKY-ONLY layer from red-black NIGHT to bright coral-red DAY, late afternoon dusk golden hour interpreted exclusively through coral red and warm cream. Keep exact 8:9 canvas and cloud masses; upper-left clouds become warm cream with angular vermilion undersides, upper-right and central-right broad smooth bright coral #ff4655 atmosphere, lower sky fades into luminous warm off-white/cream haze. Beautiful confident painterly VALORANT environment/key-art style, broad shapes, clean atmospheric gradients. No dark black night patches. Red/coral/off-white only, NO blue/teal/purple/green/yellow. No sun disc, no moon, no buildings, no islands, no objects, text, people or logo. Opaque entire canvas. Match original framing and image dimensions."
+  },
+  {
+    "key": "day-far",
+    "source": "night-far",
+    "alpha": true,
+    "prompt": "Relight this exact transparent environment layer from NIGHT to DAY. Keep identical geometry, composition, canvas, floating island silhouette and placement, tall spire, Venetian arcade architecture, every building and plaza, and ALL TRANSPARENT REGIONS. Do not add a background or sky, do not crop or reframe. Bright late-afternoon light from upper-left; stucco facades catch warm cream, roofs hot coral red, long clean shadows deep crimson/near-black. Turn window lights OFF, subtle pale coral-white radianite fissure still visible. Reduce the lava-like night glow so it feels like Valorant's Ascent map in bright daylight, with bold painted architectural planes and clean gradients. Architecture at lower-right stays atmospherically softer and lower contrast for agent legibility. Palette only red, coral, off-white/cream and near-black. NO green foliage (use deep burgundy), NO blue/purple/yellow. No people, text or logos. Preserve real alpha transparency; same full 8:9 canvas."
+  },
+  {
+    "key": "day-near",
+    "source": "night-near",
+    "alpha": true,
+    "prompt": "Relight only this transparent foreground roof plate from NIGHT to DAY, preserving EXACT silhouette, canvas, perspective, all object positions, and empty transparency. Bright sun from upper-left on the low stone parapet coping, warm off-white/cream coping edges with coral-red stone, crisp long dark red-black shadows on tiled roof floor and ventilation housing. Sophisticated official VALORANT painted environment/key-art aesthetic: bold planar shapes, deliberate brush facets, high contrast. No sky, no background, no additional buildings. Keep the upper majority of the image genuinely transparent. NO people, text, logos, or blue/green/purple/yellow. Red, coral, cream and near-black only. Do not enlarge/crop/reframe. Full same 8:9 canvas."
+  }
+]

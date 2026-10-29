@@ -1,0 +1,176 @@
+{
+  "night-sky": {
+    "source": "/tmp/art-valorant/night-sky-source.png",
+    "source_px": [
+      1182,
+      1330
+    ],
+    "source_sha256": "8d4eb15a657094665a3c2aa5ab6ed1ae0118872124a34a402e70bf5c1e8deb32",
+    "export_px": [
+      1600,
+      1800
+    ],
+    "baked_translation_px": [
+      0,
+      0
+    ],
+    "placement_offset_px": [
+      0,
+      0
+    ],
+    "alpha_bbox": [
+      0,
+      0,
+      1600,
+      1800
+    ],
+    "alpha_cleanup": "none",
+    "transparent_fraction": 0.0,
+    "alpha_levels": 1
+  },
+  "night-far": {
+    "source": "/tmp/art-valorant/night-far-source.png",
+    "source_px": [
+      1182,
+      1330
+    ],
+    "source_sha256": "1a07baa1cfd513f893120520cdbc9c5ba51684fb324669d50f20939a6095cc25",
+    "export_px": [
+      1600,
+      1800
+    ],
+    "baked_translation_px": [
+      0,
+      0
+    ],
+    "placement_offset_px": [
+      0,
+      0
+    ],
+    "alpha_bbox": [
+      0,
+      23,
+      1600,
+      1800
+    ],
+    "alpha_cleanup": "none",
+    "transparent_fraction": 0.402209375,
+    "alpha_levels": 256
+  },
+  "night-near": {
+    "source": "/tmp/art-valorant/night-near-source.png",
+    "source_px": [
+      1182,
+      1330
+    ],
+    "source_sha256": "33082395353a7b13d5ef62f5e55cfa2d072e2f74e4a7c63e6f49ee6839235bcf",
+    "export_px": [
+      1600,
+      1800
+    ],
+    "baked_translation_px": [
+      0,
+      0
+    ],
+    "placement_offset_px": [
+      0,
+      0
+    ],
+    "alpha_bbox": [
+      0,
+      1030,
+      1600,
+      1800
+    ],
+    "alpha_cleanup": "largest connected rooftop + 2px edge guard",
+    "transparent_fraction": 0.7423381944444445,
+    "alpha_levels": 256
+  },
+  "day-sky": {
+    "source": "/tmp/art-valorant/day-sky-source.png",
+    "source_px": [
+      1182,
+      1330
+    ],
+    "source_sha256": "1ccffd9745153e218c857211224a89bd303a9acffdfae6dcc3a78d9ae0a2f7db",
+    "export_px": [
+      1600,
+      1800
+    ],
+    "baked_translation_px": [
+      0,
+      0
+    ],
+    "placement_offset_px": [
+      0,
+      0
+    ],
+    "alpha_bbox": [
+      0,
+      0,
+      1600,
+      1800
+    ],
+    "alpha_cleanup": "none",
+    "transparent_fraction": 0.0,
+    "alpha_levels": 1
+  },
+  "day-far": {
+    "source": "/tmp/art-valorant/day-far-source.png",
+    "source_px": [
+      1182,
+      1330
+    ],
+    "source_sha256": "d4c009aca143886e6964ee2635efab42b2a3e8a9381786523ddca2b0268eb55d",
+    "export_px": [
+      1600,
+      1800
+    ],
+    "baked_translation_px": [
+      0,
+      0
+    ],
+    "placement_offset_px": [
+      0,
+      0
+    ],
+    "alpha_bbox": [
+      0,
+      17,
+      1600,
+      1800
+    ],
+    "alpha_cleanup": "none",
+    "transparent_fraction": 0.3928506944444444,
+    "alpha_levels": 256
+  },
+  "day-near": {
+    "source": "/tmp/art-valorant/day-near-source.png",
+    "source_px": [
+      1182,
+      1330
+    ],
+    "source_sha256": "575054a6dbb9cbe930e393a069849e2fab0496ade0981b32be87ab539987f051",
+    "export_px": [
+      1600,
+      1800
+    ],
+    "baked_translation_px": [
+      0,
+      0
+    ],
+    "placement_offset_px": [
+      0,
+      0
+    ],
+    "alpha_bbox": [
+      0,
+      1028,
+      1600,
+      1800
+    ],
+    "alpha_cleanup": "largest connected rooftop + 2px edge guard",
+    "transparent_fraction": 0.74124375,
+    "alpha_levels": 256
+  }
+}

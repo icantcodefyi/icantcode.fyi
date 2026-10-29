@@ -1,0 +1,48 @@
+{
+  "night": {
+    "size": [
+      1600,
+      1800
+    ],
+    "white_is_near": true,
+    "source": "night-composite.png",
+    "source_transform": "none",
+    "normalization_percentiles": [
+      0.2,
+      99.8
+    ],
+    "raw_limits": [
+      -0.013945930719375605,
+      17.795908084869378
+    ],
+    "near_mean": 0.6891365051269531,
+    "sky_mean": 0.0007960465736687183,
+    "range": [
+      0,
+      255
+    ]
+  },
+  "day": {
+    "size": [
+      1600,
+      1800
+    ],
+    "white_is_near": true,
+    "source": "day-composite.png",
+    "source_transform": "none",
+    "normalization_percentiles": [
+      0.2,
+      99.8
+    ],
+    "raw_limits": [
+      -0.017982064269483084,
+      16.728994529724112
+    ],
+    "near_mean": 0.6947125792503357,
+    "sky_mean": 0.0011063899146392941,
+    "range": [
+      0,
+      255
+    ]
+  }
+}

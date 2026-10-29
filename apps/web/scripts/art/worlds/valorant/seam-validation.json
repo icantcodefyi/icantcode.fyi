@@ -1,0 +1,26 @@
+{
+  "night": {
+    "old_cut_high_alpha_jump_rows_below_y600": 1200,
+    "new_cut_high_alpha_jump_rows_below_y600": 0,
+    "left_city_opaque_fraction_below_y600": 1.0,
+    "unchanged_png_layers": {
+      "sky": true,
+      "near": true
+    },
+    "full_avif_before_bytes": 230889,
+    "full_avif_after_bytes": 188110,
+    "full_avif_reduction_percent": 18.53
+  },
+  "day": {
+    "old_cut_high_alpha_jump_rows_below_y600": 1200,
+    "new_cut_high_alpha_jump_rows_below_y600": 0,
+    "left_city_opaque_fraction_below_y600": 0.9991666666666666,
+    "unchanged_png_layers": {
+      "sky": true,
+      "near": true
+    },
+    "full_avif_before_bytes": 294852,
+    "full_avif_after_bytes": 243291,
+    "full_avif_reduction_percent": 17.49
+  }
+}

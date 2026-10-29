@@ -70,6 +70,22 @@ const AVIF = new Set([
   "/site/seams/cloud-fall-day-back-1200",
   "/site/seams/cloud-fall-day-front",
   "/site/seams/cloud-fall-day-front-1200",
+  "/lobby/val/stage/night-sky",
+  "/lobby/val/stage/night-sky-800",
+  "/lobby/val/stage/night-far",
+  "/lobby/val/stage/night-far-800",
+  "/lobby/val/stage/night-near",
+  "/lobby/val/stage/night-near-800",
+  "/lobby/val/stage/night-depth",
+  "/lobby/val/stage/night-depth-800",
+  "/lobby/val/stage/day-sky",
+  "/lobby/val/stage/day-sky-800",
+  "/lobby/val/stage/day-far",
+  "/lobby/val/stage/day-far-800",
+  "/lobby/val/stage/day-near",
+  "/lobby/val/stage/day-near-800",
+  "/lobby/val/stage/day-depth",
+  "/lobby/val/stage/day-depth-800",
 ]);
 
 export const avif = () => typeof window !== "undefined" && window.__avif === true;
@@ -221,3 +237,32 @@ export const SEAM_ART = {
     size: [2400, 640],
   },
 } satisfies Record<"cloud-rise" | "cloud-fall", SeamArt>;
+
+/** Valorant: the painted rooftop vista behind the agent, layered for depth. */
+export const VALORANT_STAGE = {
+  night: {
+    sky: "/lobby/val/stage/night-sky",
+    far: "/lobby/val/stage/night-far",
+    near: "/lobby/val/stage/night-near",
+    depth: "/lobby/val/stage/night-depth",
+    skyHalf: "/lobby/val/stage/night-sky-800",
+    farHalf: "/lobby/val/stage/night-far-800",
+    nearHalf: "/lobby/val/stage/night-near-800",
+    depthHalf: "/lobby/val/stage/night-depth-800",
+  },
+  day: {
+    sky: "/lobby/val/stage/day-sky",
+    far: "/lobby/val/stage/day-far",
+    near: "/lobby/val/stage/day-near",
+    depth: "/lobby/val/stage/day-depth",
+    skyHalf: "/lobby/val/stage/day-sky-800",
+    farHalf: "/lobby/val/stage/day-far-800",
+    nearHalf: "/lobby/val/stage/day-near-800",
+    depthHalf: "/lobby/val/stage/day-depth-800",
+  },
+  size: [1600, 1800],
+  halfSize: [800, 900],
+  offset: [0, 0],
+  objectPosition: "42% 50%",
+  tint: { color: "#ff4655", night: 0.22, day: 0.18 },
+} as const;

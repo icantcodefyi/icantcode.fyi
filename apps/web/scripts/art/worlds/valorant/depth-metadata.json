@@ -1,0 +1,42 @@
+{
+  "night": {
+    "source": "/tmp/art-valorant/night-composite.png",
+    "size": [
+      1600,
+      1800
+    ],
+    "sha256": "2e191f55c0c86b479ee36debe02f69afc447c8eee496ab739cbb4c1c0ff74c19",
+    "model": "depth-anything/Depth-Anything-V2-Base-hf",
+    "device": "mps",
+    "model_input": [
+      1,
+      3,
+      854,
+      756
+    ],
+    "seconds": 0.91,
+    "alpha_levels": 1,
+    "opaque_fraction": 1.0,
+    "transparent_fraction": 0.0
+  },
+  "day": {
+    "source": "/tmp/art-valorant/day-composite.png",
+    "size": [
+      1600,
+      1800
+    ],
+    "sha256": "de974feb4624cdeb1f1bdca1494155cf8f17f272714f8d160700d1f31ac5ccee",
+    "model": "depth-anything/Depth-Anything-V2-Base-hf",
+    "device": "mps",
+    "model_input": [
+      1,
+      3,
+      854,
+      756
+    ],
+    "seconds": 0.46,
+    "alpha_levels": 1,
+    "opaque_fraction": 1.0,
+    "transparent_fraction": 0.0
+  }
+}

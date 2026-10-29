@@ -1,0 +1,145 @@
+# Valorant stage environment
+
+Fan-made Ascent-inspired painted rooftop vista, generated with the built-in `image_gen` tool. One composition in two lighting treatments: red-black night with illuminated windows and a radiant floating city; coral/cream day with crisp architectural shadows. No characters, lettering, or logos in the shipped plates.
+
+## Deliverables
+
+Public root: `apps/web/public/lobby/val/stage/`. All sizes below are decimal KB (1 KB = 1000 bytes). Each row represents two actual files. 32 files total.
+
+| Base filename | Pixels | AVIF KB | WebP KB |
+| --- | --- | ---: | ---: |
+| `night-sky.{avif,webp}` | 1600 × 1800 | 41.42 | 87.75 |
+| `night-sky-800.{avif,webp}` | 800 × 900 | 14.98 | 37.14 |
+| `night-far.{avif,webp}` | 1600 × 1800 | 111.61 | 331.88 |
+| `night-far-800.{avif,webp}` | 800 × 900 | 43.96 | 127.23 |
+| `night-near.{avif,webp}` | 1600 × 1800 | 26.74 | 87.61 |
+| `night-near-800.{avif,webp}` | 800 × 900 | 9.82 | 33.50 |
+| `night-depth.{avif,webp}` | 1600 × 1800 | 8.34 | 11.19 |
+| `night-depth-800.{avif,webp}` | 800 × 900 | 4.43 | 4.54 |
+| `day-sky.{avif,webp}` | 1600 × 1800 | 66.74 | 139.00 |
+| `day-sky-800.{avif,webp}` | 800 × 900 | 24.61 | 59.77 |
+| `day-far.{avif,webp}` | 1600 × 1800 | 130.50 | 374.74 |
+| `day-far-800.{avif,webp}` | 800 × 900 | 51.93 | 146.46 |
+| `day-near.{avif,webp}` | 1600 × 1800 | 37.13 | 111.22 |
+| `day-near-800.{avif,webp}` | 800 × 900 | 13.01 | 43.46 |
+| `day-depth.{avif,webp}` | 1600 × 1800 | 8.91 | 12.28 |
+| `day-depth-800.{avif,webp}` | 800 × 900 | 4.71 | 4.76 |
+
+| Mode / resolution | AVIF total KB | WebP total KB |
+| --- | ---: | ---: |
+| night / 1600px | 188.11 | 518.43 |
+| night / 800px | 73.18 | 202.41 |
+| day / 1600px | 243.29 | 637.24 |
+| day / 800px | 94.26 | 254.45 |
+
+All formats, modes, and resolutions on disk: **2211.38 KB**. A client should fetch one format, one resolution, and one lighting mode.
+
+## Left-edge repair and comparison
+
+The original preparation translated the far layer 192px right and exposed a full-height transparent cut. Built-in image_gen repainted the missing left architecture in both lighting modes. The repaired sources are already registered, so preparation no longer translates them. Sky and near PNG masters are pixel-identical to the pre-repair plates; inspection found no other cut boundaries. Generated far-layer details have small repainting differences outside the extension, but the major landmarks, perspective, palette, and overall composition remain matched.
+
+Native-scale before/after crops show continuous roofs, walls, and vegetation across the old boundary. At x=192 below y=600, the original 1200 rows with an alpha jump above 200/255 became zero in each repaired PNG. Both full composites were rerun through Depth Anything V2; alpha and depth orientation checks pass. See [seam-validation.json](./seam-validation.json).
+
+Full AVIF sets including depth: night **230.89 → 188.11 KB (18.53% smaller)**; day **294.85 → 243.29 KB (17.49% smaller)**. Trials compared art quality 52/speed 6 with quality 50, 48, and 46 at speed 4. Selected quality 46/speed 4 retains the reviewed roof edges, window mullions, cloud gradients, and stone texture without a material visible regression at native-scale crops and desktop/mobile preview sizes. This is lossy encoding, not pixel equality. WebP grows with the added painted architecture and retains the exact requested encoder flags.
+
+## Registration, crop, and integration
+
+- Every exported layer and depth map shares an uncropped **1600 × 1800** canvas; half assets are **800 × 900**. All placement offsets are **[0, 0]**. Stack sky → far → near; agent, outline name, and HUD stay above the environment.
+- Sky is opaque. Far and near have genuine alpha, with no checkerboard or sky baked into transparent regions. The far layer contains the complete floating city, campanile, arcades, and plaza; the near layer contains only the rooftop ventilation housing, parapet, and floor.
+- The repaired far sources already contain the registered city and a painted extension to the left canvas edge. **Do not translate the far layer.** The former +192px translation and straight transparent left margin have been removed from preparation; the campanile and floating city retain their composition while the architecture now continues naturally to the left edge.
+- Use a common `cover` transform and **object-position: 42% 50%** for all plates and the depth map. Retain the stage clip `polygon(40% 0, 100% 0, 100% 100%, 14% 100%)`. Offline previews verify 840 × 900 desktop and 390 × 600 phone crops.
+- Preview tint is a normal source-over **#ff4655** wash applied after environment composition: **22% night**, **18% day**. The tint is not baked into any asset. Do not tint the agent or HUD.
+- Suggested starting plane distances, using the current `1/d` convention: sky **36**, far **26**, near **19**; keep the current name **16**, HUD **12.5**, and agent **11.5**. Keep environmental movement modest (about 3/5/8 CSS px), with a shared 3% overscan if moving the plates; use the same overscan on depth. These motion values are suggestions, not browser-tested settings.
+- Each depth image is an **opaque full-composite inverse-depth map**, not a per-layer atlas. White means near. Sample the same UV/crop as the composite. For independent layer translations, use plane distances; the single composite map describes the resting composition, not separately translated objects.
+
+## Suggested TypeScript constant (handoff only)
+
+```ts
+export const VALORANT_STAGE = {
+  night: {
+    sky: "/lobby/val/stage/night-sky",
+    far: "/lobby/val/stage/night-far",
+    near: "/lobby/val/stage/night-near",
+    depth: "/lobby/val/stage/night-depth",
+    skyHalf: "/lobby/val/stage/night-sky-800",
+    farHalf: "/lobby/val/stage/night-far-800",
+    nearHalf: "/lobby/val/stage/night-near-800",
+    depthHalf: "/lobby/val/stage/night-depth-800",
+  },
+  day: {
+    sky: "/lobby/val/stage/day-sky",
+    far: "/lobby/val/stage/day-far",
+    near: "/lobby/val/stage/day-near",
+    depth: "/lobby/val/stage/day-depth",
+    skyHalf: "/lobby/val/stage/day-sky-800",
+    farHalf: "/lobby/val/stage/day-far-800",
+    nearHalf: "/lobby/val/stage/day-near-800",
+    depthHalf: "/lobby/val/stage/day-depth-800",
+  },
+  size: [1600, 1800],
+  halfSize: [800, 900],
+  offset: [0, 0],
+  objectPosition: "42% 50%",
+  tint: { color: "#ff4655", night: 0.22, day: 0.18 },
+} as const;
+```
+
+Add these extensionless entries to the existing AVIF set when integrating (not applied by this task):
+
+```ts
+"/lobby/val/stage/night-sky",
+"/lobby/val/stage/night-sky-800",
+"/lobby/val/stage/night-far",
+"/lobby/val/stage/night-far-800",
+"/lobby/val/stage/night-near",
+"/lobby/val/stage/night-near-800",
+"/lobby/val/stage/night-depth",
+"/lobby/val/stage/night-depth-800",
+"/lobby/val/stage/day-sky",
+"/lobby/val/stage/day-sky-800",
+"/lobby/val/stage/day-far",
+"/lobby/val/stage/day-far-800",
+"/lobby/val/stage/day-near",
+"/lobby/val/stage/day-near-800",
+"/lobby/val/stage/day-depth",
+"/lobby/val/stage/day-depth-800",
+```
+
+## Pipeline and validation
+
+Generation prompts: [prompts.json](./prompts.json), [day-prompts.json](./day-prompts.json), and [seam-repair-prompts.json](./seam-repair-prompts.json). Lossless sources and composites are staged in `/tmp/art-valorant/`; their hashes, dimensions, alpha bounds, and transforms are in [provenance.json](./provenance.json). Native tool output was **1182 × 1330**, resampled with Lanczos to the requested export sizes. Day and night are relit generated variants with small painted differences; they are registered to the same canvas, not pixel-identical masks.
+
+Near-layer extraction discarded disconnected low-alpha specks, retaining the connected rooftop silhouette and a 2px edge guard. No scene geometry was hand-drawn or substituted. Other generated transparency was preserved.
+
+Depth uses the existing `scripts/art/build_depth.py` pipeline in `/tmp/hero-art/venv`: `depth-anything/Depth-Anything-V2-Base-hf`, MPS, 756px processor target, aspect-preserving model input **854 × 756**, bicubic prediction resize to **1800 × 1600**, robust 0.2–99.8 percentile normalization, and a light bilateral filter. Inference is performed on each final untinted, registered composite. No depth image was generated by image_gen.
+
+AVIF: Pillow/libavif, quality **46** for art / **70** for depth, speed **4**, 4:2:0, two threads per encode. Fallbacks use exactly `cwebp -q 82 -alpha_q 90 -m 6 -sharp_yuv`. Depth is intentionally also encoded in both requested formats, with lossless grayscale PNG masters retained in staging. Full depth maps remain **1600 × 1800**; no depth downsampling was used for the savings.
+
+All 32 files were reopened and checked for dimensions and alpha. Maximum decoded alpha mean absolute error: **0.1777/255**. Far/near retain transparent pixels; sky/depth remain fully opaque. Both depth maps span 0–255 and pass the near-rooftop > sky orientation check. See [files.json](./files.json), [depth-validation.json](./depth-validation.json), and [depth-metadata.json](./depth-metadata.json).
+
+Visually reviewed the decoded AVIF layers on checkerboard, assembled paintings, and both desktop/phone mocks. Additional actual-Jett previews check silhouette legibility using existing official art; no character is baked into a delivered backdrop. Previews are offline composition studies, not screenshots of an integrated app. No app build, source edits, or commit were performed.
+
+Reproduce asset processing from the retained PNG sources, from the repository root:
+
+```sh
+/tmp/hero-art/venv/bin/python apps/web/scripts/art/worlds/valorant/prepare.py
+/tmp/hero-art/venv/bin/python apps/web/scripts/art/worlds/valorant/depth.py
+/tmp/hero-art/venv/bin/python apps/web/scripts/art/worlds/valorant/encode.py
+/tmp/hero-art/venv/bin/python apps/web/scripts/art/worlds/valorant/previews.py --encoded
+/tmp/hero-art/venv/bin/python apps/web/scripts/art/worlds/valorant/review_seams.py
+/tmp/hero-art/venv/bin/python apps/web/scripts/art/worlds/valorant/write_manifest.py
+```
+
+## Previews
+
+- `/tmp/art-valorant/preview-paintings.png` — full night/day paintings.
+- `/tmp/art-valorant/preview-desktop.png` — 840 × 900 stages, mock silhouettes and coral tint.
+- `/tmp/art-valorant/preview-mobile.png` — 390 × 600 stages, mock silhouettes and coral tint.
+- `/tmp/art-valorant/preview-layers.png` — alpha-layer and depth contact sheet.
+- `/tmp/art-valorant/before-seam-fix/preview-paintings.png` — preserved before preview.
+- `/tmp/art-valorant/preview-seam-comparison.png` — before/after left-edge crops at native scale.
+- `/tmp/art-valorant/{night,day}-quality-comparison.png` — PNG / original AVIF settings / optimized AVIF crops at native scale.
+- `/tmp/art-valorant/{night,day}-depth-preview.png` — color/depth registration.
+- `/tmp/art-valorant/{night,day}-{desktop,mobile}-agent-check.png` — existing Jett art over the decoded environment.
+
+Generation sources and PNG previews remain in staging; only the requested compressed assets and this script/documentation folder are added to the repository.

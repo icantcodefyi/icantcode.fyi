@@ -1,0 +1,354 @@
+[
+  {
+    "file": "night-sky.avif",
+    "px": [
+      1600,
+      1800
+    ],
+    "bytes": 41420,
+    "kb": 41.42,
+    "alpha_mae": 0.0,
+    "visible_rgb_mae": 1.33
+  },
+  {
+    "file": "night-sky.webp",
+    "px": [
+      1600,
+      1800
+    ],
+    "bytes": 87752,
+    "kb": 87.75,
+    "alpha_mae": 0.0,
+    "visible_rgb_mae": 1.312
+  },
+  {
+    "file": "night-sky-800.avif",
+    "px": [
+      800,
+      900
+    ],
+    "bytes": 14979,
+    "kb": 14.98,
+    "alpha_mae": 0.0,
+    "visible_rgb_mae": 1.734
+  },
+  {
+    "file": "night-sky-800.webp",
+    "px": [
+      800,
+      900
+    ],
+    "bytes": 37140,
+    "kb": 37.14,
+    "alpha_mae": 0.0,
+    "visible_rgb_mae": 1.702
+  },
+  {
+    "file": "night-far.avif",
+    "px": [
+      1600,
+      1800
+    ],
+    "bytes": 111608,
+    "kb": 111.61,
+    "alpha_mae": 0.1286,
+    "visible_rgb_mae": 3.045
+  },
+  {
+    "file": "night-far.webp",
+    "px": [
+      1600,
+      1800
+    ],
+    "bytes": 331880,
+    "kb": 331.88,
+    "alpha_mae": 0.0263,
+    "visible_rgb_mae": 2.555
+  },
+  {
+    "file": "night-far-800.avif",
+    "px": [
+      800,
+      900
+    ],
+    "bytes": 43956,
+    "kb": 43.96,
+    "alpha_mae": 0.1723,
+    "visible_rgb_mae": 4.964
+  },
+  {
+    "file": "night-far-800.webp",
+    "px": [
+      800,
+      900
+    ],
+    "bytes": 127226,
+    "kb": 127.23,
+    "alpha_mae": 0.0249,
+    "visible_rgb_mae": 4.108
+  },
+  {
+    "file": "night-near.avif",
+    "px": [
+      1600,
+      1800
+    ],
+    "bytes": 26743,
+    "kb": 26.74,
+    "alpha_mae": 0.0441,
+    "visible_rgb_mae": 2.2
+  },
+  {
+    "file": "night-near.webp",
+    "px": [
+      1600,
+      1800
+    ],
+    "bytes": 87610,
+    "kb": 87.61,
+    "alpha_mae": 0.0027,
+    "visible_rgb_mae": 1.931
+  },
+  {
+    "file": "night-near-800.avif",
+    "px": [
+      800,
+      900
+    ],
+    "bytes": 9816,
+    "kb": 9.82,
+    "alpha_mae": 0.057,
+    "visible_rgb_mae": 3.199
+  },
+  {
+    "file": "night-near-800.webp",
+    "px": [
+      800,
+      900
+    ],
+    "bytes": 33500,
+    "kb": 33.5,
+    "alpha_mae": 0.0029,
+    "visible_rgb_mae": 2.776
+  },
+  {
+    "file": "night-depth.avif",
+    "px": [
+      1600,
+      1800
+    ],
+    "bytes": 8339,
+    "kb": 8.34,
+    "alpha_mae": 0.0,
+    "visible_rgb_mae": 0.076
+  },
+  {
+    "file": "night-depth.webp",
+    "px": [
+      1600,
+      1800
+    ],
+    "bytes": 11190,
+    "kb": 11.19,
+    "alpha_mae": 0.0,
+    "visible_rgb_mae": 0.212
+  },
+  {
+    "file": "night-depth-800.avif",
+    "px": [
+      800,
+      900
+    ],
+    "bytes": 4430,
+    "kb": 4.43,
+    "alpha_mae": 0.0,
+    "visible_rgb_mae": 0.141
+  },
+  {
+    "file": "night-depth-800.webp",
+    "px": [
+      800,
+      900
+    ],
+    "bytes": 4542,
+    "kb": 4.54,
+    "alpha_mae": 0.0,
+    "visible_rgb_mae": 0.303
+  },
+  {
+    "file": "day-sky.avif",
+    "px": [
+      1600,
+      1800
+    ],
+    "bytes": 66742,
+    "kb": 66.74,
+    "alpha_mae": 0.0,
+    "visible_rgb_mae": 1.55
+  },
+  {
+    "file": "day-sky.webp",
+    "px": [
+      1600,
+      1800
+    ],
+    "bytes": 139000,
+    "kb": 139.0,
+    "alpha_mae": 0.0,
+    "visible_rgb_mae": 1.5
+  },
+  {
+    "file": "day-sky-800.avif",
+    "px": [
+      800,
+      900
+    ],
+    "bytes": 24614,
+    "kb": 24.61,
+    "alpha_mae": 0.0,
+    "visible_rgb_mae": 2.223
+  },
+  {
+    "file": "day-sky-800.webp",
+    "px": [
+      800,
+      900
+    ],
+    "bytes": 59766,
+    "kb": 59.77,
+    "alpha_mae": 0.0,
+    "visible_rgb_mae": 1.981
+  },
+  {
+    "file": "day-far.avif",
+    "px": [
+      1600,
+      1800
+    ],
+    "bytes": 130501,
+    "kb": 130.5,
+    "alpha_mae": 0.1362,
+    "visible_rgb_mae": 3.723
+  },
+  {
+    "file": "day-far.webp",
+    "px": [
+      1600,
+      1800
+    ],
+    "bytes": 374742,
+    "kb": 374.74,
+    "alpha_mae": 0.0487,
+    "visible_rgb_mae": 2.691
+  },
+  {
+    "file": "day-far-800.avif",
+    "px": [
+      800,
+      900
+    ],
+    "bytes": 51933,
+    "kb": 51.93,
+    "alpha_mae": 0.1777,
+    "visible_rgb_mae": 6.238
+  },
+  {
+    "file": "day-far-800.webp",
+    "px": [
+      800,
+      900
+    ],
+    "bytes": 146460,
+    "kb": 146.46,
+    "alpha_mae": 0.0455,
+    "visible_rgb_mae": 4.488
+  },
+  {
+    "file": "day-near.avif",
+    "px": [
+      1600,
+      1800
+    ],
+    "bytes": 37135,
+    "kb": 37.13,
+    "alpha_mae": 0.031,
+    "visible_rgb_mae": 3.116
+  },
+  {
+    "file": "day-near.webp",
+    "px": [
+      1600,
+      1800
+    ],
+    "bytes": 111218,
+    "kb": 111.22,
+    "alpha_mae": 0.0023,
+    "visible_rgb_mae": 2.529
+  },
+  {
+    "file": "day-near-800.avif",
+    "px": [
+      800,
+      900
+    ],
+    "bytes": 13007,
+    "kb": 13.01,
+    "alpha_mae": 0.0383,
+    "visible_rgb_mae": 4.784
+  },
+  {
+    "file": "day-near-800.webp",
+    "px": [
+      800,
+      900
+    ],
+    "bytes": 43462,
+    "kb": 43.46,
+    "alpha_mae": 0.0025,
+    "visible_rgb_mae": 3.845
+  },
+  {
+    "file": "day-depth.avif",
+    "px": [
+      1600,
+      1800
+    ],
+    "bytes": 8913,
+    "kb": 8.91,
+    "alpha_mae": 0.0,
+    "visible_rgb_mae": 0.08
+  },
+  {
+    "file": "day-depth.webp",
+    "px": [
+      1600,
+      1800
+    ],
+    "bytes": 12278,
+    "kb": 12.28,
+    "alpha_mae": 0.0,
+    "visible_rgb_mae": 0.217
+  },
+  {
+    "file": "day-depth-800.avif",
+    "px": [
+      800,
+      900
+    ],
+    "bytes": 4710,
+    "kb": 4.71,
+    "alpha_mae": 0.0,
+    "visible_rgb_mae": 0.151
+  },
+  {
+    "file": "day-depth-800.webp",
+    "px": [
+      800,
+      900
+    ],
+    "bytes": 4764,
+    "kb": 4.76,
+    "alpha_mae": 0.0,
+    "visible_rgb_mae": 0.308
+  }
+]

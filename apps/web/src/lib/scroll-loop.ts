@@ -76,6 +76,8 @@ let raf = 0;
 let last = 0;
 let clock = 0;
 let scrollY = 0;
+/** window.scrollY as of the last scroll event: reading it in a frame, after other callbacks have written styles, forces a style and layout pass */
+let liveY = 0;
 let vw = 0;
 let vh = 0;
 let idle = 0;
@@ -99,6 +101,7 @@ function measure(e: Entry) {
 function measureAll() {
   vw = window.innerWidth;
   vh = window.innerHeight;
+  liveY = window.scrollY;
   for (const e of entries) measure(e);
   kick();
 }
@@ -109,9 +112,17 @@ function start() {
   fine = finePointer() && !reduced;
   vw = window.innerWidth;
   vh = window.innerHeight;
-  scrollY = window.scrollY;
+  scrollY = liveY = window.scrollY;
   idle = reduced ? 0 : fine ? 0 : 1;
-  window.addEventListener("scroll", kick, { passive: true });
+  // scroll events run before the frame's callbacks, while the page is still clean
+  window.addEventListener(
+    "scroll",
+    () => {
+      liveY = window.scrollY;
+      kick();
+    },
+    { passive: true },
+  );
   window.addEventListener("resize", measureAll);
   document.addEventListener("visibilitychange", kick);
   if (fine) {
@@ -164,7 +175,7 @@ function tick(now: number) {
   last = now;
   clock += dt;
 
-  const y = window.scrollY;
+  const y = liveY;
   if (y !== scrollY) {
     const dy = y - scrollY;
     scrollY = y;

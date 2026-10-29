@@ -19,11 +19,15 @@ type Character = {
   element: Element;
   elementName: string;
   region: string;
+  /** what the element comes from: a Vision, or (Zhongli, who only wears a lookalike) the Archon himself */
+  source: "Vision" | "Archon";
   line: string;
   weapon: string;
   constellation: string;
   role: string;
+  /** the six stars (C1 to C6) and their links, as on the in-game constellation chart (wiki: File:<constellation>.png, 1080px) */
   stars: [number, number][];
+  links: [number, number][];
 };
 
 const CAST: Character[] = [
@@ -33,12 +37,14 @@ const CAST: Character[] = [
     short: "Kazuha",
     element: "anemo",
     elementName: "Anemo",
+    source: "Vision",
     region: "Inazuma",
     line: "He pulls every enemy into one tidy pile so the rest of the team looks good, then writes a haiku about it. I have never once benched him.",
     weapon: "Sword",
     constellation: "Acer Palmatum",
     role: "Grouping, buffs, and quiet ronin energy",
-    stars: [[214, 228], [262, 196], [318, 214], [356, 262], [338, 326], [282, 356], [246, 404]],
+    stars: [[532, 910], [379, 157], [863, 514], [208, 518], [534, 484], [691, 152]],
+    links: [[1, 3], [3, 4], [4, 2], [2, 5], [3, 0], [0, 2]],
   },
   {
     id: "zhongli",
@@ -46,12 +52,14 @@ const CAST: Character[] = [
     short: "Zhongli",
     element: "geo",
     elementName: "Geo",
+    source: "Archon",
     region: "Liyue",
     line: "A shield so thick I stopped dodging entirely. A retired god of contracts who keeps forgetting his wallet. Extremely relatable.",
     weapon: "Polearm",
     constellation: "Lapis Dei",
     role: "The shield. I play worse with him and still win",
-    stars: [[300, 168], [372, 236], [372, 330], [300, 398], [228, 330], [228, 236], [300, 282]],
+    stars: [[830, 695], [384, 497], [265, 689], [543, 989], [532, 294], [533, 628]],
+    links: [[5, 4], [4, 0], [0, 3], [3, 2], [2, 1]],
   },
   {
     id: "furina",
@@ -59,12 +67,14 @@ const CAST: Character[] = [
     short: "Furina",
     element: "hydro",
     elementName: "Hydro",
+    source: "Vision",
     region: "Fontaine",
     line: "Pure theatre. She spends the whole team's HP to make everyone hit harder, then gives a five-minute speech about it. Worth it.",
     weapon: "Sword",
     constellation: "Animula Choragi",
     role: "Damage buff and main character energy",
-    stars: [[232, 200], [300, 172], [366, 206], [338, 268], [270, 300], [300, 362], [362, 392]],
+    stars: [[294, 838], [840, 568], [815, 816], [251, 581], [553, 927], [534, 141]],
+    links: [[5, 3], [3, 0], [0, 4], [4, 2], [2, 1], [1, 5]],
   },
   {
     id: "hu-tao",
@@ -72,12 +82,14 @@ const CAST: Character[] = [
     short: "Hu Tao",
     element: "pyro",
     elementName: "Pyro",
+    source: "Vision",
     region: "Liyue",
-    line: "Runs a funeral parlour with two-for-one coffin deals. Low HP, huge numbers, zero fear. I let her cook, mostly literally.",
+    line: "Runs a funeral parlour and hands out buy-one-get-one-free coupons. Low HP, huge numbers, zero fear. I let her cook, mostly literally.",
     weapon: "Polearm",
     constellation: "Papilio Charontis",
     role: "Main damage, and the reason my heart rate is high",
-    stars: [[248, 206], [300, 246], [352, 206], [376, 284], [300, 330], [224, 284], [300, 404]],
+    stars: [[346, 677], [852, 994], [850, 169], [748, 748], [659, 975], [399, 147]],
+    links: [[5, 0], [0, 2], [0, 3], [3, 4], [0, 4], [4, 1]],
   },
 ];
 
@@ -111,51 +123,16 @@ const SKY = (() => {
   }));
 })();
 
-const GLYPHS: Record<Element, string[]> = {
-  anemo: [
-    "M11.5 31.5 C7.2 23.4 10.6 12.8 19.6 9.4 C28.3 6.1 37.6 10.7 39.4 19.2 C40.9 26.2 36.2 32.6 29.6 33.2 C24.4 33.7 20.6 29.8 21.4 25.4 C22 22.2 25.4 20.6 27.9 22.2 C29.7 23.4 29.6 25.9 28 26.8",
-    "M5.5 37.2 C13.8 41.6 25.2 42.2 34.4 37.6",
-    "M12.4 42.6 C17.2 44.2 22.6 44.3 27.2 43.1",
-    "M38.6 4.6 L39.7 7.7 L42.8 8.8 L39.7 9.9 L38.6 13 L37.5 9.9 L34.4 8.8 L37.5 7.7 Z",
-    "M6.6 16.4 C8.2 13.6 10.4 11.2 13 9.4",
-  ],
-  geo: [
-    "M24 3.5 L40.5 13.5 V34.5 L24 44.5 L7.5 34.5 V13.5 Z",
-    "M24 11.5 L33.5 17.2 V30.8 L24 36.5 L14.5 30.8 V17.2 Z",
-    "M24 3.5 V11.5 M40.5 13.5 L33.5 17.2 M40.5 34.5 L33.5 30.8 M24 44.5 V36.5 M7.5 34.5 L14.5 30.8 M7.5 13.5 L14.5 17.2",
-    "M24 19 L29 24 L24 29 L19 24 Z",
-    "M24 19 V29 M19 24 H29",
-  ],
-  hydro: [
-    "M24 3.8 C27.5 9.6 38.6 18.4 38.6 29.4 A14.6 14.6 0 0 1 9.4 29.4 C9.4 18.4 20.5 9.6 24 3.8 Z",
-    "M14.6 30.2 C17.7 27.6 20.9 27.6 24 30.2 C27.1 32.8 30.3 32.8 33.4 30.2",
-    "M18 36.4 C20 35 22 35 24 36.4 C26 37.8 28 37.8 30 36.4",
-    "M17.2 22.6 C18.2 19.2 20.2 16.2 22.6 13.6",
-    "M40.5 8.5 A2.2 2.2 0 1 1 40.49 8.5",
-  ],
-  pyro: [
-    "M24 44.5 C15.4 44.5 9.6 38.6 9.6 31.2 C9.6 23 17.2 19.6 18.2 10.6 C23.4 13.6 26.8 18.8 26.2 25 C28.8 23.4 30.4 20.2 30.2 15.6 C36.4 20.8 38.4 27.2 38.4 32 C38.4 39 32.6 44.5 24 44.5 Z",
-    "M24 40.4 C20.4 40.4 18.4 37.8 18.4 35 C18.4 31.4 22 29.8 23 26 C26.6 29.2 29.6 31.8 29.6 35.4 C29.6 38.2 27.4 40.4 24 40.4 Z",
-    "M36.2 6.2 A1.8 1.8 0 1 1 36.19 6.2",
-    "M12.2 4.6 C11 7 11.6 9.4 13.4 10.8",
-  ],
-};
-
-function Glyph({ element, className }: { element: Element; className?: string }) {
+/**
+ * The game's own element symbols (the official icons, as on the Genshin
+ * Impact wiki: public/lobby/gi/elements), drawn as masks so CSS tints each
+ * in its element's colour in both modes.
+ */
+function ElementMark({ element, className }: { element: Element; className: string }) {
   return (
-    <svg
-      viewBox="0 0 48 48"
-      className={className}
-      aria-hidden="true"
-      fill="none"
-      stroke="currentColor"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      {GLYPHS[element].map((d, i) => (
-        <path key={d} d={d} pathLength={1} className="tv-glyph-path" style={{ "--i": i } as CSSProperties} />
-      ))}
-    </svg>
+    <span className={`tv-mark tv-mark-${element} ${className}`} aria-hidden="true">
+      <i />
+    </span>
   );
 }
 
@@ -173,11 +150,14 @@ const CHART = (() => {
   });
 })();
 
+/** each chart, centred on its quadrant of the astrolabe at a tenth of its size */
 const FIGURES = CAST.map((c, i) => {
-  const cx = c.stars.reduce((s, p) => s + p[0], 0) / c.stars.length;
-  const cy = c.stars.reduce((s, p) => s + p[1], 0) / c.stars.length;
+  const xs = c.stars.map((p) => p[0]);
+  const ys = c.stars.map((p) => p[1]);
+  const cx = (Math.min(...xs) + Math.max(...xs)) / 2;
+  const cy = (Math.min(...ys) + Math.max(...ys)) / 2;
   const [ox, oy] = polar(166, QUADRANTS[i]);
-  return c.stars.map(([x, y]) => [round(ox + (x - cx) * 0.36), round(oy + (y - cy) * 0.36)] as const);
+  return c.stars.map(([x, y]) => [round(ox + (x - cx) * 0.1), round(oy + (y - cy) * 0.1)] as const);
 });
 
 function arc(r: number, mid: number, span: number) {
@@ -287,11 +267,22 @@ function Astrolabe({ active }: { active: number }) {
         )}
         {CAST.map((c, ci) => (
           <g key={c.id} className="tv-figure" data-on={ci === active || undefined}>
-            <polyline points={FIGURES[ci].map((p) => p.join(",")).join(" ")} stroke={GOLD} strokeWidth="0.75" strokeOpacity="0.7" />
+            {c.links.map(([a, b]) => (
+              <line
+                key={`${a}-${b}`}
+                x1={FIGURES[ci][a][0]}
+                y1={FIGURES[ci][a][1]}
+                x2={FIGURES[ci][b][0]}
+                y2={FIGURES[ci][b][1]}
+                stroke={GOLD}
+                strokeWidth="0.75"
+                strokeOpacity="0.7"
+              />
+            ))}
             {FIGURES[ci].map(([x, y], i) => (
               <g key={i}>
-                <circle cx={x} cy={y} r={i % 3 === 0 ? 5 : 3.6} stroke={GOLD} className="tv-sd" strokeWidth="0.5" />
-                <circle cx={x} cy={y} r={i % 3 === 0 ? 2.2 : 1.4} fill={GOLD} />
+                <circle cx={x} cy={y} r="4.4" stroke={GOLD} className="tv-sd" strokeWidth="0.5" />
+                <circle cx={x} cy={y} r="1.9" fill={GOLD} />
               </g>
             ))}
             <text className="tv-figure-name" fill={GOLD}>
@@ -452,6 +443,63 @@ const PLACES: Record<Region, { name: string; place: string }> = {
   fontaine: { name: "Fontaine", place: "Court of Fontaine" },
 };
 
+/**
+ * One character's card. As a sizer it keeps only what sets the height (the
+ * fixed emblem and rank rows stay empty) and is hidden from everyone.
+ */
+function Info({ c, sizer = false }: { c: Character; sizer?: boolean }) {
+  const rise = sizer ? "" : "tv-rise ";
+  return (
+    <div className={sizer ? "tv-info tv-info-sizer" : "tv-info"} aria-hidden={sizer || undefined}>
+      <div className={`${rise}tv-element`} style={{ "--r": 0 } as CSSProperties}>
+        <span className="tv-glyph-frame">{sizer ? null : <ElementMark element={c.element} className="tv-glyph" />}</span>
+        <span>
+          <span className="tv-element-name">{c.elementName}</span> {c.source}
+          <span className="tv-dot">
+            <span className="sr-only">, </span>
+          </span>
+          {c.region}
+        </span>
+      </div>
+      <h3 className={`${rise}tv-display tv-name`} style={{ "--r": 1 } as CSSProperties}>
+        {c.name}
+      </h3>
+      {/* rarity on the gold rule: five stars, then the ornament */}
+      <div className={`${rise}tv-rank`} style={{ "--r": 2 } as CSSProperties}>
+        {sizer ? null : (
+          <>
+            <span className="tv-stars" role="img" aria-label="Five-star character">
+              {[0, 1, 2, 3, 4].map((i) => (
+                <svg key={i} viewBox="0 0 12 12" aria-hidden="true" style={{ "--s": i } as CSSProperties}>
+                  <path d={STAR} />
+                </svg>
+              ))}
+            </span>
+            <Divider />
+          </>
+        )}
+      </div>
+      <p className={`${rise}tv-line`} style={{ "--r": 3 } as CSSProperties}>
+        {c.line}
+      </p>
+      <dl className={`${rise}tv-details`} style={{ "--r": 4 } as CSSProperties}>
+        <div>
+          <dt>Weapon</dt>
+          <dd>{c.weapon}</dd>
+        </div>
+        <div>
+          <dt>Constellation</dt>
+          <dd>{c.constellation}</dd>
+        </div>
+        <div>
+          <dt>In my team</dt>
+          <dd>{c.role}</dd>
+        </div>
+      </dl>
+    </div>
+  );
+}
+
 /** A waypoint rose: the mark beside the region's name. */
 function Waypoint() {
   return (
@@ -514,7 +562,8 @@ function Gust({ element }: { element: Element }) {
   );
 }
 
-const STAR = "M6 0.6 L7.5 4.2 L11.4 4.5 L8.4 7 L9.4 10.8 L6 8.7 L2.6 10.8 L3.6 7 L0.6 4.5 L4.5 4.2 Z";
+/** The rarity star: plump (inner radius about half the outer), as in the game. */
+const STAR = "M6.00 0.65 L7.73 3.96 L11.42 4.59 L8.81 7.26 L9.35 10.96 L6.00 9.30 L2.65 10.96 L3.19 7.26 L0.58 4.59 L4.27 3.96 Z";
 
 function VistaPlate({ region, plate, d, day }: { region: Region; plate: VistaPlateName; d: number; day: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -740,7 +789,7 @@ export function Teyvat() {
             Teyvat
           </h2>
           <p className="tv-intro">
-            The four I'd take into the Spiral Abyss. Also, coincidentally, the four who ate all my primogems.
+            The four I'd take into the Spiral Abyss. Also, coincidentally, the four who ate all my Primogems.
           </p>
         </header>
 
@@ -787,48 +836,13 @@ export function Teyvat() {
           </Layer>
         </div>
 
-        <div key={c.id} className="tv-info [grid-area:info]" aria-live="polite">
-          <div className="tv-rise tv-element" style={{ "--r": 0 } as CSSProperties}>
-            <span className="tv-glyph-frame">
-              <Glyph element={c.element} className="tv-glyph" />
-            </span>
-            <span>
-              <span className="tv-element-name">{c.elementName}</span>
-              <span className="tv-dot" aria-hidden="true" />
-              {c.region}
-            </span>
-          </div>
-          <h3 className="tv-rise tv-display tv-name" style={{ "--r": 1 } as CSSProperties}>
-            {c.name}
-          </h3>
-          {/* rarity on the gold rule: five stars, then the ornament */}
-          <div className="tv-rise tv-rank" style={{ "--r": 2 } as CSSProperties}>
-            <span className="tv-stars" role="img" aria-label="Five-star character">
-              {[0, 1, 2, 3, 4].map((i) => (
-                <svg key={i} viewBox="0 0 12 12" aria-hidden="true" style={{ "--s": i } as CSSProperties}>
-                  <path d={STAR} />
-                </svg>
-              ))}
-            </span>
-            <Divider />
-          </div>
-          <p className="tv-rise tv-line" style={{ "--r": 3 } as CSSProperties}>
-            {c.line}
-          </p>
-          <dl className="tv-rise tv-details" style={{ "--r": 4 } as CSSProperties}>
-            <div>
-              <dt>Weapon</dt>
-              <dd>{c.weapon}</dd>
-            </div>
-            <div>
-              <dt>Constellation</dt>
-              <dd>{c.constellation}</dd>
-            </div>
-            <div>
-              <dt>In my team</dt>
-              <dd>{c.role}</dd>
-            </div>
-          </dl>
+        {/* the live card over the other three, laid invisibly in the same cell: the
+            column is always as tall as the tallest card, so a swap moves nothing */}
+        <div className="tv-infos [grid-area:info]" aria-live="polite">
+          {CAST.map((ch) => (
+            <Info key={`size-${ch.id}`} c={ch} sizer />
+          ))}
+          <Info key={c.id} c={c} />
         </div>
 
         <div className="tv-switch [grid-area:switch]" role="group" aria-label="Choose a character" onKeyDown={onKeyDown}>
@@ -846,7 +860,7 @@ export function Teyvat() {
             >
               <span className="tv-thumb-ring">
                 <img src={`/lobby/gi/${ch.id}-icon.webp`} alt="" width={256} height={256} loading="lazy" decoding="async" />
-                <Glyph element={ch.element} className="tv-thumb-glyph" />
+                <ElementMark element={ch.element} className="tv-thumb-glyph" />
               </span>
               <span className="tv-thumb-name">{ch.short}</span>
             </button>

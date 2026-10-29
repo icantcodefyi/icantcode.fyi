@@ -248,6 +248,10 @@ html[data-mode="day"] .tv-plate > img[data-set="day"] { opacity: 1; }
 
 .tv-head,
 .tv-info { max-width: 34rem; }
+/* the live card and the three invisible sizers share one cell */
+.tv-infos { display: grid; }
+.tv-infos > .tv-info { grid-area: 1 / 1; }
+.tv-info-sizer { visibility: hidden; pointer-events: none; }
 .tv-title {
   font-weight: 800;
   font-size: clamp(2.5rem, 1.8rem + 2vw, 3.5rem);
@@ -440,14 +444,26 @@ html[data-mode="day"] .tv-plate > img[data-set="day"] { opacity: 1; }
   outline: 1px solid color-mix(in srgb, var(--tv-line) 40%, transparent);
   outline-offset: 4px;
 }
-.tv-glyph {
-  width: 32px;
-  height: 32px;
-  rotate: -45deg;
-  color: var(--tv-el);
-  stroke-width: 1.5;
+/* the element symbols: the game's icons as masks, in the game's own colours (the icons' fills) */
+.tv-mark { display: grid; place-items: center; }
+.tv-mark i {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: var(--mk);
+  -webkit-mask: var(--mk-src) center / contain no-repeat;
+  mask: var(--mk-src) center / contain no-repeat;
 }
-.tv-glyph-path { stroke-dasharray: 1; stroke-dashoffset: 0; }
+.tv-mark-anemo { --mk: #32d7a0; --mk-src: url(/lobby/gi/elements/anemo.svg); }
+.tv-mark-geo { --mk: #ffac00; --mk-src: url(/lobby/gi/elements/geo.svg); }
+.tv-mark-hydro { --mk: #00c0ff; --mk-src: url(/lobby/gi/elements/hydro.svg); }
+.tv-mark-pyro { --mk: #ff6640; --mk-src: url(/lobby/gi/elements/pyro.svg); }
+.tv-glyph {
+  width: 40px;
+  height: 40px;
+  rotate: -45deg;
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--mk) 45%, transparent));
+}
 
 .tv-name {
   margin-top: 24px;
@@ -467,14 +483,14 @@ html[data-mode="day"] .tv-plate > img[data-set="day"] { opacity: 1; }
   height: 18px;
   margin-top: 14px;
 }
+/* the game's rarity gold (#ffcc33), close-set, with its thin dark rim */
 .tv-stars {
   display: flex;
-  gap: 4px;
-  color: #ffd36b;
-  filter: drop-shadow(0 0 6px rgb(255 196 84 / 0.45));
+  gap: 0;
+  color: #ffcc33;
+  filter: drop-shadow(0 0 0.75px rgb(58 32 0 / 0.75));
 }
-.tv-stars svg { width: 18px; height: 18px; fill: currentColor; }
-html[data-mode="day"] .tv-stars { color: #d39a1c; filter: drop-shadow(0 1px 0 rgb(122 76 12 / 0.35)); }
+.tv-stars svg { width: 18px; height: 18px; fill: currentColor; stroke: currentColor; stroke-width: 0.6; stroke-linejoin: round; }
 
 /* the swap's burst, in the motes' layer, behind the character */
 .tv-gust {
@@ -536,7 +552,7 @@ html[data-mode="day"] .tv-world { --tv-mist: rgb(255 255 255 / 0.3); }
 
 @media (min-width: 1024px) {
   .tv-world { padding-block: 72px; }
-  .tv-info { align-self: center; }
+  .tv-infos { align-self: center; }
   .tv-switch { align-self: end; }
   .tv-line { min-height: calc(1.6em * 3); }
 }
@@ -558,9 +574,9 @@ html[data-mode="day"] .tv-world { --tv-mist: rgb(255 255 255 / 0.3); }
   .tv-switch { justify-content: flex-start; }
 }
 
+/* the ring around each portrait is its element, in the game's colour */
 .tv-thumb {
-  --c: #8af5d6;
-  --c-deep: #0f6e64;
+  --c: #32d7a0;
   flex: none;
   display: grid;
   justify-items: center;
@@ -574,9 +590,9 @@ html[data-mode="day"] .tv-world { --tv-mist: rgb(255 255 255 / 0.3); }
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
-.tv-thumb-geo { --c: #ffcf63; --c-deep: #9a5f12; }
-.tv-thumb-hydro { --c: #7fe6ff; --c-deep: #1663d2; }
-.tv-thumb-pyro { --c: #ff9150; --c-deep: #8f1232; }
+.tv-thumb-geo { --c: #ffac00; }
+.tv-thumb-hydro { --c: #00c0ff; }
+.tv-thumb-pyro { --c: #ff6640; }
 
 .tv-thumb-ring {
   position: relative;
@@ -596,15 +612,17 @@ html[data-mode="day"] .tv-world { --tv-mist: rgb(255 255 255 / 0.3); }
   opacity: 0;
   scale: 0.88;
 }
+/* every one of them is five-star: the portrait sits on the game's 5-star card gold */
 .tv-thumb-ring img {
   display: block;
   width: 100%;
   height: 100%;
   border-radius: 50%;
   object-fit: cover;
-  background: var(--c-deep);
+  background: linear-gradient(#99775b, #b0916e 30%, #cfa871);
   opacity: 0.8;
 }
+/* the element badge, as on HoYoLAB's character cards: the symbol in its colour on a dark disc */
 .tv-thumb-glyph {
   position: absolute;
   right: -5px;
@@ -613,10 +631,8 @@ html[data-mode="day"] .tv-world { --tv-mist: rgb(255 255 255 / 0.3); }
   height: 28px;
   padding: 4px;
   border-radius: 50%;
-  background: var(--c);
-  color: #10131f;
-  box-shadow: 0 0 0 2px var(--tv-base);
-  stroke-width: 3;
+  background: #14161f;
+  box-shadow: 0 0 0 2px var(--tv-base), inset 0 0 0 1px color-mix(in srgb, var(--mk) 45%, transparent);
 }
 .tv-thumb:hover .tv-thumb-ring img,
 .tv-thumb[aria-pressed="true"] .tv-thumb-ring img { opacity: 1; }
@@ -655,7 +671,7 @@ html[data-mode="day"] .tv-world { --tv-mist: rgb(255 255 255 / 0.3); }
   .tv-anim .tv-char[data-state="out"] { animation: tv-char-out 520ms var(--ease-in) both; }
 
   .tv-rise { animation: tv-rise var(--dur-in) var(--ease) calc(var(--r) * 70ms + 120ms) both; }
-  .tv-glyph-path { animation: tv-draw var(--dur-scene) var(--ease) calc(var(--i) * 140ms + 200ms) both; }
+  .tv-glyph-frame .tv-mark i { animation: tv-mark-in var(--dur-scene) var(--ease) 200ms both; }
 
   /* first view: the gold divider draws from its centre and the title rises
      ([data-in]); the character settles, the astrolabe turns the last 8° into
@@ -697,7 +713,7 @@ html[data-mode="day"] .tv-world { --tv-mist: rgb(255 255 255 / 0.3); }
   .tv-thumb:active .tv-thumb-ring { scale: 0.96; }
 }
 @media (prefers-reduced-motion: no-preference) and (min-width: 1024px) {
-  .tv-world:not([data-staged]) :is(.tv-rise, .tv-glyph-path, .tv-stars svg) { animation-play-state: paused; }
+  .tv-world:not([data-staged]) :is(.tv-rise, .tv-glyph-frame .tv-mark i, .tv-stars svg) { animation-play-state: paused; }
 }
 
 @keyframes tv-spin { to { transform: rotate(360deg); } }
@@ -743,9 +759,9 @@ html[data-mode="day"] .tv-world { --tv-mist: rgb(255 255 255 / 0.3); }
   from { opacity: 0; transform: translateY(16px); }
   to { opacity: 1; transform: none; }
 }
-@keyframes tv-draw {
-  from { stroke-dashoffset: 1; }
-  to { stroke-dashoffset: 0; }
+@keyframes tv-mark-in {
+  from { opacity: 0; transform: scale(0.55) rotate(-30deg); }
+  to { opacity: 1; transform: none; }
 }
 @keyframes tv-leaf {
   0% { opacity: 0; transform: translate(-40px, -30px) rotate(0deg); }
@@ -888,12 +904,10 @@ html[data-mode="day"] .tv-mote svg {
 html[data-mode="day"] .tv-glyph-frame {
   background: color-mix(in srgb, var(--tv-el) 14%, #fffaf0);
 }
-html[data-mode="day"] .tv-glyph { color: var(--tv-line); }
+/* by day the symbols keep the game's colours, with a thin ink rim so the light ones hold on parchment */
+html[data-mode="day"] .tv-glyph { filter: drop-shadow(0 0 0.6px rgb(40 24 0 / 0.7)) drop-shadow(0 1px 1px rgb(40 24 0 / 0.25)); }
+html[data-mode="day"] .tv-stars { filter: drop-shadow(0 0 0.75px rgb(90 52 0 / 0.9)); }
 
-html[data-mode="day"] .tv-thumb { --c: #5fcfae; --c-deep: #bfe5d8; }
-html[data-mode="day"] .tv-thumb-geo { --c: #e7b24a; --c-deep: #efd29c; }
-html[data-mode="day"] .tv-thumb-hydro { --c: #5fb2f0; --c-deep: #bcd5f3; }
-html[data-mode="day"] .tv-thumb-pyro { --c: #f07a4a; --c-deep: #f5c9cc; }
 html[data-mode="day"] .tv-thumb-ring { box-shadow: 0 6px 14px color-mix(in srgb, var(--tv-line) 18%, transparent); }
 html[data-mode="day"] .tv-thumb-ring img { opacity: 0.9; }
-html[data-mode="day"] .tv-thumb-glyph { color: #fffaf0; box-shadow: 0 0 0 2px var(--tv-base); }
+html[data-mode="day"] .tv-thumb-glyph { background: #1d1f2a; }

@@ -1,16 +1,21 @@
 import {
   BufferAttribute,
   BufferGeometry,
+  CustomBlending,
   DataTexture,
+  DstAlphaFactor,
   LinearFilter,
   LinearMipmapLinearFilter,
   Mesh,
+  OneFactor,
   RedFormat,
   ShaderMaterial,
+  SrcAlphaFactor,
   Texture,
   Vector2,
   Vector3,
   Vector4,
+  ZeroFactor,
 } from "three";
 import { EYE, PLATE, type PlateName } from "./rig";
 import type { Scrim, Shadow } from "./stage";
@@ -127,13 +132,14 @@ function grid(cols: number, rows: number, [l, t, r, b]: readonly number[]) {
   return geo;
 }
 
-/** Uniforms every plate shares: the lens and how much relief is showing. */
+/** Uniforms every plate shares: the lens, how much relief is showing, the dive's deepening and a clock. */
 export function plateShared() {
   return {
     uVp: { value: new Vector2() },
     uF: { value: 1 },
     uRelief: { value: 0 },
     uDeep: { value: 0 },
+    uTime: { value: 0 },
   };
 }
 export type PlateShared = ReturnType<typeof plateShared>;
@@ -143,7 +149,7 @@ export function plateRect() {
   return { value: new Vector4() };
 }
 
-const TINT = { night: new Vector3(0.46, 0.4, 0.6), day: new Vector3(0.74, 0.84, 1.0) };
+export const TINT = { night: new Vector3(0.46, 0.4, 0.6), day: new Vector3(0.74, 0.84, 1.0) };
 
 export function colorTexture(img: ImageBitmap) {
   const t = new Texture(img);
@@ -167,6 +173,15 @@ export function depthTexture(img: ImageBitmap) {
 
 const geos = new Map<PlateName, BufferGeometry>();
 
+function gridOf(name: PlateName) {
+  let geo = geos.get(name);
+  if (!geo) {
+    geo = grid(GRID[name].cols, GRID[name].rows, GRID[name].pad);
+    geos.set(name, geo);
+  }
+  return geo;
+}
+
 export function createPlate(
   name: PlateName,
   mode: "night" | "day",
@@ -176,8 +191,6 @@ export function createPlate(
   rect: { value: Vector4 },
 ) {
   const r = PLATE[name];
-  let geo = geos.get(name);
-  if (!geo) geos.set(name, (geo = grid(GRID[name].cols, GRID[name].rows, GRID[name].pad)));
   const mat = new ShaderMaterial({
     vertexShader: plateVert,
     fragmentShader: plateFrag,
@@ -196,8 +209,73 @@ export function createPlate(
     depthTest: true,
     depthWrite: true,
   });
-  const mesh = new Mesh(geo, mat);
+  const mesh = new Mesh(gridOf(name), mat);
   mesh.frustumCulled = false;
+  return mesh;
+}
+
+/* ── sunlight on the day meadow ──────────────────────────────────────── */
+
+/**
+ * Soft cloud shadows drifting over the day hill with the wind, the sun a
+ * touch warmer between them. Drawn right after the hill plate on its own
+ * grid, so it rides the hill's relief. Its blend (rgb × the hill's alpha
+ * added, the hill × its alpha kept) lights and shades only the painted
+ * hill, in proportion to how much of each pixel the hill covers.
+ */
+const lightFrag = /* glsl */ `
+  uniform sampler2D uMap;
+  uniform float uOpacity;
+  uniform float uRelief;
+  uniform float uTime;
+  varying vec2 vUv;
+
+  float hash(vec2 p) {
+    return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+  }
+  float noise(vec2 p) {
+    vec2 i = floor(p);
+    vec2 f = fract(p);
+    f = f * f * (3.0 - 2.0 * f);
+    return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), f.x), mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), f.x), f.y);
+  }
+
+  void main() {
+    // stretched across, as shadows on ground seen low; drifting with the clouds
+    vec2 p = vUv * vec2(2.2, 7.0) - vec2(uTime * 0.035, 0.0);
+    float n = noise(p) * 0.65 + noise(p * 2.1 + 7.1) * 0.35;
+    float shade = smoothstep(0.46, 0.64, n);
+    float sun = 1.0 - smoothstep(0.3, 0.46, n);
+    float k = uOpacity * uRelief;
+    gl_FragColor = vec4(vec3(1.0, 0.88, 0.66) * sun * 0.06 * k, 1.0 - shade * 0.16 * k);
+  }
+`;
+
+export function createLight(map: Texture, depth: Texture, shared: PlateShared, rect: { value: Vector4 }) {
+  const r = PLATE.hill;
+  const mat = new ShaderMaterial({
+    vertexShader: plateVert,
+    fragmentShader: lightFrag,
+    uniforms: {
+      ...shared,
+      uMap: { value: map },
+      uDepth: { value: depth },
+      uRect: rect,
+      uRange: { value: new Vector3(1 / r.far, 1 / r.near, r.flat) },
+      uOpacity: { value: 1 },
+    },
+    transparent: true,
+    depthTest: false,
+    depthWrite: false,
+    blending: CustomBlending,
+    blendSrc: DstAlphaFactor,
+    blendDst: SrcAlphaFactor,
+    blendSrcAlpha: ZeroFactor,
+    blendDstAlpha: OneFactor,
+  });
+  const mesh = new Mesh(gridOf("hill"), mat);
+  mesh.frustumCulled = false;
+  mesh.renderOrder = 1; // over the hill plate
   return mesh;
 }
 

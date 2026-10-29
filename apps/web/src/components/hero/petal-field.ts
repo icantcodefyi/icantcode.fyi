@@ -190,7 +190,7 @@ const sparkFrag = /* glsl */ `
   }
 `;
 
-function rand(seed: number) {
+export function rand(seed: number) {
   // mulberry32
   let a = seed >>> 0;
   return () => {

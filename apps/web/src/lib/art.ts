@@ -22,6 +22,8 @@ const AVIF = new Set([
   "/site/hero-cutout",
   "/site/hero-depth-night",
   "/site/hero-depth-day",
+  "/site/sky-night",
+  "/site/sky-day",
   "/site/scenes/ship-launch",
   "/site/scenes/ship-launch-day",
   "/site/scenes/sit-cutout",

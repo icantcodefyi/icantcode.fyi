@@ -73,7 +73,12 @@ function layer(mode: Mode, set: keyof typeof ART) {
   return { a: ART[set], set, eager: set === "night", on: mode === set };
 }
 
-const DEPTH_ART = { night: "/site/hero-depth-night", day: "/site/hero-depth-day" } as const;
+/** What the WebGL stage loads per mode after first paint: the plates' depth, then the sky's sprites. */
+const STAGE_ART = {
+  night: { depth: "/site/hero-depth-night", sky: "/site/sky-night" },
+  day: { depth: "/site/hero-depth-day", sky: "/site/sky-day" },
+} as const;
+const stageArt = (m: Mode) => ({ depth: art(STAGE_ART[m].depth), sky: art(STAGE_ART[m].sky) });
 
 /** Resolves once the hero's entrances (and the canvases' fade-in) have played out. */
 function settled(el: HTMLElement) {
@@ -145,14 +150,14 @@ export function Hero() {
       const s = scene.current;
       const images = plateImages(el, m);
       if (!s || !images || st.spent) return;
-      const ok = await s.load(m, images, art(DEPTH_ART[m]));
+      const ok = await s.load(m, images, stageArt(m));
       await settled(el);
       if (!ok || disposed || modeRef.current !== m || scene.current !== s) return;
       st.relayout();
       st.swap();
       if (m === "night" && dayOkRef.current) {
         const day = plateImages(el, "day");
-        if (day) void s.load("day", day, art(DEPTH_ART.day));
+        if (day) void s.load("day", day, stageArt("day"));
       }
     };
 
@@ -206,7 +211,7 @@ export function Hero() {
     const el = root.current;
     if (!dayOk || !s || !el || !s.has(modeRef.current)) return;
     const day = plateImages(el, "day");
-    if (day) void s.load("day", day, art(DEPTH_ART.day));
+    if (day) void s.load("day", day, stageArt("day"));
   }, [dayOk]);
 
   const toggle = useCallback(

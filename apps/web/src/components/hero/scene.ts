@@ -2,6 +2,7 @@ import { type BufferGeometry, type Mesh, PerspectiveCamera, Scene, type ShaderMa
 import { createPetals, type Mode } from "./petal-field";
 import {
   colorTexture,
+  createLight,
   createPlate,
   createScrim,
   createShadow,
@@ -13,15 +14,16 @@ import {
   TILE,
 } from "./plates";
 import { EYE, type Eye, type Lens, type PlateName } from "./rig";
+import { createSkyLife } from "./sky-life";
 import type { Rect, Scrim, Shadow } from "./stage";
 
 /**
  * The hero's WebGL side: three canvases in the DOM's own stacking slots, all
  * drawn from one camera (rig.ts), so petals and plates live in one space.
  *
- *   back   sky plate, then the far petals          (under the name)
- *   char   the character plate                     (between name and ghost name)
- *   front  hill plate, scrim, then the near petals (over everything painted)
+ *   back   sky plate, the sky's life, then the far petals     (under the name)
+ *   char   the character plate                                (between name and ghost name)
+ *   front  hill plate, fireflies, scrim, then the near petals (over everything painted)
  *
  * The petals run from the start. The plates load later and take over from
  * the <img>s only once they are uploaded and compiled; until then (and
@@ -45,8 +47,8 @@ export interface HeroScene {
   layout(l: Layout): void;
   /** switch modes; `instant` draws the new one right away (a view transition is about to snapshot it) */
   setMode(mode: Mode, instant: boolean): void;
-  /** fetch and upload one mode's plates; resolves false if anything fails */
-  load(mode: Mode, images: PlateImages, depth: string): Promise<boolean>;
+  /** fetch and upload one mode's plates (then its sky sprites); resolves false if a plate fails */
+  load(mode: Mode, images: PlateImages, art: { depth: string; sky: string }): Promise<boolean>;
   has(mode: Mode): boolean;
   /** hand the painting to the plates (they start flat and ease into relief) or back to the <img>s */
   plates(on: boolean): void;
@@ -111,6 +113,7 @@ export function createHeroScene(
 
   const shared = plateShared();
   const rects = { sky: plateRect(), char: plateRect(), hill: plateRect() };
+  const life = createSkyLife(shared, rects);
   type Set = {
     scenes: Record<PlateName, Scene>;
     meshes: Mesh<BufferGeometry, ShaderMaterial>[];
@@ -196,14 +199,20 @@ export function createHeroScene(
       for (const mesh of s.meshes) mesh.material.uniforms.uOpacity.value = shown[m];
       s.shadow.mesh.material.uniforms.uOpacity.value = shown[m];
     }
+    life.show(shown);
 
     // sky and far petals share a canvas; petals stay in front of the sky, so the
     // depth buffer only orders the sky against itself
     draw(back, platePasses("sky"));
+    if (on) back.render(life.sky, camera);
     back.render(backPetals, camera);
     if (char && on) draw(char, platePasses("char"));
     draw(front, platePasses("hill"));
-    if (on) front.render(scrimScene, camera);
+    if (on) {
+      // fireflies are depth-tested against the hill's flowers, and dimmed with it by the scrim
+      front.render(life.meadow, camera);
+      front.render(scrimScene, camera);
+    }
     // near petals are depth-tested against the hill: they drift behind its flowers
     front.render(frontPetals, camera);
   }
@@ -211,6 +220,8 @@ export function createHeroScene(
   function frame(e: Eye, dt: number, p: number) {
     if (disposed) return;
     petals.tick(dt);
+    shared.uTime.value += dt;
+    life.tick(dt, shown);
     if (on) relief = flat ? Math.max(0, relief - dt / 0.6) : Math.min(1, relief + dt / RELIEF_IN);
     const other: Mode = mode === "day" ? "night" : "day";
     if (shown[mode] < 1) shown[mode] = Math.min(1, shown[mode] + dt / MODE_FADE);
@@ -237,6 +248,12 @@ export function createHeroScene(
       meshes.push(mesh);
       scenes[n] = new Scene().add(mesh);
     });
+    // the sun moves over the day meadow
+    if (m === "day") {
+      const light = createLight(maps[2], depth[2], shared, rects.hill);
+      meshes.push(light);
+      scenes.hill.add(light);
+    }
     // her shadow goes down first, under her plate
     const shadow = createShadow(shadowSource(colors[1]), depth[1], shared, rects.char);
     shadow.mesh.renderOrder = -1;
@@ -253,16 +270,32 @@ export function createHeroScene(
       depths[i].close();
     }
     const textures = [...maps, ...depth];
-    await Promise.all(PLATES.map((n) => target[n].compileAsync(scenes[n], camera)));
+    await Promise.all([...PLATES.map((n) => target[n].compileAsync(scenes[n], camera)), life.compile(back, front, camera)]);
     if (disposed) return false;
+    life.attach(m, { sky: maps[0], skyDepth: depth[0], hillDepth: depth[2] });
     sets[m] = { scenes, meshes, textures, shadow };
     return true;
+  }
+
+  /** The mode's sky sprites, after its plates: the clouds and birds fade in once they're up. */
+  async function sprites(m: Mode, url: string) {
+    const img = new Image();
+    img.src = url;
+    const bmp = await createImageBitmap(await decoded(img), { premultiplyAlpha: "premultiply" });
+    if (disposed) return bmp.close();
+    const t = colorTexture(bmp);
+    await frameOnce();
+    back.initTexture(t);
+    bmp.close();
+    if (disposed) return t.dispose();
+    life.sprites(m, t);
   }
 
   return {
     frame,
     layout(l) {
       lensTo(l.lens);
+      life.layout(l);
       for (const n of PLATES) rects[n].value.set(l.rects[n].x, l.rects[n].y, l.rects[n].w, l.rects[n].h);
       scrim.set(l.scrim);
       for (const s of Object.values(sets)) s.shadow.set(l.shadow, l.rects.char.h);
@@ -279,9 +312,15 @@ export function createHeroScene(
         render(lastP);
       }
     },
-    load(m, images, depth) {
+    load(m, images, art) {
       if (!opts.depth) return Promise.resolve(false);
-      return (loading[m] ??= upload(m, images, depth).catch(() => false));
+      return (loading[m] ??= upload(m, images, art.depth)
+        .then((ok) => {
+          // the sky can live without them
+          if (ok) sprites(m, art.sky).catch(() => {});
+          return ok;
+        })
+        .catch(() => false));
     },
     has: (m) => !!sets[m],
     plates(next) {
@@ -310,6 +349,7 @@ export function createHeroScene(
         s.shadow.dispose();
       }
       disposeGrids();
+      life.dispose();
       scrim.dispose();
       petals.dispose();
       for (const r of renderers()) {

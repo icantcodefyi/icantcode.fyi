@@ -86,6 +86,54 @@ const AVIF = new Set([
   "/lobby/val/stage/day-near-800",
   "/lobby/val/stage/day-depth",
   "/lobby/val/stage/day-depth-800",
+  "/lobby/gi/vista/fontaine-day-depth-1200",
+  "/lobby/gi/vista/fontaine-day-depth",
+  "/lobby/gi/vista/fontaine-day-far-1200",
+  "/lobby/gi/vista/fontaine-day-far",
+  "/lobby/gi/vista/fontaine-day-near-1200",
+  "/lobby/gi/vista/fontaine-day-near",
+  "/lobby/gi/vista/fontaine-day-sky-1200",
+  "/lobby/gi/vista/fontaine-day-sky",
+  "/lobby/gi/vista/fontaine-night-depth-1200",
+  "/lobby/gi/vista/fontaine-night-depth",
+  "/lobby/gi/vista/fontaine-night-far-1200",
+  "/lobby/gi/vista/fontaine-night-far",
+  "/lobby/gi/vista/fontaine-night-near-1200",
+  "/lobby/gi/vista/fontaine-night-near",
+  "/lobby/gi/vista/fontaine-night-sky-1200",
+  "/lobby/gi/vista/fontaine-night-sky",
+  "/lobby/gi/vista/inazuma-day-depth-1200",
+  "/lobby/gi/vista/inazuma-day-depth",
+  "/lobby/gi/vista/inazuma-day-far-1200",
+  "/lobby/gi/vista/inazuma-day-far",
+  "/lobby/gi/vista/inazuma-day-near-1200",
+  "/lobby/gi/vista/inazuma-day-near",
+  "/lobby/gi/vista/inazuma-day-sky-1200",
+  "/lobby/gi/vista/inazuma-day-sky",
+  "/lobby/gi/vista/inazuma-night-depth-1200",
+  "/lobby/gi/vista/inazuma-night-depth",
+  "/lobby/gi/vista/inazuma-night-far-1200",
+  "/lobby/gi/vista/inazuma-night-far",
+  "/lobby/gi/vista/inazuma-night-near-1200",
+  "/lobby/gi/vista/inazuma-night-near",
+  "/lobby/gi/vista/inazuma-night-sky-1200",
+  "/lobby/gi/vista/inazuma-night-sky",
+  "/lobby/gi/vista/liyue-day-depth-1200",
+  "/lobby/gi/vista/liyue-day-depth",
+  "/lobby/gi/vista/liyue-day-far-1200",
+  "/lobby/gi/vista/liyue-day-far",
+  "/lobby/gi/vista/liyue-day-near-1200",
+  "/lobby/gi/vista/liyue-day-near",
+  "/lobby/gi/vista/liyue-day-sky-1200",
+  "/lobby/gi/vista/liyue-day-sky",
+  "/lobby/gi/vista/liyue-night-depth-1200",
+  "/lobby/gi/vista/liyue-night-depth",
+  "/lobby/gi/vista/liyue-night-far-1200",
+  "/lobby/gi/vista/liyue-night-far",
+  "/lobby/gi/vista/liyue-night-near-1200",
+  "/lobby/gi/vista/liyue-night-near",
+  "/lobby/gi/vista/liyue-night-sky-1200",
+  "/lobby/gi/vista/liyue-night-sky",
 ]);
 
 export const avif = () => typeof window !== "undefined" && window.__avif === true;
@@ -265,4 +313,123 @@ export const VALORANT_STAGE = {
   offset: [0, 0],
   objectPosition: "42% 50%",
   tint: { color: "#ff4655", night: 0.22, day: 0.18 },
+} as const;
+
+/** Teyvat: the selected character's home region behind them (Inazuma, Liyue, Fontaine), layered for depth. */
+export const TEYVAT_VISTA = {
+  "inazuma": {
+    "night": {
+      "sky": "/lobby/gi/vista/inazuma-night-sky",
+      "far": "/lobby/gi/vista/inazuma-night-far",
+      "near": "/lobby/gi/vista/inazuma-night-near",
+      "depth": "/lobby/gi/vista/inazuma-night-depth",
+      "skyHalf": "/lobby/gi/vista/inazuma-night-sky-1200",
+      "farHalf": "/lobby/gi/vista/inazuma-night-far-1200",
+      "nearHalf": "/lobby/gi/vista/inazuma-night-near-1200",
+      "depthHalf": "/lobby/gi/vista/inazuma-night-depth-1200"
+    },
+    "day": {
+      "sky": "/lobby/gi/vista/inazuma-day-sky",
+      "far": "/lobby/gi/vista/inazuma-day-far",
+      "near": "/lobby/gi/vista/inazuma-day-near",
+      "depth": "/lobby/gi/vista/inazuma-day-depth",
+      "skyHalf": "/lobby/gi/vista/inazuma-day-sky-1200",
+      "farHalf": "/lobby/gi/vista/inazuma-day-far-1200",
+      "nearHalf": "/lobby/gi/vista/inazuma-day-near-1200",
+      "depthHalf": "/lobby/gi/vista/inazuma-day-depth-1200"
+    }
+  },
+  "liyue": {
+    "night": {
+      "sky": "/lobby/gi/vista/liyue-night-sky",
+      "far": "/lobby/gi/vista/liyue-night-far",
+      "near": "/lobby/gi/vista/liyue-night-near",
+      "depth": "/lobby/gi/vista/liyue-night-depth",
+      "skyHalf": "/lobby/gi/vista/liyue-night-sky-1200",
+      "farHalf": "/lobby/gi/vista/liyue-night-far-1200",
+      "nearHalf": "/lobby/gi/vista/liyue-night-near-1200",
+      "depthHalf": "/lobby/gi/vista/liyue-night-depth-1200"
+    },
+    "day": {
+      "sky": "/lobby/gi/vista/liyue-day-sky",
+      "far": "/lobby/gi/vista/liyue-day-far",
+      "near": "/lobby/gi/vista/liyue-day-near",
+      "depth": "/lobby/gi/vista/liyue-day-depth",
+      "skyHalf": "/lobby/gi/vista/liyue-day-sky-1200",
+      "farHalf": "/lobby/gi/vista/liyue-day-far-1200",
+      "nearHalf": "/lobby/gi/vista/liyue-day-near-1200",
+      "depthHalf": "/lobby/gi/vista/liyue-day-depth-1200"
+    }
+  },
+  "fontaine": {
+    "night": {
+      "sky": "/lobby/gi/vista/fontaine-night-sky",
+      "far": "/lobby/gi/vista/fontaine-night-far",
+      "near": "/lobby/gi/vista/fontaine-night-near",
+      "depth": "/lobby/gi/vista/fontaine-night-depth",
+      "skyHalf": "/lobby/gi/vista/fontaine-night-sky-1200",
+      "farHalf": "/lobby/gi/vista/fontaine-night-far-1200",
+      "nearHalf": "/lobby/gi/vista/fontaine-night-near-1200",
+      "depthHalf": "/lobby/gi/vista/fontaine-night-depth-1200"
+    },
+    "day": {
+      "sky": "/lobby/gi/vista/fontaine-day-sky",
+      "far": "/lobby/gi/vista/fontaine-day-far",
+      "near": "/lobby/gi/vista/fontaine-day-near",
+      "depth": "/lobby/gi/vista/fontaine-day-depth",
+      "skyHalf": "/lobby/gi/vista/fontaine-day-sky-1200",
+      "farHalf": "/lobby/gi/vista/fontaine-day-far-1200",
+      "nearHalf": "/lobby/gi/vista/fontaine-day-near-1200",
+      "depthHalf": "/lobby/gi/vista/fontaine-day-depth-1200"
+    }
+  },
+  "size": [
+    2400,
+    1350
+  ],
+  "halfSize": [
+    1200,
+    675
+  ],
+  "layers": {
+    "sky": {
+      "size": [
+        2400,
+        1350
+      ],
+      "offset": [
+        0,
+        0
+      ],
+      "maxTravelPx": 2
+    },
+    "far": {
+      "size": [
+        2400,
+        1350
+      ],
+      "offset": [
+        0,
+        0
+      ],
+      "maxTravelPx": 6
+    },
+    "near": {
+      "size": [
+        2400,
+        1350
+      ],
+      "offset": [
+        0,
+        0
+      ],
+      "maxTravelPx": 12
+    }
+  },
+  "characterRegion": {
+    "kazuha": "inazuma",
+    "zhongli": "liyue",
+    "hu-tao": "liyue",
+    "furina": "fontaine"
+  }
 } as const;

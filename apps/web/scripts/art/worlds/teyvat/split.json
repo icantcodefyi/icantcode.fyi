@@ -1,0 +1,188 @@
+{
+  "fontaine-day": {
+    "size": [
+      2400,
+      1350
+    ],
+    "offsets": {
+      "sky": [
+        0,
+        0
+      ],
+      "far": [
+        0,
+        0
+      ],
+      "near": [
+        0,
+        0
+      ]
+    },
+    "split_thresholds": {
+      "far": 0.012,
+      "near": 0.5
+    },
+    "far_alpha_fraction": 0.511992121900835,
+    "near_alpha_fraction": 0.09561202389805101,
+    "reconstruction_mae": 0.0017523662551440328,
+    "reconstruction_max_error": 20.0,
+    "edge_feather_px": 3.4,
+    "underpainting": "generated clean sky and sea, no duplicated landmarks",
+    "rgb_bleed_px": 8
+  },
+  "fontaine-night": {
+    "size": [
+      2400,
+      1350
+    ],
+    "offsets": {
+      "sky": [
+        0,
+        0
+      ],
+      "far": [
+        0,
+        0
+      ],
+      "near": [
+        0,
+        0
+      ]
+    },
+    "split_thresholds": {
+      "far": 0.012,
+      "near": 0.5
+    },
+    "far_alpha_fraction": 0.5207140855873613,
+    "near_alpha_fraction": 0.0981353821745982,
+    "reconstruction_mae": 0.001055246913580247,
+    "reconstruction_max_error": 15.0,
+    "edge_feather_px": 3.4,
+    "underpainting": "generated clean sky and sea, no duplicated landmarks",
+    "rgb_bleed_px": 8
+  },
+  "inazuma-day": {
+    "size": [
+      2400,
+      1350
+    ],
+    "offsets": {
+      "sky": [
+        0,
+        0
+      ],
+      "far": [
+        0,
+        0
+      ],
+      "near": [
+        0,
+        0
+      ]
+    },
+    "split_thresholds": {
+      "far": 0.012,
+      "near": 0.5
+    },
+    "far_alpha_fraction": 0.5223741030449627,
+    "near_alpha_fraction": 0.0756910040814163,
+    "reconstruction_mae": 0.0018059670781893004,
+    "reconstruction_max_error": 21.0,
+    "edge_feather_px": 3.4,
+    "underpainting": "generated clean sky and sea, no duplicated landmarks",
+    "rgb_bleed_px": 8
+  },
+  "inazuma-night": {
+    "size": [
+      2400,
+      1350
+    ],
+    "offsets": {
+      "sky": [
+        0,
+        0
+      ],
+      "far": [
+        0,
+        0
+      ],
+      "near": [
+        0,
+        0
+      ]
+    },
+    "split_thresholds": {
+      "far": 0.012,
+      "near": 0.5
+    },
+    "far_alpha_fraction": 0.5169127913404468,
+    "near_alpha_fraction": 0.07082099026335108,
+    "reconstruction_mae": 0.0018515432098765432,
+    "reconstruction_max_error": 20.0,
+    "edge_feather_px": 3.4,
+    "underpainting": "generated clean sky and sea, no duplicated landmarks",
+    "rgb_bleed_px": 8
+  },
+  "liyue-day": {
+    "size": [
+      2400,
+      1350
+    ],
+    "offsets": {
+      "sky": [
+        0,
+        0
+      ],
+      "far": [
+        0,
+        0
+      ],
+      "near": [
+        0,
+        0
+      ]
+    },
+    "split_thresholds": {
+      "far": 0.012,
+      "near": 0.5
+    },
+    "far_alpha_fraction": 0.5262618180016719,
+    "near_alpha_fraction": 0.07632245916278586,
+    "reconstruction_mae": 0.0033024691358024692,
+    "reconstruction_max_error": 20.0,
+    "edge_feather_px": 3.4,
+    "underpainting": "generated clean sky and sea, no duplicated landmarks",
+    "rgb_bleed_px": 8
+  },
+  "liyue-night": {
+    "size": [
+      2400,
+      1350
+    ],
+    "offsets": {
+      "sky": [
+        0,
+        0
+      ],
+      "far": [
+        0,
+        0
+      ],
+      "near": [
+        0,
+        0
+      ]
+    },
+    "split_thresholds": {
+      "far": 0.012,
+      "near": 0.5
+    },
+    "far_alpha_fraction": 0.5241748606693172,
+    "near_alpha_fraction": 0.0766113849812287,
+    "reconstruction_mae": 0.0011792181069958847,
+    "reconstruction_max_error": 22.0,
+    "edge_feather_px": 3.4,
+    "underpainting": "generated clean sky and sea, no duplicated landmarks",
+    "rgb_bleed_px": 8
+  }
+}

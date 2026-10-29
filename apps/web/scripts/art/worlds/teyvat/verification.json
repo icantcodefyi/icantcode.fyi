@@ -1,0 +1,763 @@
+{
+  "file_count": 96,
+  "paintings": {
+    "inazuma-night": {
+      "avif": {
+        "full_KB": 137.08,
+        "rmse_8bit": 3.905,
+        "psnr_dB": 36.3
+      },
+      "webp": {
+        "full_KB": 288.0,
+        "rmse_8bit": 2.634,
+        "psnr_dB": 39.72
+      },
+      "depth_top_mean": 0.0,
+      "depth_bottom_mean": 142.85
+    },
+    "inazuma-day": {
+      "avif": {
+        "full_KB": 160.22,
+        "rmse_8bit": 6.256,
+        "psnr_dB": 32.21
+      },
+      "webp": {
+        "full_KB": 474.08,
+        "rmse_8bit": 3.391,
+        "psnr_dB": 37.52
+      },
+      "depth_top_mean": 0.03,
+      "depth_bottom_mean": 151.98
+    },
+    "liyue-night": {
+      "avif": {
+        "full_KB": 145.96,
+        "rmse_8bit": 3.428,
+        "psnr_dB": 37.43
+      },
+      "webp": {
+        "full_KB": 259.19,
+        "rmse_8bit": 2.546,
+        "psnr_dB": 40.02
+      },
+      "depth_top_mean": 0.0,
+      "depth_bottom_mean": 145.93
+    },
+    "liyue-day": {
+      "avif": {
+        "full_KB": 167.0,
+        "rmse_8bit": 6.45,
+        "psnr_dB": 31.94
+      },
+      "webp": {
+        "full_KB": 462.79,
+        "rmse_8bit": 3.35,
+        "psnr_dB": 37.63
+      },
+      "depth_top_mean": 0.01,
+      "depth_bottom_mean": 144.44
+    },
+    "fontaine-night": {
+      "avif": {
+        "full_KB": 147.94,
+        "rmse_8bit": 4.525,
+        "psnr_dB": 35.02
+      },
+      "webp": {
+        "full_KB": 330.19,
+        "rmse_8bit": 2.949,
+        "psnr_dB": 38.74
+      },
+      "depth_top_mean": 0.0,
+      "depth_bottom_mean": 169.71
+    },
+    "fontaine-day": {
+      "avif": {
+        "full_KB": 143.98,
+        "rmse_8bit": 5.598,
+        "psnr_dB": 33.17
+      },
+      "webp": {
+        "full_KB": 392.52,
+        "rmse_8bit": 3.003,
+        "psnr_dB": 38.58
+      },
+      "depth_top_mean": 0.0,
+      "depth_bottom_mean": 170.54
+    }
+  },
+  "files": [
+    {
+      "file": "fontaine-day-depth-1200.avif",
+      "sha256": "1f11c9811846a5c04d704c108f594821882f4b1a1f54fdc3c6e8a505c08ec116",
+      "mode": "RGB",
+      "alpha_min": 255,
+      "alpha_max": 255
+    },
+    {
+      "file": "fontaine-day-depth-1200.webp",
+      "sha256": "d8b3b9626d8cdc48ac815394f1acfcc759e8e686714ec6759ef4e9f114db4c23",
+      "mode": "RGB",
+      "alpha_min": 255,
+      "alpha_max": 255
+    },
+    {
+      "file": "fontaine-day-depth.avif",
+      "sha256": "4a35747117e9c796f29cf54265123d397fcb66409fcac9f4df7a04b9dbf66c06",
+      "mode": "RGB",
+      "alpha_min": 255,
+      "alpha_max": 255
+    },
+    {
+      "file": "fontaine-day-depth.webp",
+      "sha256": "4da11484a9229b9af8f8a72641c64d30f6c07378767e9e00d81dd31a4c45acd4",
+      "mode": "RGB",
+      "alpha_min": 255,
+      "alpha_max": 255
+    },
+    {
+      "file": "fontaine-day-far-1200.avif",
+      "sha256": "27793f885ce63051359dae4bb3474209f9513ad2e5ab032a481154317dc6c93f",
+      "mode": "RGBA",
+      "alpha_min": 0,
+      "alpha_max": 255
+    },
+    {
+      "file": "fontaine-day-far-1200.webp",
+      "sha256": "168694b7c028458d1da52e049edb90f186a79d7c8bd73a82be49b17567f8ba6f",
+      "mode": "RGBA",
+      "alpha_min": 0,
+      "alpha_max": 255
+    },
+    {
+      "file": "fontaine-day-far.avif",
+      "sha256": "218e7a02a924d94d03d4790351627020b30d0ebc4e1235f6072a64d2cb024f13",
+      "mode": "RGBA",
+      "alpha_min": 0,
+      "alpha_max": 255
+    },
+    {
+      "file": "fontaine-day-far.webp",
+      "sha256": "57a59c0d669bdd44b86ad16f80a0bd6e63a0fad3496a9ac6164a551fe599df58",
+      "mode": "RGBA",
+      "alpha_min": 0,
+      "alpha_max": 255
+    },
+    {
+      "file": "fontaine-day-near-1200.avif",
+      "sha256": "9c76dad1839fe981b2d2a182e9e861ed3c1e8f1719e6d5bf149fb81f1545b378",
+      "mode": "RGBA",
+      "alpha_min": 0,
+      "alpha_max": 255
+    },
+    {
+      "file": "fontaine-day-near-1200.webp",
+      "sha256": "c56e4f8f2683ec9e10837bad9ad25075592b8c9f7b1e716a293430eccba48daa",
+      "mode": "RGBA",
+      "alpha_min": 0,
+      "alpha_max": 255
+    },
+    {
+      "file": "fontaine-day-near.avif",
+      "sha256": "e49c988818a0d04623f208658564c4aed9c2a5efaefbe4c7b421d5ee82e1ef86",
+      "mode": "RGBA",
+      "alpha_min": 0,
+      "alpha_max": 255
+    },
+    {
+      "file": "fontaine-day-near.webp",
+      "sha256": "6c4eb7c3baf394bbcd051925aecd2ceedfc39036bae004c07e1061e6a768de1c",
+      "mode": "RGBA",
+      "alpha_min": 0,
+      "alpha_max": 255
+    },
+    {
+      "file": "fontaine-day-sky-1200.avif",
+      "sha256": "78e93be200e085a46c012432d683fce641aaad9ec7ec06054a891e8a05c0637a",
+      "mode": "RGB",
+      "alpha_min": 255,
+      "alpha_max": 255
+    },
+    {
+      "file": "fontaine-day-sky-1200.webp",
+      "sha256": "36fc88280403663225b4be63601b52a679353a37d1cf9a9ef5ab2710ac58718d",
+      "mode": "RGB",
+      "alpha_min": 255,
+      "alpha_max": 255
+    },
+    {
+      "file": "fontaine-day-sky.avif",
+      "sha256": "b22aa7469f4764fcf0972a74698eba77ea19bee105e6202aaeed6d783d637e30",
+      "mode": "RGB",
+      "alpha_min": 255,
+      "alpha_max": 255
+    },
+    {
+      "file": "fontaine-day-sky.webp",
+      "sha256": "da334fbd6a69ed6f1d83709bbfb56e32b1b41f015f8250cce7719070086cbdc2",
+      "mode": "RGB",
+      "alpha_min": 255,
+      "alpha_max": 255
+    },
+    {
+      "file": "fontaine-night-depth-1200.avif",
+      "sha256": "db8a05d74ac7751a333df758eb06ced1cca102bf2d5cc56bb5627299728889ce",
+      "mode": "RGB",
+      "alpha_min": 255,
+      "alpha_max": 255
+    },
+    {
+      "file": "fontaine-night-depth-1200.webp",
+      "sha256": "5f4b3d1ce53b65d3aa76fefdb5422e971784ec922ca990ae13f62790c0e143db",
+      "mode": "RGB",
+      "alpha_min": 255,
+      "alpha_max": 255
+    },
+    {
+      "file": "fontaine-night-depth.avif",
+      "sha256": "a03f12ee0c59671168c2090f65838c9f1a10c6dc5aa0bbc21c4029c2f18d20ef",
+      "mode": "RGB",
+      "alpha_min": 255,
+      "alpha_max": 255
+    },
+    {
+      "file": "fontaine-night-depth.webp",
+      "sha256": "375d000010610c7653ccfa70932798031152bbff48976de46be98ce65f946bc7",
+      "mode": "RGB",
+      "alpha_min": 255,
+      "alpha_max": 255
+    },
+    {
+      "file": "fontaine-night-far-1200.avif",
+      "sha256": "6ffa0d03fa2f73c406aa353e160b94419ddbe870a1898971b1bae038a2da9f49",
+      "mode": "RGBA",
+      "alpha_min": 0,
+      "alpha_max": 255
+    },
+    {
+      "file": "fontaine-night-far-1200.webp",
+      "sha256": "ab299fe8567ce37bba2fafd2346e63423e2534b5f66196b27880bb9faf8b6057",
+      "mode": "RGBA",
+      "alpha_min": 0,
+      "alpha_max": 255
+    },
+    {
+      "file": "fontaine-night-far.avif",
+      "sha256": "35681c778d9904c6017c79f8d05df1ad3b8ab4417a44059bbed8112f66be33c1",
+      "mode": "RGBA",
+      "alpha_min": 0,
+      "alpha_max": 255
+    },
+    {
+      "file": "fontaine-night-far.webp",
+      "sha256": "46893d33e103968a8b919a9199f034c815a6bd81e5b4734c69925c0c98d11017",
+      "mode": "RGBA",
+      "alpha_min": 0,
+      "alpha_max": 255
+    },
+    {
+      "file": "fontaine-night-near-1200.avif",
+      "sha256": "9cef7f19fae4e76af2fe53d26ee38af085aa476bcebb322a35ab90bb205d7165",
+      "mode": "RGBA",
+      "alpha_min": 0,
+      "alpha_max": 255
+    },
+    {
+      "file": "fontaine-night-near-1200.webp",
+      "sha256": "4aff5032ba16c61ab522f474ec11b67c5ab0e7e118c253127f1983be5159ca0a",
+      "mode": "RGBA",
+      "alpha_min": 0,
+      "alpha_max": 255
+    },
+    {
+      "file": "fontaine-night-near.avif",
+      "sha256": "4c6aff136baec7d8e2d5e8889079481f9ac49089c26780e524deef478b4f76d4",
+      "mode": "RGBA",
+      "alpha_min": 0,
+      "alpha_max": 255
+    },
+    {
+      "file": "fontaine-night-near.webp",
+      "sha256": "6f6a6163b145f752a41c912f697eb073c8aac247c67b67a0093861f2f210416b",
+      "mode": "RGBA",
+      "alpha_min": 0,
+      "alpha_max": 255
+    },
+    {
+      "file": "fontaine-night-sky-1200.avif",
+      "sha256": "b087be1dabb58816440e8f7b7b397e1fd5c0aa4a3a29a7aaec182d40809bd5f9",
+      "mode": "RGB",
+      "alpha_min": 255,
+      "alpha_max": 255
+    },
+    {
+      "file": "fontaine-night-sky-1200.webp",
+      "sha256": "e7274a2d19537788571f6a2cd4dcc3babeacefe1d0084e735512751ac1dd1072",
+      "mode": "RGB",
+      "alpha_min": 255,
+      "alpha_max": 255
+    },
+    {
+      "file": "fontaine-night-sky.avif",
+      "sha256": "e2b846cad36114ac2b37bcd686be0dd1f02be4e06556a1b0cd4c89853f1ab5be",
+      "mode": "RGB",
+      "alpha_min": 255,
+      "alpha_max": 255
+    },
+    {
+      "file": "fontaine-night-sky.webp",
+      "sha256": "14948192f0425c92e4beeb0a26b1c1fd8b74e1720eed10d71496c48c30e5eb6e",
+      "mode": "RGB",
+      "alpha_min": 255,
+      "alpha_max": 255
+    },
+    {
+      "file": "inazuma-day-depth-1200.avif",
+      "sha256": "2e522232e42447701a4138de5f58bf254a012f2a6c6540a561052d8010564b89",
+      "mode": "RGB",
+      "alpha_min": 255,
+      "alpha_max": 255
+    },
+    {
+      "file": "inazuma-day-depth-1200.webp",
+      "sha256": "4d1c072123658caae019fd7a44d56f5239395150ac583ca5ec3f45b8f6d86eb4",
+      "mode": "RGB",
+      "alpha_min": 255,
+      "alpha_max": 255
+    },
+    {
+      "file": "inazuma-day-depth.avif",
+      "sha256": "476a2053585c7fa4edb9a3116d18130a40e699228ab390f301c8cf39f850e9e9",
+      "mode": "RGB",
+      "alpha_min": 255,
+      "alpha_max": 255
+    },
+    {
+      "file": "inazuma-day-depth.webp",
+      "sha256": "fe00ae09771167af072ee7453aaa1a21e42ed99c10fc8c16e0908e3ab003c192",
+      "mode": "RGB",
+      "alpha_min": 255,
+      "alpha_max": 255
+    },
+    {
+      "file": "inazuma-day-far-1200.avif",
+      "sha256": "87282a2f3a0947fc5eef03c353010eb64bbc270d99d884c42603cea476317516",
+      "mode": "RGBA",
+      "alpha_min": 0,
+      "alpha_max": 255
+    },
+    {
+      "file": "inazuma-day-far-1200.webp",
+      "sha256": "21065232f129cf85ac8ee43ad9b8eb67aaa142d549fabfacaa1bf338c392b395",
+      "mode": "RGBA",
+      "alpha_min": 0,
+      "alpha_max": 255
+    },
+    {
+      "file": "inazuma-day-far.avif",
+      "sha256": "32ad93cc3510a73ffcbc1a36b68568bb8a6fb704f29089bced522b23cfb6b2dd",
+      "mode": "RGBA",
+      "alpha_min": 0,
+      "alpha_max": 255
+    },
+    {
+      "file": "inazuma-day-far.webp",
+      "sha256": "c37aecf996f0ab42c868dc6914f57fa2a90afcdbb34a1a12434887a9bfa0bdf2",
+      "mode": "RGBA",
+      "alpha_min": 0,
+      "alpha_max": 255
+    },
+    {
+      "file": "inazuma-day-near-1200.avif",
+      "sha256": "452c45b23f1e7185f7a991132539901b5aaf33c1f5605c984c675ea3e01bb982",
+      "mode": "RGBA",
+      "alpha_min": 0,
+      "alpha_max": 255
+    },
+    {
+      "file": "inazuma-day-near-1200.webp",
+      "sha256": "5e7070d5cefb7a9d7fca3c618b7e999282e5166d65924f27076609dc58d1c3f8",
+      "mode": "RGBA",
+      "alpha_min": 0,
+      "alpha_max": 255
+    },
+    {
+      "file": "inazuma-day-near.avif",
+      "sha256": "5d8753125757bf03f4ca76f2d776d37bd90c89ef89f117bbbe5df4d5af43cfe4",
+      "mode": "RGBA",
+      "alpha_min": 0,
+      "alpha_max": 255
+    },
+    {
+      "file": "inazuma-day-near.webp",
+      "sha256": "18776ffd67ea66fb43d1930f23fd2e5a75f08dfd7c805053253b2951a02ac861",
+      "mode": "RGBA",
+      "alpha_min": 0,
+      "alpha_max": 255
+    },
+    {
+      "file": "inazuma-day-sky-1200.avif",
+      "sha256": "4e8f161d4cc9e26f392474d0225aeecf727946d25da8383cd0ea796dc5170e12",
+      "mode": "RGB",
+      "alpha_min": 255,
+      "alpha_max": 255
+    },
+    {
+      "file": "inazuma-day-sky-1200.webp",
+      "sha256": "fb83c4158d7908bb9f4c078faa509ea4ee80f9bbebd54d05c9d2e715ff794ebd",
+      "mode": "RGB",
+      "alpha_min": 255,
+      "alpha_max": 255
+    },
+    {
+      "file": "inazuma-day-sky.avif",
+      "sha256": "71ea1a80753e85699c006242e043be7848295d9fd50b09a68f9b9882f2355985",
+      "mode": "RGB",
+      "alpha_min": 255,
+      "alpha_max": 255
+    },
+    {
+      "file": "inazuma-day-sky.webp",
+      "sha256": "046bdc841bf269e6408c6d941ebbbaa18311040525a38747c82c797ec4048cc5",
+      "mode": "RGB",
+      "alpha_min": 255,
+      "alpha_max": 255
+    },
+    {
+      "file": "inazuma-night-depth-1200.avif",
+      "sha256": "f80ef3e589947a96553e0ed01b4036f9175cab2852dfa8b19a3cfadff2706b0c",
+      "mode": "RGB",
+      "alpha_min": 255,
+      "alpha_max": 255
+    },
+    {
+      "file": "inazuma-night-depth-1200.webp",
+      "sha256": "ed18e072938b28daa054994368859b596a87436e49e664d16414b38d248aeff2",
+      "mode": "RGB",
+      "alpha_min": 255,
+      "alpha_max": 255
+    },
+    {
+      "file": "inazuma-night-depth.avif",
+      "sha256": "b8971c80e3ff71c1c8c96b03a8cca8be5f509cfc8abd3a26b70d3d5daab48788",
+      "mode": "RGB",
+      "alpha_min": 255,
+      "alpha_max": 255
+    },
+    {
+      "file": "inazuma-night-depth.webp",
+      "sha256": "4fbd5941f23527fd4ef0db97ba6e0fe8a100dc5b6dfd2a3baf94c581baab0c93",
+      "mode": "RGB",
+      "alpha_min": 255,
+      "alpha_max": 255
+    },
+    {
+      "file": "inazuma-night-far-1200.avif",
+      "sha256": "3bd65394d7710693b29eb18c10323e0b3c6f54a288294da6d8f715f7439da96c",
+      "mode": "RGBA",
+      "alpha_min": 0,
+      "alpha_max": 255
+    },
+    {
+      "file": "inazuma-night-far-1200.webp",
+      "sha256": "ebe7b0fa209cd6f621d7851c429c21a71af10e2c19ccac30e49005f644410caa",
+      "mode": "RGBA",
+      "alpha_min": 0,
+      "alpha_max": 255
+    },
+    {
+      "file": "inazuma-night-far.avif",
+      "sha256": "f5133243a463e18c7cf7cdf2d644937c09a554d68bff1e0ab30c9e8b951d4455",
+      "mode": "RGBA",
+      "alpha_min": 0,
+      "alpha_max": 255
+    },
+    {
+      "file": "inazuma-night-far.webp",
+      "sha256": "1e53bae1708c69c7cf7697170b0302c8ef773058a0f6d8786cc85cc7381ca178",
+      "mode": "RGBA",
+      "alpha_min": 0,
+      "alpha_max": 255
+    },
+    {
+      "file": "inazuma-night-near-1200.avif",
+      "sha256": "41d9631141932cb59382f7afd9bb70e5339f77d82b358ab0ed2ade77ea077512",
+      "mode": "RGBA",
+      "alpha_min": 0,
+      "alpha_max": 255
+    },
+    {
+      "file": "inazuma-night-near-1200.webp",
+      "sha256": "5b342e74f9934468c543d516042a9c7de8d853eed25dc282d065e5d8d8159f5e",
+      "mode": "RGBA",
+      "alpha_min": 0,
+      "alpha_max": 255
+    },
+    {
+      "file": "inazuma-night-near.avif",
+      "sha256": "cb192bfbfa87f031ff22d144f7b9a974aae45482077794cce5490c8e62596810",
+      "mode": "RGBA",
+      "alpha_min": 0,
+      "alpha_max": 255
+    },
+    {
+      "file": "inazuma-night-near.webp",
+      "sha256": "389846af7d57f67a05f192c09259db2c4e133adfcaa55359c6f752d1b61d084d",
+      "mode": "RGBA",
+      "alpha_min": 0,
+      "alpha_max": 255
+    },
+    {
+      "file": "inazuma-night-sky-1200.avif",
+      "sha256": "fbfc89c4396e59bb395d7476df6066a0bd7efdeb7d6cb0419d3186c7165a4fa9",
+      "mode": "RGB",
+      "alpha_min": 255,
+      "alpha_max": 255
+    },
+    {
+      "file": "inazuma-night-sky-1200.webp",
+      "sha256": "163e094324a55d98a18d6d64cada6bf52991088eb9282c952e748600bcd87bd0",
+      "mode": "RGB",
+      "alpha_min": 255,
+      "alpha_max": 255
+    },
+    {
+      "file": "inazuma-night-sky.avif",
+      "sha256": "ed5792f493202b3df5f493ec5565fe0a7c64682e0336a040066073ce7045cfab",
+      "mode": "RGB",
+      "alpha_min": 255,
+      "alpha_max": 255
+    },
+    {
+      "file": "inazuma-night-sky.webp",
+      "sha256": "41cefd42fe15a5c85cf242890751711559d5eabfa6238241a84844ee19af21e9",
+      "mode": "RGB",
+      "alpha_min": 255,
+      "alpha_max": 255
+    },
+    {
+      "file": "liyue-day-depth-1200.avif",
+      "sha256": "afacf37419d29bf9e7931b85bc0f5d4aeeb6c750f8564c83de399e62e2117715",
+      "mode": "RGB",
+      "alpha_min": 255,
+      "alpha_max": 255
+    },
+    {
+      "file": "liyue-day-depth-1200.webp",
+      "sha256": "a330674a16f6abdf641a56804d64ee3b575ee7cdf7c0bf687093509b45d5fbbd",
+      "mode": "RGB",
+      "alpha_min": 255,
+      "alpha_max": 255
+    },
+    {
+      "file": "liyue-day-depth.avif",
+      "sha256": "9ed45248d2b35320f6385dc2a4936819c8bf983c9bb3437a61d8e3ebd9e619bc",
+      "mode": "RGB",
+      "alpha_min": 255,
+      "alpha_max": 255
+    },
+    {
+      "file": "liyue-day-depth.webp",
+      "sha256": "db32d43c32303f3b453d7bc30661c2c9c6b0bd0a466d1719c23ea7b78e7e43e6",
+      "mode": "RGB",
+      "alpha_min": 255,
+      "alpha_max": 255
+    },
+    {
+      "file": "liyue-day-far-1200.avif",
+      "sha256": "2f657aaae68bddce84bd29a65d59d54ff905dda11ae3088b0eac3f5fc27cb1e9",
+      "mode": "RGBA",
+      "alpha_min": 0,
+      "alpha_max": 255
+    },
+    {
+      "file": "liyue-day-far-1200.webp",
+      "sha256": "03a92eec9971aa03250a69d4b621c426a7efd92aa8ec96af1ae3da94f0ede801",
+      "mode": "RGBA",
+      "alpha_min": 0,
+      "alpha_max": 255
+    },
+    {
+      "file": "liyue-day-far.avif",
+      "sha256": "66fd448f4a9dddc6fed5c88a1dc6fa04a2c49e1dfe2aa4213d6f82ba3edf398e",
+      "mode": "RGBA",
+      "alpha_min": 0,
+      "alpha_max": 255
+    },
+    {
+      "file": "liyue-day-far.webp",
+      "sha256": "85274e7eff11e52c0f3e2e7e141c0e941fe71d4a7f24a8544630a1ac690f50d2",
+      "mode": "RGBA",
+      "alpha_min": 0,
+      "alpha_max": 255
+    },
+    {
+      "file": "liyue-day-near-1200.avif",
+      "sha256": "80bc07236b4298a6080ce835d433f36af50d9fa2273f98ff0d6d831d7927085a",
+      "mode": "RGBA",
+      "alpha_min": 0,
+      "alpha_max": 255
+    },
+    {
+      "file": "liyue-day-near-1200.webp",
+      "sha256": "13724d51454e4910c6f759b3bca90716ff7736596a8496797c02ad3d28181481",
+      "mode": "RGBA",
+      "alpha_min": 0,
+      "alpha_max": 255
+    },
+    {
+      "file": "liyue-day-near.avif",
+      "sha256": "19f23cff2bc5c95d1be9fcbb493499ff49496b6d5f7a0969e3bfeb03a38ea3f8",
+      "mode": "RGBA",
+      "alpha_min": 0,
+      "alpha_max": 255
+    },
+    {
+      "file": "liyue-day-near.webp",
+      "sha256": "8d9403b6ce06144128006a2e08be79b67a5ec27908be355214650b8a2429ff6c",
+      "mode": "RGBA",
+      "alpha_min": 0,
+      "alpha_max": 255
+    },
+    {
+      "file": "liyue-day-sky-1200.avif",
+      "sha256": "df63f2ce144a191aebc3d8faec6b321ee0cca9c21d8767c8c0ea96737ac1f448",
+      "mode": "RGB",
+      "alpha_min": 255,
+      "alpha_max": 255
+    },
+    {
+      "file": "liyue-day-sky-1200.webp",
+      "sha256": "57e82b889360144d7859613e6e75c02a4e9c7e9d59fdcf9e679b268c50cb6da8",
+      "mode": "RGB",
+      "alpha_min": 255,
+      "alpha_max": 255
+    },
+    {
+      "file": "liyue-day-sky.avif",
+      "sha256": "add2029a097b216a0add37e68a0d717815e07cd781663ffb2bafbddd2bf2d85c",
+      "mode": "RGB",
+      "alpha_min": 255,
+      "alpha_max": 255
+    },
+    {
+      "file": "liyue-day-sky.webp",
+      "sha256": "9a0e249f6defd329c056121001c676736cb08830149a40f99d1f4a1db7e453db",
+      "mode": "RGB",
+      "alpha_min": 255,
+      "alpha_max": 255
+    },
+    {
+      "file": "liyue-night-depth-1200.avif",
+      "sha256": "c1d28da19a1338bd06b726d3d4d3132b2438ebcac755c85e74bbd0e9278cb925",
+      "mode": "RGB",
+      "alpha_min": 255,
+      "alpha_max": 255
+    },
+    {
+      "file": "liyue-night-depth-1200.webp",
+      "sha256": "e3b15e7a58dafb5923ffcb21f03e919d40a908878628e54dfd2e5df4a1a620e1",
+      "mode": "RGB",
+      "alpha_min": 255,
+      "alpha_max": 255
+    },
+    {
+      "file": "liyue-night-depth.avif",
+      "sha256": "15b996837a483c390ae61f9d4cbeda4b25712354a504d95e983b7061c26f6bdf",
+      "mode": "RGB",
+      "alpha_min": 255,
+      "alpha_max": 255
+    },
+    {
+      "file": "liyue-night-depth.webp",
+      "sha256": "0109cb3bf57078cfeed701063de0cd135f5a8cff7d68b50e3e021258d9542236",
+      "mode": "RGB",
+      "alpha_min": 255,
+      "alpha_max": 255
+    },
+    {
+      "file": "liyue-night-far-1200.avif",
+      "sha256": "360b4206d8be6fd4703780e347cf5b124545adcfd92fac8b34c244e4c4ec31cf",
+      "mode": "RGBA",
+      "alpha_min": 0,
+      "alpha_max": 255
+    },
+    {
+      "file": "liyue-night-far-1200.webp",
+      "sha256": "7edfb9f0bf4a88890b5353adeb4bbc302ebe8222c711e10872ab4adf8a3afd68",
+      "mode": "RGBA",
+      "alpha_min": 0,
+      "alpha_max": 255
+    },
+    {
+      "file": "liyue-night-far.avif",
+      "sha256": "fdf8054d8bdd4db908bcd1ae7de78cf75f186878b802e1a1336129ba3fe5d314",
+      "mode": "RGBA",
+      "alpha_min": 0,
+      "alpha_max": 255
+    },
+    {
+      "file": "liyue-night-far.webp",
+      "sha256": "1b1120c6ffd4a86550d065718e047c8ea4af82c9c10dba8d31c4b6b80d6f63d9",
+      "mode": "RGBA",
+      "alpha_min": 0,
+      "alpha_max": 255
+    },
+    {
+      "file": "liyue-night-near-1200.avif",
+      "sha256": "83738d2d90cbf4cf48c48571460910f4444c4a647049220ad2509ad79b62d65a",
+      "mode": "RGBA",
+      "alpha_min": 0,
+      "alpha_max": 255
+    },
+    {
+      "file": "liyue-night-near-1200.webp",
+      "sha256": "7c618e95fd1d8a0de0286a238c2b999d37e663b939e8f24d12a9374eb0ac2378",
+      "mode": "RGBA",
+      "alpha_min": 0,
+      "alpha_max": 255
+    },
+    {
+      "file": "liyue-night-near.avif",
+      "sha256": "9d81d676a6704e01cafdc52dcfe3b988cd77d264f03e085ce95614e510bb43c5",
+      "mode": "RGBA",
+      "alpha_min": 0,
+      "alpha_max": 255
+    },
+    {
+      "file": "liyue-night-near.webp",
+      "sha256": "de68057190087a74344c348d8a02cb4aaee42ec5ac2573385dde66d1a7e2f342",
+      "mode": "RGBA",
+      "alpha_min": 0,
+      "alpha_max": 255
+    },
+    {
+      "file": "liyue-night-sky-1200.avif",
+      "sha256": "a09d9c891dc4b496c01cf1839495ffa0d4ef474512fb174b2f09456d99e715bb",
+      "mode": "RGB",
+      "alpha_min": 255,
+      "alpha_max": 255
+    },
+    {
+      "file": "liyue-night-sky-1200.webp",
+      "sha256": "4df0f613c1bef77988f29b0684a6f99c8d382c3286847b2c116b04f4c47b1e7e",
+      "mode": "RGB",
+      "alpha_min": 255,
+      "alpha_max": 255
+    },
+    {
+      "file": "liyue-night-sky.avif",
+      "sha256": "4ea5fe6b74a0a3e440839f225a922e431d666e0e06d478fb25f2f2a703595e66",
+      "mode": "RGB",
+      "alpha_min": 255,
+      "alpha_max": 255
+    },
+    {
+      "file": "liyue-night-sky.webp",
+      "sha256": "af1f07c446221429fd8a5b22bcbfb0a8e064b7f4b813e6406f83c4f9afe922e7",
+      "mode": "RGB",
+      "alpha_min": 255,
+      "alpha_max": 255
+    }
+  ]
+}

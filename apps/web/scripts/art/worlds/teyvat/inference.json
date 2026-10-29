@@ -1,0 +1,122 @@
+{
+  "fontaine-night": {
+    "model": "depth-anything/Depth-Anything-V2-Base-hf",
+    "device": "mps",
+    "sha256": "49ddd7e6cf04d93d24da8c1331fb70d43fa146ab4e99b1574259e008767d0686",
+    "size": [
+      2400,
+      1350
+    ],
+    "model_input": [
+      1,
+      3,
+      756,
+      1344
+    ],
+    "normalization": [
+      -0.00042750968009931943,
+      16.336391506195064
+    ],
+    "convention": "white near / black far; inverse relative depth"
+  },
+  "inazuma-night": {
+    "model": "depth-anything/Depth-Anything-V2-Base-hf",
+    "device": "mps",
+    "sha256": "ac5e59524ae7fa2f2ae9e7f51a923a5bd7d2b0f74b45a06d62cadddbc9c61825",
+    "size": [
+      2400,
+      1350
+    ],
+    "model_input": [
+      1,
+      3,
+      756,
+      1344
+    ],
+    "normalization": [
+      -0.0004103750227368437,
+      15.557338804244988
+    ],
+    "convention": "white near / black far; inverse relative depth"
+  },
+  "liyue-night": {
+    "model": "depth-anything/Depth-Anything-V2-Base-hf",
+    "device": "mps",
+    "sha256": "c0ba956d17eb8b24e0a904c490638a75e6a1f24ef2006bae7c0d180bd7224f8a",
+    "size": [
+      2400,
+      1350
+    ],
+    "model_input": [
+      1,
+      3,
+      756,
+      1344
+    ],
+    "normalization": [
+      -0.00043410024663899073,
+      13.017115081787079
+    ],
+    "convention": "white near / black far; inverse relative depth"
+  },
+  "inazuma-day": {
+    "model": "depth-anything/Depth-Anything-V2-Base-hf",
+    "device": "mps",
+    "sha256": "0dd7e41e9b7101ce1361a523d02f66b6eb766bbc3e8763c074043953b167a38e",
+    "size": [
+      2400,
+      1350
+    ],
+    "model_input": [
+      1,
+      3,
+      756,
+      1344
+    ],
+    "normalization": [
+      -9.293954972235936e-05,
+      14.763932380676259
+    ],
+    "convention": "white near / black far; inverse relative depth"
+  },
+  "liyue-day": {
+    "model": "depth-anything/Depth-Anything-V2-Base-hf",
+    "device": "mps",
+    "sha256": "20af632754d353435b6e388a24c00eb82cde0fe514f2a313b5793732d3be1a4d",
+    "size": [
+      2400,
+      1350
+    ],
+    "model_input": [
+      1,
+      3,
+      756,
+      1344
+    ],
+    "normalization": [
+      -6.207780407567042e-05,
+      13.34337075424192
+    ],
+    "convention": "white near / black far; inverse relative depth"
+  },
+  "fontaine-day": {
+    "model": "depth-anything/Depth-Anything-V2-Base-hf",
+    "device": "mps",
+    "sha256": "aa2abc07f5c60824e3f4b04c1c67ae8aa9e167a90732bc5e5637c70898f79198",
+    "size": [
+      2400,
+      1350
+    ],
+    "model_input": [
+      1,
+      3,
+      756,
+      1344
+    ],
+    "normalization": [
+      -0.0007120836365502319,
+      16.25143243408203
+    ],
+    "convention": "white near / black far; inverse relative depth"
+  }
+}

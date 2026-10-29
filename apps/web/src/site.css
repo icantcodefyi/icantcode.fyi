@@ -421,38 +421,43 @@ body {
 /* ── Deferred sections: a box of about the right height until the real one
    mounts (two screens ahead, or before any jump that lands below it) ── */
 .defer-ph { display: block; height: var(--ph-h, 100vh); }
-.defer-ph[data-ph="hackathons"] { --ph-h: 2900px; }
+.defer-ph[data-ph="hackathons"] { --ph-h: 3140px; }
 .defer-ph[data-ph="teyvat"] { --ph-h: 1470px; }
 .defer-ph[data-ph="valorant"] { --ph-h: 1330px; }
 .defer-ph[data-ph="anime"] { --ph-h: 2700px; }
 .defer-ph[data-ph="bts"] { --ph-h: 3030px; }
 .defer-ph[data-ph="guestbook"] { --ph-h: 960px; }
 @media (min-width: 640px) {
+  .defer-ph[data-ph="hackathons"] { --ph-h: 2830px; }
   .defer-ph[data-ph="teyvat"] { --ph-h: 1520px; }
   .defer-ph[data-ph="valorant"] { --ph-h: 1240px; }
   .defer-ph[data-ph="anime"] { --ph-h: 1900px; }
   .defer-ph[data-ph="bts"] { --ph-h: 3134px; }
 }
 @media (min-width: 768px) {
-  .defer-ph[data-ph="hackathons"] { --ph-h: 2460px; }
+  .defer-ph[data-ph="hackathons"] { --ph-h: 2440px; }
   .defer-ph[data-ph="teyvat"] { --ph-h: 1630px; }
   .defer-ph[data-ph="bts"] { --ph-h: 3206px; }
 }
 @media (min-width: 1024px) {
-  .defer-ph[data-ph="hackathons"] { --ph-h: 2280px; }
+  .defer-ph[data-ph="hackathons"] { --ph-h: 2610px; }
   .defer-ph[data-ph="teyvat"] { --ph-h: 1000px; }
   .defer-ph[data-ph="valorant"] { --ph-h: min(100vh, 934px); }
   .defer-ph[data-ph="anime"] { --ph-h: 1222px; }
   .defer-ph[data-ph="bts"] { --ph-h: 2224px; }
   .defer-ph[data-ph="guestbook"] { --ph-h: 640px; }
 }
+/* the list wraps the event names below 1100 (the dock's gutter) */
+@media (min-width: 1100px) {
+  .defer-ph[data-ph="hackathons"] { --ph-h: 2250px; }
+}
 @media (min-width: 1280px) {
-  .defer-ph[data-ph="hackathons"] { --ph-h: 2085px; }
+  .defer-ph[data-ph="hackathons"] { --ph-h: 2100px; }
   .defer-ph[data-ph="bts"] { --ph-h: 2332px; }
 }
 @media (min-width: 1440px) {
   .defer-ph[data-ph="bts"] { --ph-h: 2484px; }
 }
-@media (min-width: 1920px) {
-  .defer-ph[data-ph="hackathons"] { --ph-h: 1800px; }
+@media (min-width: 1800px) {
+  .defer-ph[data-ph="hackathons"] { --ph-h: 1825px; }
 }

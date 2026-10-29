@@ -1,34 +1,60 @@
-/* A two-colour riso page: black ink and one spot ink, Riso Blue, which no
-   other part of the site prints in. --an-spot fills tones, SFX and the
-   offset block; --an-spot-ink is the same blue deepened for text on paper. */
+/* ───────── The Anime world: a two-colour riso manga spread ─────────
+   Black ink and one spot ink, Riso Blue, which no other part of the site
+   prints in. Night (the default) is the page printed on black stock in
+   white ink; day is black ink on white paper. Balloons, captions and SFX
+   are knocked out to paper in both, as a printer would.
+   --an-stock    the press sheet     --an-page   the trimmed pages on it
+   --an-rule     ink on the sheet (frames, folios, marks)
+   --an-paper    paper inside panels --an-ink    the black plate
+   --an-spot     Riso Blue fills     --an-spot-ink  Riso Blue as text */
 .an-world {
   --an-ink: #0b0a0d;
-  --an-paper: #f4f1ea;
+  --an-paper: #ecebe4;
+  /* the press sheet, and the trimmed pages printed on it */
+  --an-stock: #0e0d11;
+  --an-page: #16151a;
+  --an-rule: #ecebe4;
   --an-spot: #0078bf;
   --an-spot-ink: #005a90;
-  --an-gap: 16px;
+  --an-flood: var(--an-spot);
+  --an-flood-text: #fff;
   position: relative;
   overflow: hidden;
-  background: var(--an-paper);
-  color: var(--an-ink);
+  background: var(--an-stock);
+  color: var(--an-rule);
   font-family: "Onest", sans-serif;
   isolation: isolate;
+}
+html[data-mode="day"] .an-world {
+  --an-paper: #fdfcf8;
+  --an-stock: #f2f0e9;
+  --an-page: #fdfcf8;
+  --an-rule: #0b0a0d;
+  --an-flood: var(--an-ink);
+  --an-flood-text: #fdfcf8;
 }
 
 .an-fill-ink { fill: var(--an-ink); }
 .an-fill-spot { fill: var(--an-spot); }
+.an-fill-line { fill: var(--an-rule); }
 
-.an-grain {
+/* paper grain: one small tile of turbulence, rasterised once and tiled */
+.an-world::before {
+  content: "";
   position: absolute;
   inset: 0;
-  width: 100%;
-  height: 100%;
-  opacity: 0.32;
-  mix-blend-mode: multiply;
   pointer-events: none;
   z-index: 0;
+  opacity: 0.5;
+  background-size: 240px 240px;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.92  0 0 0 0 0.9  0 0 0 0 0.85  1.1 0 0 0 -0.62'/></filter><rect width='240' height='240' filter='url(%23n)'/></svg>");
+}
+html[data-mode="day"] .an-world::before {
+  opacity: 0.55;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.1  0 0 0 0 0.08  0 0 0 0 0.06  1 0 0 0 -0.55'/></filter><rect width='240' height='240' filter='url(%23n)'/></svg>");
 }
 
+/* the halftone thresholds the page prints in and out through */
 .an-edge-tone {
   position: absolute;
   left: 0;
@@ -37,78 +63,148 @@
 }
 .an-edge-top { top: 0; }
 .an-edge-bottom { bottom: 0; transform: scaleY(-1); }
+.an-edge-ink { display: none; }
+html[data-mode="day"] .an-edge-ink { display: inline; }
+html[data-mode="day"] .an-edge-spot { display: none; }
+/* by day the threshold starts three rows in: crisp dots on white, not an ink band */
+html[data-mode="day"] .an-edge-tone { clip-path: inset(21px 0 0 0); }
+html[data-mode="day"] .an-edge-top { top: -21px; }
+html[data-mode="day"] .an-edge-bottom { bottom: -21px; }
 
-/* grid */
-.an-grid {
-  display: grid;
-  gap: calc(var(--an-gap) + 6px);
-  grid-template-columns: 1fr;
-  grid-template-areas: "t" "sg" "hxh" "mob" "bebop" "frieren" "jjk";
+/* ── the sheet ── */
+.an-sheet {
+  position: relative;
+  z-index: 1;
+  margin: 0 auto;
+  max-width: calc(1280px + 64px);
+  padding: 118px 14px 112px;
 }
-
 @media (min-width: 640px) {
-  .an-grid {
-    gap: var(--an-gap);
-    grid-template-columns: repeat(6, minmax(0, 1fr));
-    grid-template-rows: auto 300px 300px 300px 300px;
-    grid-template-areas:
-      "t t t t t t"
-      "sg sg sg hxh hxh hxh"
-      "sg sg sg mob mob mob"
-      "bebop bebop bebop bebop bebop bebop"
-      "frieren frieren frieren jjk jjk jjk";
-  }
+  .an-sheet { padding: 132px 32px 128px; }
 }
+.an-spread { position: relative; }
 
-@media (min-width: 1024px) {
-  .an-world { --an-gap: 18px; }
-  .an-grid {
-    grid-template-columns: repeat(12, minmax(0, 1fr));
-    grid-template-rows: 330px 300px 300px;
-    grid-template-areas:
-      "t t t t hxh hxh hxh hxh mob mob mob mob"
-      "sg sg sg sg bebop bebop bebop bebop bebop bebop bebop bebop"
-      "sg sg sg sg frieren frieren frieren frieren jjk jjk jjk jjk";
-  }
+/* page furniture: folios, the running hashira, crop marks, the spine */
+.an-leaf { position: absolute; }
+.an-sentinel { position: absolute; visibility: hidden; pointer-events: none; }
+.an-page {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: var(--an-page);
 }
+/* on a phone the page is the screen: no sheet edge to show */
+[data-kind="strip"] .an-page { background: none; }
+html .an-world[data-kind="strip"] { --an-stock: var(--an-page); }
+.an-folio {
+  position: absolute;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  font-variant-numeric: tabular-nums;
+  color: var(--an-rule);
+  opacity: 0.8;
+}
+.an-hashira {
+  position: absolute;
+  display: flex;
+  gap: 10px;
+  writing-mode: vertical-rl;
+  font-family: "Zen Kaku Gothic New", sans-serif;
+  font-weight: 500;
+  font-size: 12px;
+  letter-spacing: 0.22em;
+  color: var(--an-rule);
+  opacity: 0.72;
+}
+.an-hashira-en {
+  font-family: "Onest", sans-serif;
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.26em;
+}
+.an-tsuzuku {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: "Zen Kaku Gothic New", sans-serif;
+  font-weight: 900;
+  font-size: 15px;
+  letter-spacing: 0.14em;
+  color: var(--an-rule);
+}
+.an-tsuzuku svg { fill: var(--an-spot); }
 
-/* panel */
+.an-trim {
+  position: absolute;
+  fill: none;
+  stroke: var(--an-rule);
+  stroke-width: 0.8;
+  opacity: 0.55;
+}
+.an-trim-tl { left: -24px; top: -24px; }
+.an-trim-tr { right: -24px; top: -24px; transform: scaleX(-1); }
+.an-trim-bl { left: -24px; bottom: -24px; transform: scaleY(-1); }
+.an-trim-br { right: -24px; bottom: -24px; transform: scale(-1, -1); }
+[data-kind="strip"] .an-trim { display: none; }
+.an-spread-trims { position: absolute; inset: 0; pointer-events: none; }
+
+.an-register {
+  position: absolute;
+  fill: none;
+  stroke-width: 0.9;
+  pointer-events: none;
+}
+.an-register-k { stroke: var(--an-rule); }
+/* the blue plate never quite lands on the black: its own target, a hair off */
+.an-register-b { stroke: var(--an-spot); transform: translate(1.4px, -1px); }
+
+/* the fold between the pages: a halftone shadow, densest in the gutter, each page carrying its half */
+.an-spine {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 42px;
+  background:
+    radial-gradient(circle, var(--an-rule) 0.95px, transparent 1.35px) 0 0 / 5px 5px,
+    radial-gradient(circle, var(--an-rule) 0.6px, transparent 1px) 2.5px 2.5px / 5px 5px;
+  opacity: 0.34;
+}
+.an-page-l .an-spine {
+  right: 0;
+  -webkit-mask: linear-gradient(to left, #000 12%, transparent);
+  mask: linear-gradient(to left, #000 12%, transparent);
+}
+.an-page-r .an-spine {
+  left: 0;
+  background-position: 2px 0, 4.5px 2.5px;
+  -webkit-mask: linear-gradient(to right, #000 12%, transparent);
+  mask: linear-gradient(to right, #000 12%, transparent);
+}
+html[data-mode="day"] .an-spine { opacity: 0.4; }
+
+/* ── panels ── */
 .an-panel {
   --on: 0;
-  --pop: none;
-  --stamp: none;
-  --play: paused;
-  --tilt-now: var(--tilt-sm);
-  position: relative;
-  min-height: 340px;
-  transform: rotate(var(--tilt-now));
+  --d0: 0ms;
+  position: absolute;
   outline: none;
   -webkit-tap-highlight-color: transparent;
 }
-@media (min-width: 640px) {
-  .an-panel { --tilt-now: var(--tilt); min-height: 0; }
-}
-
+.an-stage { position: absolute; inset: 0; }
 .an-panel[data-active],
 .an-panel:focus-visible {
   --on: 1;
-  --pop: an-pop;
-  --stamp: an-restamp;
-  --play: running;
   z-index: 5;
 }
 @media (hover: hover) {
   .an-panel:not(.an-title):hover {
     --on: 1;
-    --pop: an-pop;
-    --stamp: an-restamp;
-    --play: running;
     z-index: 5;
   }
 }
-.an-panel:focus-visible .an-spot {
-  outline: 3px solid var(--an-spot);
-}
+.an-panel:focus-visible .an-frame .an-edge { stroke: var(--an-spot); }
 
 .an-cell {
   position: absolute;
@@ -116,32 +212,281 @@
   overflow: hidden;
   background: var(--an-paper);
 }
-
-.an-spot {
+.an-frame {
   position: absolute;
   inset: 0;
-  background: var(--an-spot);
-  transform: translate(10px, 10px);
-  opacity: var(--on);
-}
-
-.an-border {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
   overflow: visible;
   pointer-events: none;
   z-index: 2;
 }
 .an-edge {
-  stroke: var(--an-ink);
+  stroke: var(--an-rule);
   stroke-linecap: square;
   stroke-dasharray: 1 2;
   stroke-dashoffset: 0;
 }
 
-/* tone: each sheet overhangs its corner by 8px, so its slow drift never uncovers the edge */
+/* the riso offset: in focus, the blue plate of the whole frame slips out from under it */
+.an-spot {
+  position: absolute;
+  inset: 0;
+  background: var(--an-spot);
+  opacity: var(--on);
+  translate: calc(var(--on) * 8px) calc(var(--on) * 8px);
+}
+
+/* ── the poster, as two plates ── */
+.an-art {
+  position: absolute;
+  left: 0;
+  width: 100%;
+}
+.an-art-in {
+  position: absolute;
+  inset: 0;
+  isolation: isolate;
+}
+/* a poster that stops short of its frame dissolves into the tone beyond it */
+.an-art-part {
+  -webkit-mask: linear-gradient(to right, #000 calc(100% - var(--fade)), transparent);
+  mask: linear-gradient(to right, #000 calc(100% - var(--fade)), transparent);
+}
+.an-tone-field {
+  position: absolute;
+  top: 0;
+}
+/* what the poster leaves is the page itself, printed with the tone */
+.an-cell-part { background: var(--an-page); }
+.an-plate {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.an-plate-k { filter: url(#an-sep-k-night); }
+.an-plate-b {
+  filter: url(#an-sep-b-night);
+  mix-blend-mode: screen;
+  translate: 1px -1px;
+}
+html[data-mode="day"] .an-plate-k { filter: url(#an-sep-k-day); }
+html[data-mode="day"] .an-plate-b { filter: url(#an-sep-b-day); mix-blend-mode: multiply; }
+
+/* colour floods in through the same halftone screen, and drains back out */
+@property --an-bloom {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+.an-plate-c {
+  --an-bloom: 0px;
+  visibility: hidden;
+  -webkit-mask: radial-gradient(circle, #000 var(--an-bloom), transparent calc(var(--an-bloom) + 0.7px)) 0 0 / 7px 7px;
+  mask: radial-gradient(circle, #000 var(--an-bloom), transparent calc(var(--an-bloom) + 0.7px)) 0 0 / 7px 7px;
+}
+.an-panel[data-active] .an-plate-c,
+.an-panel:focus-visible .an-plate-c {
+  --an-bloom: 5.6px;
+  visibility: visible;
+}
+@media (hover: hover) {
+  .an-panel:hover .an-plate-c {
+    --an-bloom: 5.6px;
+    visibility: visible;
+  }
+}
+
+.an-face-dbg {
+  position: absolute;
+  z-index: 9;
+  outline: 2px solid #f0f;
+  background: rgb(255 0 255 / 0.18);
+}
+
+/* ── caption: a narration box in the frame's corner ── */
+.an-caption {
+  position: absolute;
+  z-index: 3;
+  padding: 7px 10px 8px;
+  background: var(--an-paper);
+  color: var(--an-ink);
+  border: 2.5px solid var(--an-ink);
+}
+.an-caption-title {
+  font-family: "Dela Gothic One", sans-serif;
+  font-size: 16px;
+  line-height: 1.12;
+  letter-spacing: -0.005em;
+}
+.an-caption-ja {
+  margin-top: 1px;
+  font-family: "Zen Kaku Gothic New", sans-serif;
+  font-weight: 500;
+  font-size: 12.5px;
+  color: #3a3640;
+}
+.an-caption-meta {
+  margin-top: 4px;
+  font-size: 13.5px;
+  font-weight: 500;
+  line-height: 1.3;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── balloon ── */
+.an-bubble-wrap {
+  position: absolute;
+  z-index: 4;
+  pointer-events: none;
+}
+.an-bubble { position: relative; }
+.an-bubble svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.an-bubble-paper { fill: var(--an-paper); }
+.an-bubble-ink { fill: var(--an-ink); }
+.an-bubble p {
+  position: relative;
+  padding: 15% 14% 17%;
+  font-weight: 600;
+  font-size: 15px;
+  line-height: 1.3;
+  text-align: center;
+  text-wrap: balance;
+  color: var(--an-ink);
+}
+.an-bubble-wrap.an-bubble-burst p { padding: 20% 19% 21%; }
+
+/* ── SFX ── */
+.an-sfx-wrap {
+  position: absolute;
+  z-index: 5;
+  pointer-events: none;
+}
+.an-sfx-hit { position: relative; }
+.an-sfx { display: block; position: relative; }
+.an-glyph { position: absolute; inset: 0; }
+.an-glyph svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.an-sfx text {
+  font-family: "Dela Gothic One", sans-serif;
+  font-size: 100px;
+  stroke-linejoin: round;
+  paint-order: stroke;
+}
+.an-sfx-out { fill: var(--an-ink); stroke: var(--an-ink); stroke-width: 30px; }
+.an-sfx-rim { fill: var(--an-paper); stroke: var(--an-paper); stroke-width: 15px; }
+.an-sfx-ink { fill: var(--an-ink); }
+/* the blue plate, a hair out of register with the black (2 of the glyph grid's 100 units) */
+.an-sfx-spot { fill: var(--an-spot); translate: 0.02em -0.015em; }
+/* motion lines: they trail the lettering while the page moves (useTrails) */
+.an-trail {
+  position: absolute;
+  left: 4%;
+  width: 92%;
+  top: 0;
+  height: 200%;
+  opacity: 0;
+  fill: var(--an-ink);
+  pointer-events: none;
+  /* the SFX's centre: flipped about it, the lines trail above instead */
+  transform-origin: 50% 25%;
+}
+
+/* ── the splash ── */
+.an-title { container-type: inline-size; }
+.an-title .an-cell { background: var(--an-flood); color: var(--an-flood-text); }
+.an-title-lines {
+  position: absolute;
+  inset: -40px -8%;
+}
+.an-lines {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  fill: var(--an-ink);
+  opacity: 0.32;
+  transform-origin: 50% 50%;
+}
+html[data-mode="day"] .an-lines { fill: #fff; opacity: 0.14; }
+.an-title-copy {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 20px 58px 20px 20px;
+}
+.an-kicker {
+  padding: 2px 10px 3px;
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--an-spot);
+  background: var(--an-flood-text);
+}
+html[data-mode="day"] .an-kicker { color: #fff; background: var(--an-spot); }
+.an-display {
+  font-family: "Dela Gothic One", sans-serif;
+  font-size: clamp(56px, 17cqi, 80px);
+  line-height: 0.9;
+  letter-spacing: -0.02em;
+  font-weight: 400;
+}
+.an-display-word { display: block; }
+.an-display-ch { display: inline-block; }
+/* the hook, boxed like narration: paper knocked out of the flood */
+.an-lede {
+  margin-top: auto;
+  max-width: 34ch;
+  padding: 8px 11px 9px;
+  font-size: 15px;
+  line-height: 1.42;
+  background: var(--an-paper);
+  color: var(--an-ink);
+  border: 2.5px solid var(--an-ink);
+}
+/* on a page the title runs large down the left and the hook sits in the lower right */
+:is([data-kind="spread"], [data-kind="pages"]) .an-title-copy {
+  --ds: clamp(64px, 14cqi, 92px);
+  padding: 24px 72px 18px 26px;
+  gap: 14px;
+}
+:is([data-kind="spread"], [data-kind="pages"]) .an-display { font-size: var(--ds); }
+/* tucked in beside "list" (1.81em of Dela Gothic One) and under "Watch" (one 0.9em line below the 27.5px kicker) */
+:is([data-kind="spread"], [data-kind="pages"]) .an-lede {
+  position: absolute;
+  left: calc(52px + 1.81 * var(--ds));
+  top: calc(24px + 27.5px + 14px + 0.9 * var(--ds) + 10px);
+  width: min(300px, calc(100% - 52px - 1.81 * var(--ds) - 62px));
+  max-width: none;
+}
+.an-vertical {
+  position: absolute;
+  right: 16px;
+  top: 18px;
+  z-index: 1;
+  writing-mode: vertical-rl;
+  font-family: "Zen Kaku Gothic New", sans-serif;
+  font-weight: 900;
+  font-size: 22px;
+  letter-spacing: 0.12em;
+  color: var(--an-flood-text);
+}
+
+/* tones: each sheet overhangs its corner by 8px, so its slow drift never uncovers the edge */
 .an-tone {
   position: absolute;
   pointer-events: none;
@@ -150,283 +495,144 @@
 .an-tone-bl { left: -8px; bottom: -8px; transform: scaleX(-1); }
 .an-tone-tr { right: -8px; top: -8px; transform: scaleY(-1); }
 .an-tone-tl { left: -8px; top: -8px; transform: scale(-1, -1); }
+.an-title .an-tone:first-of-type { display: none; }
+html[data-mode="day"] .an-title .an-tone:first-of-type { display: block; }
+html[data-mode="day"] .an-title .an-tone + .an-tone { display: none; }
 
-/* focus lines */
-.an-lines {
-  position: absolute;
-  inset: -4%;
-  width: 108%;
-  height: 108%;
-  opacity: var(--on);
-  pointer-events: none;
-}
-.an-wedges { fill: var(--an-ink); transform-origin: 200px 150px; }
-.an-rush line {
-  stroke: var(--an-ink);
-  stroke-width: 1.2;
-  stroke-dasharray: 0.16 1;
-  stroke-dashoffset: 0;
-}
-.an-lines-static { opacity: 0.16; }
-.an-lines-static .an-wedges { fill: #fff; }
-.an-lines-static .an-rush { display: none; }
-
-/* poster */
-.an-poster {
-  position: absolute;
-  margin: 0;
-  top: 18px;
-  bottom: 18px;
-  left: 18px;
-  aspect-ratio: 460 / 650;
-  border: 3px solid var(--an-ink);
-  background: var(--an-ink);
-  transform: rotate(-1.6deg);
-  box-shadow: 6px 6px 0 var(--an-ink);
-  z-index: 1;
-}
-.an-side-right .an-poster { left: auto; right: 18px; transform: rotate(1.6deg); }
-.an-poster img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-/* caption */
-.an-caption {
-  position: absolute;
-  right: 14px;
-  bottom: 16px;
-  width: min(64%, 252px);
-  padding: 9px 11px 10px;
-  background: #fff;
-  border: 3px solid var(--an-ink);
-  z-index: 2;
-}
-.an-side-right .an-caption { right: auto; left: 14px; }
-.an-caption-title {
-  font-family: "Dela Gothic One", sans-serif;
-  font-size: 18px;
-  line-height: 1.12;
-  letter-spacing: -0.01em;
-}
-.an-caption-ja {
-  margin-top: 3px;
-  font-family: "Zen Kaku Gothic New", sans-serif;
-  font-weight: 500;
-  font-size: 14px;
-  color: #3a3640;
-}
-.an-caption-meta {
-  margin-top: 6px;
-  font-size: 15px;
-  font-weight: 500;
-  line-height: 1.3;
-  font-variant-numeric: tabular-nums;
-}
-
-/* bubble */
-.an-bubble-wrap {
-  position: absolute;
-  top: -14px;
-  right: 0;
-  width: min(64%, 250px);
-  z-index: 4;
-  pointer-events: none;
-}
-.an-side-right .an-bubble-wrap { right: auto; left: 0; }
-.an-bubble {
-  position: relative;
-  transform-origin: 20% 100%;
-}
-.an-side-right .an-bubble { transform-origin: 80% 100%; }
-.an-bubble svg {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-}
-.an-bubble-paper { fill: #fff; }
-.an-bubble-ink { fill: var(--an-ink); }
-.an-bubble p {
-  position: relative;
-  padding: 15% 14% 17%;
-  font-weight: 600;
-  font-size: 16px;
-  line-height: 1.28;
-  text-align: center;
-  text-wrap: balance;
-}
-.an-bubble-burst p { padding: 20% 19% 21%; }
-
-/* sfx */
-.an-sfx-wrap {
-  position: absolute;
-  z-index: 3;
-  font-size: 58px;
-  pointer-events: none;
-}
-.an-sfx { display: block; overflow: visible; }
-.an-sfx text {
-  font-family: "Dela Gothic One", sans-serif;
-  font-size: 100px;
-  stroke-linejoin: round;
-  paint-order: stroke;
-}
-.an-sfx-out { fill: var(--an-ink); stroke: var(--an-ink); stroke-width: 30px; }
-.an-sfx-rim { fill: #fff; stroke: #fff; stroke-width: 15px; }
-.an-sfx-ink { fill: var(--an-ink); }
-.an-sfx-spot { fill: var(--an-spot); }
-
-[data-panel="sg"] .an-sfx-wrap { left: 5%; bottom: 31%; font-size: 44px; }
-[data-panel="hxh"] .an-sfx-wrap { left: -3%; bottom: -7%; font-size: 46px; }
-[data-panel="mob"] .an-sfx-wrap { left: 30%; top: 42%; font-size: 40px; }
-[data-panel="bebop"] .an-sfx-wrap { left: 6%; top: 40%; font-size: 46px; }
-[data-panel="frieren"] .an-sfx-wrap { left: 5%; top: 6%; font-size: 34px; }
-[data-panel="jjk"] .an-sfx-wrap { right: 9%; bottom: 36%; font-size: 46px; }
-
-@media (min-width: 640px) {
-  [data-panel="sg"] .an-sfx-wrap { left: auto; bottom: auto; right: 4%; top: 6%; font-size: 74px; }
-  [data-panel="hxh"] .an-sfx-wrap { font-size: 52px; }
-  [data-panel="mob"] .an-sfx-wrap { left: 34%; font-size: 42px; }
-  [data-panel="bebop"] .an-sfx-wrap { left: auto; right: 2%; top: 3%; font-size: 70px; }
-  [data-panel="frieren"] .an-sfx-wrap { font-size: 38px; }
-  [data-panel="jjk"] .an-sfx-wrap { font-size: 50px; }
-}
-
-@media (min-width: 640px) and (max-width: 1023px) {
-  [data-panel="bebop"] .an-sfx-wrap { font-size: 54px; }
-}
-
-/* variants */
-@media (min-width: 640px) {
-  .an-v-tall .an-poster {
-    top: 22px;
-    bottom: auto;
-    width: 70%;
-  }
-  .an-v-tall .an-bubble-wrap {
-    top: 50%;
-    right: -10px;
-    width: min(62%, 280px);
-  }
-  .an-v-tall .an-caption {
-    width: calc(100% - 28px);
-    max-width: none;
-  }
-  .an-v-tall .an-sfx-wrap { font-size: 74px; }
-
-  .an-v-wide .an-poster { left: 26px; }
-  .an-v-wide .an-bubble-wrap {
-    top: 26px;
-    left: 236px;
-    right: auto;
-    width: min(33%, 300px);
-  }
-  .an-v-wide .an-bubble p { font-size: 18px; }
-  .an-v-wide .an-caption { width: 260px; right: 22px; bottom: 20px; }
-  .an-v-wide .an-sfx-wrap { font-size: 96px; }
-}
-
-/* title */
-.an-title .an-cell { background: var(--an-ink); color: #fff; }
-.an-title { min-height: 0; }
-/* the kicker is a spot-ink tag with the paper knocked out of it */
-.an-kicker {
-  display: inline-block;
-  padding: 2px 10px 3px;
-  font-weight: 600;
-  font-size: 16px;
-  color: #fff;
-  background: var(--an-spot);
-}
-.an-display {
-  margin-top: 10px;
-  font-family: "Dela Gothic One", sans-serif;
-  font-size: min(calc((100cqi - 72px) / 5.1), 104px);
-  line-height: 0.92;
-  letter-spacing: -0.02em;
-}
-.an-lede {
-  max-width: min(34ch, calc(100% - 44px));
-  font-size: 16px;
-  line-height: 1.5;
-  color: rgb(255 255 255 / 0.86);
-}
-.an-vertical {
-  position: absolute;
-  bottom: 20px;
-  right: 16px;
-  writing-mode: vertical-rl;
-  font-family: "Zen Kaku Gothic New", sans-serif;
-  font-weight: 900;
-  font-size: 28px;
-  letter-spacing: 0.1em;
-  color: var(--an-spot);
-  z-index: 1;
-}
-.an-title-sfx { right: -14px; top: -44px; font-size: 42px; }
-@media (min-width: 640px) {
-  .an-title-sfx { right: -22px; top: -30px; font-size: 52px; }
-}
-.an-title .an-cell { position: relative; height: 100%; }
-.an-title { container-type: inline-size; }
-
-/* motion */
+/* ───────── motion ───────── */
 @media (prefers-reduced-motion: no-preference) {
-  .an-panel {
-    transform: rotate(var(--tilt-now)) scale(calc(1 + var(--on) * 0.03));
-    transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+  .an-spot { transition: opacity 0.22s var(--ease-io), translate 0.5s var(--ease); }
+  .an-art-in { transition: transform 1.1s var(--ease); }
+  .an-panel[data-active] .an-art-in,
+  .an-panel:focus-visible .an-art-in { transform: scale(1.035); }
+  @media (hover: hover) {
+    .an-panel:hover .an-art-in { transform: scale(1.035); }
   }
-  .an-spot { transition: opacity 0.2s ease-out; }
-  .an-lines { transition: opacity 0.18s ease-out; }
-  .an-wedges {
-    animation: an-boil 0.42s steps(1) infinite;
-    animation-play-state: var(--play);
+  .an-plate-c { transition: --an-bloom 0.45s var(--ease-io), visibility 0s 0.45s; }
+  .an-panel[data-active] .an-plate-c,
+  .an-panel:focus-visible .an-plate-c { transition: --an-bloom 0.6s var(--ease-io), visibility 0s; }
+  @media (hover: hover) {
+    .an-panel:hover .an-plate-c { transition: --an-bloom 0.6s var(--ease-io), visibility 0s; }
   }
-  .an-rush line {
-    animation: an-rush 0.7s linear infinite;
-    animation-play-state: var(--play);
-  }
-  /* the screentone sheets slide a few px on the compositor, each on its own clock, so the dots shimmer against the frame */
-  .an-tone { animation: an-drift 10.3s ease-in-out infinite alternate; }
-  .an-tone + .an-tone { animation-duration: 13.7s; animation-direction: alternate-reverse; }
-  .an-bubble { animation: var(--pop) 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
-  .an-sfx-hit { animation: var(--stamp) 0.42s cubic-bezier(0.2, 1.4, 0.4, 1); }
 
-  [data-phase="armed"] .an-edge { stroke-dashoffset: 1; }
-  [data-phase="armed"] .an-cell,
-  [data-phase="armed"] .an-bubble-wrap,
-  [data-phase="armed"] .an-sfx-wrap { opacity: 0; }
-
-  [data-phase="in"] .an-edge {
-    animation: an-draw 0.4s cubic-bezier(0.7, 0, 0.3, 1) both;
-    animation-delay: calc(var(--i) * 110ms + var(--e) * 85ms);
+  /* in focus the SFX hits again and the balloon gives a little */
+  .an-panel[data-done][data-active] .an-sfx-hit,
+  .an-panel[data-done]:focus-visible .an-sfx-hit { animation: an-restamp 0.42s var(--ease-pop); }
+  .an-panel[data-done][data-active] .an-bubble,
+  .an-panel[data-done]:focus-visible .an-bubble { animation: an-give 0.5s var(--ease-pop); }
+  @media (hover: hover) {
+    .an-panel[data-done]:hover .an-sfx-hit { animation: an-restamp 0.42s var(--ease-pop); }
+    .an-panel[data-done]:hover .an-bubble { animation: an-give 0.5s var(--ease-pop); }
   }
-  /* each panel prints in through a halftone screen whose dots swell until they close up */
-  [data-phase="in"] .an-cell {
+
+  /* ambient: the rumbling SFX tremble, two frames a beat, as anime letters them */
+  [data-panel="sg"][data-done] .an-sfx,
+  [data-panel="mob"][data-done] .an-sfx { animation: an-tremble 0.36s steps(1) infinite; }
+  .an-title .an-tone { animation: an-drift 10.3s var(--ease-io) infinite alternate; }
+
+  /* ── the entrance: each panel prints itself ── */
+  [data-phase="armed"] .an-panel:not([data-in]) :is(.an-caption, .an-bubble, .an-sfx-hit) { opacity: 0; }
+  /* its art prints in place, except on the page a spread turns down, which falls already printed */
+  [data-phase="armed"] .an-panel:not([data-in], [data-kind="spread"] .an-leaf-r > *) .an-edge { stroke-dashoffset: 1; }
+  [data-phase="armed"] .an-panel:not([data-in], [data-kind="spread"] .an-leaf-r > *) .an-cell { opacity: 0; }
+  [data-kind="spread"] .an-leaf-r > .an-panel[data-in]:not([data-done]) :is(.an-edge, .an-cell, .an-plate-b) {
+    animation: none;
+    -webkit-mask: none;
+    mask: none;
+  }
+  /* the page's furniture and marks come up with the first panel */
+  [data-phase="armed"] :is(.an-page > *, .an-register, .an-trim) { opacity: 0; transition: opacity 0.9s var(--ease) 0.2s; }
+  [data-phase="armed"]:has(.an-title[data-in]) :is(.an-page > *, .an-register, .an-trim) { opacity: 1; }
+  [data-phase="armed"]:has(.an-title[data-in]) .an-spine { opacity: 0.34; }
+  html[data-mode="day"] [data-phase="armed"]:has(.an-title[data-in]) .an-spine { opacity: 0.4; }
+  [data-phase="armed"]:has(.an-title[data-in]) .an-trim { opacity: 0.55; }
+
+  /* the page turn: on a spread the right-hand leaf waits stood up on the spine, then falls open
+     (anime.tsx TURN_MS), the light going off it as it lands */
+  [data-kind="spread"] .an-leaf-r { transform-origin: 0 50%; }
+  [data-phase="armed"][data-kind="spread"] .an-leaf-r:not([data-turn]) { transform: perspective(2600px) rotateY(-89deg); }
+  [data-phase="armed"][data-kind="spread"] .an-leaf-r[data-turn]:not([data-flat]) { animation: an-turn 0.9s linear both; }
+  [data-kind="spread"] .an-leaf-r::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0;
+    background: linear-gradient(to right, rgb(0 0 0 / 0.55), rgb(0 0 0 / 0.15) 45%, transparent 80%);
+  }
+  [data-phase="armed"][data-kind="spread"] .an-leaf-r:not([data-flat])::after { opacity: 1; }
+  [data-phase="armed"][data-kind="spread"] .an-leaf-r[data-turn]:not([data-flat])::after { animation: an-turn-shade 0.9s var(--ease) both; }
+
+  /* 1. the frame is ruled, edge by edge */
+  .an-panel[data-in]:not([data-done]) .an-edge {
+    animation: an-draw 0.34s var(--ease-io) both;
+    animation-delay: calc(var(--d0) + var(--e) * 70ms);
+  }
+  /* 2. the black plate prints through a halftone screen whose dots swell until they close up */
+  .an-panel[data-in]:not([data-done]) .an-cell {
     -webkit-mask: radial-gradient(circle, #000 var(--an-dot), transparent calc(var(--an-dot) + 0.6px)) 0 0 / 8px 8px;
     mask: radial-gradient(circle, #000 var(--an-dot), transparent calc(var(--an-dot) + 0.6px)) 0 0 / 8px 8px;
-    animation: an-ink 0.52s cubic-bezier(0.5, 0, 0.75, 0) both;
-    animation-delay: calc(var(--i) * 110ms + 300ms);
+    animation: an-ink 0.56s var(--ease-io) both;
+    animation-delay: calc(var(--d0) + 150ms);
   }
-  /* and its speed lines burst once as the SFX lands */
-  [data-phase="in"] .an-panel:not(.an-title) .an-lines {
-    animation: an-burst 0.7s ease-out backwards;
-    animation-delay: calc(var(--i) * 110ms + 640ms);
+  /* 3. the blue plate comes down off register and settles in */
+  .an-panel[data-in]:not([data-done]) .an-plate-b {
+    animation: an-register 0.95s var(--ease) both;
+    animation-delay: calc(var(--d0) + 200ms);
   }
-  [data-phase="in"] .an-bubble-wrap {
-    animation: an-pop-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
-    animation-delay: calc(var(--i) * 110ms + 520ms);
+  /* 4. the narration box drops into its corner */
+  .an-panel[data-in]:not([data-done]) .an-caption {
+    animation: an-caption 0.4s var(--ease) both;
+    animation-delay: calc(var(--d0) + 420ms);
   }
-  [data-phase="in"] .an-sfx-wrap {
-    animation: an-stamp 0.45s cubic-bezier(0.2, 1.3, 0.4, 1) both;
-    animation-delay: calc(var(--i) * 110ms + 680ms);
+  /* 5. the SFX lands glyph by glyph, its blue a beat behind its black */
+  .an-panel[data-in]:not([data-done]) .an-glyph {
+    animation: an-glyph 0.42s var(--ease-pop) both;
+    animation-delay: calc(var(--d0) + 560ms + var(--g) * 80ms);
+  }
+  .an-panel[data-in]:not([data-done]) .an-sfx-spot {
+    animation: an-register-sfx 0.5s var(--ease) both;
+    animation-delay: calc(var(--d0) + 600ms + var(--g) * 80ms);
+  }
+  /* 6. and the balloon pops from its tail, last, so it reads after the picture */
+  .an-panel[data-in]:not([data-done]) .an-bubble {
+    animation: an-pop-in 0.52s var(--ease-pop) both;
+    animation-delay: calc(var(--d0) + 840ms);
+  }
+  .an-panel[data-in]:not([data-done]) .an-bubble p {
+    animation: an-fade 0.3s var(--ease) both;
+    animation-delay: calc(var(--d0) + 960ms);
+  }
+  /* the splash: the title is stamped letter by letter over a burst of focus lines */
+  .an-title[data-in]:not([data-done]) .an-display-ch {
+    animation: an-char 0.46s var(--ease-pop) both;
+    animation-delay: calc(var(--d0) + 380ms + var(--c) * 55ms);
+  }
+  .an-title[data-in]:not([data-done]) .an-kicker {
+    animation: an-wipe 0.4s var(--ease) both;
+    animation-delay: calc(var(--d0) + 300ms);
+  }
+  .an-title[data-in]:not([data-done]) :is(.an-lede, .an-vertical) {
+    animation: an-rise 0.6s var(--ease) both;
+    animation-delay: calc(var(--d0) + 760ms);
+  }
+  .an-title[data-in]:not([data-done]) .an-title-lines {
+    animation: an-burst 0.9s var(--ease) both;
+    animation-delay: calc(var(--d0) + 300ms);
   }
 }
 
+/* falls fast, lands, lifts a hair on the air under it, and settles */
+@keyframes an-turn {
+  0% { transform: perspective(2600px) rotateY(-89deg); animation-timing-function: var(--ease-io); }
+  62% { transform: perspective(2600px) rotateY(0deg); animation-timing-function: var(--ease); }
+  78% { transform: perspective(2600px) rotateY(-2.2deg); animation-timing-function: var(--ease-io); }
+  100% { transform: perspective(2600px) rotateY(0deg); }
+}
+@keyframes an-turn-shade {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
 @keyframes an-draw {
   from { stroke-dashoffset: 1; }
   to { stroke-dashoffset: 0; }
@@ -440,66 +646,64 @@
   from { --an-dot: 0px; }
   to { --an-dot: 6px; }
 }
-@keyframes an-burst {
-  0% { opacity: 0; transform: scale(1.14); }
-  22% { opacity: 0.9; }
-  100% { opacity: 0; transform: scale(1); }
+@keyframes an-register {
+  from { translate: 9px -7px; }
+}
+@keyframes an-register-sfx {
+  from { translate: 0.07em -0.06em; }
+}
+@keyframes an-caption {
+  from { clip-path: inset(0 100% 0 0); }
+  to { clip-path: inset(0); }
+}
+@keyframes an-glyph {
+  0% { opacity: 0; transform: scale(2.3) rotate(-12deg); }
+  35% { opacity: 1; }
+  62% { transform: scale(0.9) rotate(2deg); }
+  100% { opacity: 1; transform: none; }
 }
 @keyframes an-pop-in {
-  from { opacity: 0; transform: scale(0.6) translateY(12px); }
-  to { opacity: 1; transform: none; }
+  0% { opacity: 0; transform: scale(0.35); }
+  30% { opacity: 1; }
+  100% { opacity: 1; transform: none; }
 }
-@keyframes an-stamp {
-  0% { opacity: 0; transform: scale(2.6) rotate(-8deg); }
-  55% { opacity: 1; transform: scale(0.92) rotate(1deg); }
+@keyframes an-fade {
+  from { opacity: 0; }
+}
+@keyframes an-char {
+  0% { opacity: 0; transform: translateY(-0.18em) scale(1.7); }
+  40% { opacity: 1; }
+  100% { opacity: 1; transform: none; }
+}
+@keyframes an-wipe {
+  from { clip-path: inset(0 100% 0 0); }
+  to { clip-path: inset(0); }
+}
+@keyframes an-rise {
+  from { opacity: 0; transform: translateY(12px); }
+}
+@keyframes an-burst {
+  0% { opacity: 0; transform: scale(1.25); }
+  30% { opacity: 1; }
   100% { opacity: 1; transform: none; }
 }
 @keyframes an-restamp {
-  0% { transform: scale(1.9) rotate(-6deg); opacity: 0.2; }
-  60% { transform: scale(0.94); opacity: 1; }
+  0% { transform: scale(1.7) rotate(-6deg); opacity: 0.3; }
+  60% { transform: scale(0.95); opacity: 1; }
   100% { transform: none; }
 }
-@keyframes an-pop {
-  0% { transform: scale(1); }
-  35% { transform: scale(1.1) rotate(-1.5deg); }
-  70% { transform: scale(0.98); }
-  100% { transform: scale(1.04); }
+@keyframes an-give {
+  0% { transform: none; }
+  40% { transform: scale(1.06) rotate(-1.2deg); }
+  100% { transform: none; }
 }
-@keyframes an-boil {
-  0% { transform: rotate(0deg) scale(1); }
-  33% { transform: rotate(1.1deg) scale(1.02); }
-  66% { transform: rotate(-0.8deg) scale(0.99); }
-}
-@keyframes an-rush {
-  from { stroke-dashoffset: 0; }
-  to { stroke-dashoffset: -1.16; }
+@keyframes an-tremble {
+  0% { transform: translate(0.7px, -0.5px); }
+  25% { transform: translate(-0.6px, 0.6px); }
+  50% { transform: translate(0.5px, 0.7px); }
+  75% { transform: translate(-0.7px, -0.4px); }
 }
 @keyframes an-drift {
   from { translate: 0 0; }
   to { translate: 6px 5px; }
 }
-
-/* ───────── Day: the clean classic page ─────────
-   Night is a warm, aged page that fades into a black margin. Day is fresh
-   white stock: crisp black ink, lighter grain, the title panel printed on
-   paper rather than flooded with ink, and a gentler screentone margin. */
-html[data-mode="day"] .an-world {
-  --an-paper: #fdfcfa;
-}
-html[data-mode="day"] .an-grain { opacity: 0.14; }
-
-html[data-mode="day"] .an-poster { box-shadow: 5px 5px 0 var(--an-ink); }
-
-html[data-mode="day"] .an-title .an-cell {
-  background: var(--an-paper);
-  color: var(--an-ink);
-}
-html[data-mode="day"] .an-title .an-vertical { color: var(--an-spot-ink); }
-html[data-mode="day"] .an-title .an-lede { color: #2c2932; }
-html[data-mode="day"] .an-lines-static { opacity: 0.1; }
-html[data-mode="day"] .an-lines-static .an-wedges { fill: var(--an-ink); }
-/* the margin tone starts three rows in, so the page edge is crisp dots on
-   white instead of a solid ink band */
-html[data-mode="day"] .an-edge-tone { opacity: 1; clip-path: inset(21px 0 0 0); }
-html[data-mode="day"] .an-edge-top { top: -21px; }
-html[data-mode="day"] .an-edge-bottom { bottom: -21px; }

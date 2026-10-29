@@ -2,23 +2,18 @@ import { useEffect, useRef, useState } from "react";
 
 import { SkyToggle } from "@/components/hero/sky-toggle";
 import { setMode, useMode } from "@/lib/mode";
-import { watchScroll } from "@/lib/scroll-loop";
-
-/** How long the page must rest before a dock tucked away by a downward scroll comes back. */
-const REST = 900; // ms
 
 /**
- * The hero's day ⇄ night switch, docked top-right once the hero scrolls away.
- * It tucks away while you scroll down (so it never sits on what you are
- * reading) and returns on the way back up or once the page rests. Over a
- * fandom world (a top-level section with [data-world]) it drops the main
- * stage's colours for a neutral glass.
+ * The hero's day ⇄ night switch, docked top-right once the hero scrolls
+ * away, and always there from then on (the owner wants it findable at any
+ * point; sections keep a safe zone clear for it instead). Over a fandom
+ * world (a top-level section with [data-world]) it drops the main stage's
+ * colours for a neutral glass.
  */
 export function ModeDock() {
   const mode = useMode();
   const ref = useRef<HTMLDivElement>(null);
   const [past, setPast] = useState(false);
-  const [away, setAway] = useState(false);
   const [world, setWorld] = useState(false);
 
   useEffect(() => {
@@ -27,21 +22,6 @@ export function ModeDock() {
     const io = new IntersectionObserver(([e]) => setPast(!e.isIntersecting), { rootMargin: "-80px 0px 0px 0px" });
     io.observe(hero);
     return () => io.disconnect();
-  }, []);
-
-  useEffect(() => {
-    let rest = 0;
-    const stop = watchScroll((_, dy) => {
-      // never pull it out from under keyboard focus
-      if (dy > 2 && !ref.current?.contains(document.activeElement)) setAway(true);
-      else if (dy < -2) setAway(false);
-      window.clearTimeout(rest);
-      rest = window.setTimeout(() => setAway(false), REST);
-    });
-    return () => {
-      stop();
-      window.clearTimeout(rest);
-    };
   }, []);
 
   // which top-level sections sit under the dock: a thin band level with it
@@ -89,9 +69,8 @@ export function ModeDock() {
     };
   }, []);
 
-  const shown = past && !away;
   return (
-    <div ref={ref} className="mode-dock" data-shown={shown ? "" : undefined} data-world={world ? "" : undefined} inert={!shown}>
+    <div ref={ref} className="mode-dock" data-shown={past ? "" : undefined} data-world={world ? "" : undefined} inert={!past}>
       <SkyToggle
         night={mode === "night"}
         onToggle={(e) => {

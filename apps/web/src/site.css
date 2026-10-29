@@ -140,13 +140,13 @@ body {
   z-index: 70;
   padding: 5px;
   border-radius: 999px;
-  background: color-mix(in oklab, var(--bg) 62%, transparent);
-  backdrop-filter: blur(10px);
+  /* a plain fill, no backdrop blur: the dock is up for every scroll frame,
+     and recompositing a blur behind it halved the frame rate */
+  background: color-mix(in oklab, var(--bg) 86%, transparent);
   box-shadow: 0 6px 24px rgb(0 0 0 / 0.18);
   opacity: 0;
   translate: 0 -8px;
   pointer-events: none;
-  /* hidden for real once it has faded out, so its blur isn't recomposited behind every scroll frame */
   visibility: hidden;
   transition:
     opacity 0.3s var(--ease),
@@ -161,12 +161,12 @@ body {
   visibility: visible;
   transition-delay: 0s;
 }
-/* over a fandom world: neutral glass, none of the main stage's colours */
+/* over a fandom world: a neutral tint, none of the main stage's colours */
 .mode-dock[data-world] {
-  background: rgb(255 255 255 / 0.1);
+  background: rgb(14 14 16 / 0.72);
 }
 html[data-mode="day"] .mode-dock[data-world] {
-  background: rgb(0 0 0 / 0.06);
+  background: rgb(250 250 250 / 0.78);
 }
 .mode-dock:not([data-shown]) * {
   animation-play-state: paused !important;
@@ -362,31 +362,6 @@ body {
 }
 .foil:hover::after { opacity: 0.42; }
 
-/* ── Gold foil sheen sweeping across the footer wordmark ── */
-.foil-text {
-  color: transparent;
-  background-image: linear-gradient(
-    100deg,
-    #0b0a0d 0%,
-    #0b0a0d 40%,
-    #ff7ab6 47%,
-    #fff0f6 50%,
-    #ff7ab6 53%,
-    #0b0a0d 60%,
-    #0b0a0d 100%
-  );
-  background-size: 300% 100%;
-  background-position: 100% 0;
-  -webkit-background-clip: text;
-  background-clip: text;
-}
-@media (prefers-reduced-motion: no-preference) {
-  .foil-text { animation: sheen 6s var(--ease) infinite; }
-  @keyframes sheen {
-    0%, 35% { background-position: 100% 0; }
-    100% { background-position: 0% 0; }
-  }
-}
 @media (prefers-reduced-motion: reduce) {
   .foil { transform: none; }
 }
@@ -450,31 +425,33 @@ body {
 .defer-ph[data-ph="teyvat"] { --ph-h: 1470px; }
 .defer-ph[data-ph="valorant"] { --ph-h: 1330px; }
 .defer-ph[data-ph="anime"] { --ph-h: 2700px; }
-.defer-ph[data-ph="bts"] { --ph-h: 3180px; }
-.defer-ph[data-ph="guestbook"] { --ph-h: 420px; }
+.defer-ph[data-ph="bts"] { --ph-h: 3030px; }
+.defer-ph[data-ph="guestbook"] { --ph-h: 960px; }
 @media (min-width: 640px) {
   .defer-ph[data-ph="teyvat"] { --ph-h: 1520px; }
   .defer-ph[data-ph="valorant"] { --ph-h: 1240px; }
   .defer-ph[data-ph="anime"] { --ph-h: 1900px; }
+  .defer-ph[data-ph="bts"] { --ph-h: 3134px; }
 }
 @media (min-width: 768px) {
   .defer-ph[data-ph="hackathons"] { --ph-h: 2460px; }
   .defer-ph[data-ph="teyvat"] { --ph-h: 1630px; }
-  .defer-ph[data-ph="bts"] { --ph-h: 3260px; }
+  .defer-ph[data-ph="bts"] { --ph-h: 3206px; }
 }
 @media (min-width: 1024px) {
   .defer-ph[data-ph="hackathons"] { --ph-h: 2280px; }
   .defer-ph[data-ph="teyvat"] { --ph-h: 1000px; }
   .defer-ph[data-ph="valorant"] { --ph-h: min(100vh, 934px); }
   .defer-ph[data-ph="anime"] { --ph-h: 1222px; }
-  .defer-ph[data-ph="bts"] { --ph-h: 2350px; }
+  .defer-ph[data-ph="bts"] { --ph-h: 2224px; }
+  .defer-ph[data-ph="guestbook"] { --ph-h: 640px; }
 }
 @media (min-width: 1280px) {
   .defer-ph[data-ph="hackathons"] { --ph-h: 2085px; }
-  .defer-ph[data-ph="bts"] { --ph-h: 2445px; }
+  .defer-ph[data-ph="bts"] { --ph-h: 2332px; }
 }
 @media (min-width: 1440px) {
-  .defer-ph[data-ph="bts"] { --ph-h: 2608px; }
+  .defer-ph[data-ph="bts"] { --ph-h: 2484px; }
 }
 @media (min-width: 1920px) {
   .defer-ph[data-ph="hackathons"] { --ph-h: 1800px; }

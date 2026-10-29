@@ -34,18 +34,58 @@ const COS = Math.cos((22 * Math.PI) / 180);
 const lonX = (lon: number) => (lon - 67.5) * COS * K;
 const latY = (lat: number) => (37.5 - lat) * K;
 
-function arc([x1, y1]: [number, number], [x2, y2]: [number, number]) {
-  const mx = (x1 + x2) / 2;
-  const my = (y1 + y2) / 2;
+type Pt = [number, number];
+
+/** The control point that bows a route to the left of travel, in proportion to its length. */
+function bend([x1, y1]: Pt, [x2, y2]: Pt): Pt {
   const dx = x2 - x1;
   const dy = y2 - y1;
   const len = Math.hypot(dx, dy);
-  // bow each route to the left of travel, proportional to its length
   const bow = Math.min(90, len * 0.32);
-  return `M${x1} ${y1} Q${mx - (dy / len) * bow} ${my + (dx / len) * bow} ${x2} ${y2}`;
+  return [(x1 + x2) / 2 - (dy / len) * bow, (y1 + y2) / 2 + (dx / len) * bow];
+}
+
+const arc = (a: Pt, b: Pt) => `M${a[0]} ${a[1]} Q${bend(a, b).join(" ")} ${b[0]} ${b[1]}`;
+
+/** `n + 1` points evenly spaced by length along the route: a traveller keeps one speed, as SMIL's paced motion did. */
+function paced(a: Pt, b: Pt, n = 24): Pt[] {
+  const c = bend(a, b);
+  const at = (t: number): Pt => [0, 1].map((k) => (1 - t) ** 2 * a[k] + 2 * t * (1 - t) * c[k] + t * t * b[k]) as Pt;
+  const M = 256;
+  const pts = Array.from({ length: M + 1 }, (_, i) => at(i / M));
+  const len = [0];
+  for (let i = 1; i <= M; i++) len.push(len[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]));
+  const out: Pt[] = [];
+  for (let j = 0, i = 0; j <= n; j++) {
+    const s = (len[M] * j) / n;
+    while (i < M - 1 && len[i + 1] < s) i++;
+    const f = (s - len[i]) / (len[i + 1] - len[i]);
+    out.push([pts[i][0] + (pts[i + 1][0] - pts[i][0]) * f, pts[i][1] + (pts[i + 1][1] - pts[i][1]) * f]);
+  }
+  return out;
 }
 
 type Counts = Record<string, { won: number; hosted: number }>;
+
+// The map's viewBox; .wm-fx (the HTML layers over it) places things in its units as cqw of the map's width.
+const VIEW = { x: -30, y: -20, w: INDIA_VIEW.w + 60, h: INDIA_VIEW.h + 50 };
+const VIEWBOX = `${VIEW.x} ${VIEW.y} ${VIEW.w} ${VIEW.h}`;
+const cq = (v: number) => `${((v * 100) / VIEW.w).toFixed(3)}cqw`;
+
+const ROUTES = CITIES.filter((c) => c !== HOME);
+/** Each traveller's flight as keyframes: the route, sampled evenly along its length. */
+const FLIGHTS = ROUTES.map((c, i) => {
+  const pts = paced(CITY_XY[HOME], CITY_XY[c]);
+  const frames = pts.map(([x, y], j) => `${((j * 100) / (pts.length - 1)).toFixed(3)}%{translate:${cq(x)} ${cq(y)}}`);
+  return `@keyframes wm-flight-${i}{${frames.join("")}}`;
+}).join("");
+
+/** Where a city's pin sits and how big it is (dot size is wins), shared by the map's layers. */
+function pinOf(c: string, counts: Counts) {
+  const [x, y] = CITY_XY[c];
+  const n = counts[c] ?? { won: 0, hosted: 0 };
+  return { x, y, n, r: 4 + n.won * 1.6, pop: { "--pop": `${400 + POP.indexOf(c) * 90}ms` } as CSSProperties };
+}
 
 interface MapProps {
   active: string;
@@ -56,195 +96,244 @@ interface MapProps {
 function IndiaMap({ active, counts, onCity, drawn }: MapProps & { drawn: boolean }) {
   const { w, h } = INDIA_VIEW;
   const home = CITY_XY[HOME];
-  const routes = CITIES.filter((c) => c !== HOME);
   const lons = [70, 75, 80, 85, 90, 95];
   const lats = [10, 15, 20, 25, 30, 35];
   const km500 = (500 / 111) * K; // 1° of latitude ≈ 111 km
+  const is = drawn ? " is-drawn" : "";
 
+  // Five layers, in the map's old paint order: land and routes; travellers; pin glows; pulses; pins, labels,
+  // compass and scale. What moves is an HTML box: an animated SVG child repaints the whole map on the main
+  // thread every frame, a box animating translate, scale or opacity runs on the compositor.
   return (
-    <svg
-      viewBox={`-30 -20 ${w + 60} ${h + 50}`}
-      role="img"
-      aria-label="Map of India marking the cities where ani won or organised hackathons"
-      className={`wins-map ws-map h-auto w-full ${drawn ? "is-drawn" : ""}`}
-    >
-      <defs>
-        <pattern id="wm-dots" width="6" height="6" patternUnits="userSpaceOnUse">
-          <circle cx="3" cy="3" r="1.15" fill="currentColor" />
-        </pattern>
-        <pattern id="wm-dots-fine" width="3" height="3" patternUnits="userSpaceOnUse">
-          <circle cx="1.5" cy="1.5" r="0.55" fill="currentColor" />
-        </pattern>
-        <pattern id="ws-hatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(35)">
-          <line x1="0" y1="0" x2="0" y2="7" stroke="#ff2e88" strokeWidth="1.4" />
-        </pattern>
-        <linearGradient id="ws-paper" x1="0" y1="0" x2="0.4" y2="1">
-          <stop offset="0" stopColor="#fff7fb" />
-          <stop offset="0.6" stopColor="#ffe3ef" />
-          <stop offset="1" stopColor="#ffd0e3" />
-        </linearGradient>
-        <radialGradient id="wm-fade" cx={home[0] / w} cy={home[1] / h} r="0.75">
-          <stop offset="0" stopColor="#fff" stopOpacity="1" />
-          <stop offset="1" stopColor="#fff" stopOpacity="0.15" />
-        </radialGradient>
-        <radialGradient id="ws-pin-glow">
-          <stop offset="0.3" stopColor="#ff2e88" stopOpacity="0.5" />
-          <stop offset="1" stopColor="#ff2e88" stopOpacity="0" />
-        </radialGradient>
-        <radialGradient id="ws-heat" cx="0.5" cy="0.5" r="0.5">
-          <stop offset="0" stopColor="#ff2e88" stopOpacity="0.55" />
-          <stop offset="1" stopColor="#ff2e88" stopOpacity="0" />
-        </radialGradient>
-        <mask id="wm-mask">
-          <rect x="-30" y="-20" width={w + 60} height={h + 50} fill="url(#wm-fade)" />
-        </mask>
-        <clipPath id="wm-clip">
-          <path d={INDIA_PATH} />
-        </clipPath>
-        <filter id="ws-glow" x="-20%" y="-20%" width="140%" height="140%">
-          <feGaussianBlur stdDeviation="2.2" result="b" />
-          <feMerge>
-            <feMergeNode in="b" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
-        </filter>
-        <marker id="wm-tip" viewBox="0 0 6 6" refX="3" refY="3" markerWidth="6" markerHeight="6" orient="auto">
-          <path d="M0 0 L6 3 L0 6 Z" fill="var(--pink)" />
-        </marker>
-      </defs>
+    <>
+      <svg
+        viewBox={VIEWBOX}
+        role="img"
+        aria-label="Map of India marking the cities where ani won or organised hackathons"
+        className={`wins-map ws-map h-auto w-full${is}`}
+      >
+        <defs>
+          <pattern id="wm-dots" width="6" height="6" patternUnits="userSpaceOnUse">
+            <circle cx="3" cy="3" r="1.15" fill="currentColor" />
+          </pattern>
+          <pattern id="wm-dots-fine" width="3" height="3" patternUnits="userSpaceOnUse">
+            <circle cx="1.5" cy="1.5" r="0.55" fill="currentColor" />
+          </pattern>
+          <pattern id="ws-hatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(35)">
+            <line x1="0" y1="0" x2="0" y2="7" stroke="#ff2e88" strokeWidth="1.4" />
+          </pattern>
+          <linearGradient id="ws-paper" x1="0" y1="0" x2="0.4" y2="1">
+            <stop offset="0" stopColor="#fff7fb" />
+            <stop offset="0.6" stopColor="#ffe3ef" />
+            <stop offset="1" stopColor="#ffd0e3" />
+          </linearGradient>
+          <radialGradient id="wm-fade" cx={home[0] / w} cy={home[1] / h} r="0.75">
+            <stop offset="0" stopColor="#fff" stopOpacity="1" />
+            <stop offset="1" stopColor="#fff" stopOpacity="0.15" />
+          </radialGradient>
+          <radialGradient id="ws-pin-glow">
+            <stop offset="0.3" stopColor="#ff2e88" stopOpacity="0.5" />
+            <stop offset="1" stopColor="#ff2e88" stopOpacity="0" />
+          </radialGradient>
+          <radialGradient id="ws-heat" cx="0.5" cy="0.5" r="0.5">
+            <stop offset="0" stopColor="#ff2e88" stopOpacity="0.55" />
+            <stop offset="1" stopColor="#ff2e88" stopOpacity="0" />
+          </radialGradient>
+          <mask id="wm-mask">
+            <rect x="-30" y="-20" width={w + 60} height={h + 50} fill="url(#wm-fade)" />
+          </mask>
+          <clipPath id="wm-clip">
+            <path d={INDIA_PATH} />
+          </clipPath>
+          <filter id="ws-glow" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="2.2" result="b" />
+            <feMerge>
+              <feMergeNode in="b" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+          <marker id="wm-tip" viewBox="0 0 6 6" refX="3" refY="3" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M0 0 L6 3 L0 6 Z" fill="var(--pink)" />
+          </marker>
+        </defs>
 
-      {/* graticule */}
-      <g className="wm-grid" fill="currentColor">
-        {lons.map((lon) => (
-          <g key={lon}>
-            <line x1={lonX(lon)} x2={lonX(lon)} y1={-10} y2={h + 10} stroke="currentColor" />
-            <text x={lonX(lon)} y={h + 26} textAnchor="middle">
-              {lon}°E
-            </text>
-          </g>
-        ))}
-        {lats.map((lat) => (
-          <g key={lat}>
-            <line y1={latY(lat)} y2={latY(lat)} x1={-10} x2={w + 10} stroke="currentColor" />
-            <text x={-14} y={latY(lat) + 4} textAnchor="end">
-              {lat}°N
-            </text>
-          </g>
-        ))}
-        <line className="wm-tropic" y1={latY(23.44)} y2={latY(23.44)} x1={-10} x2={w + 10} stroke="currentColor" />
-        <text x={w + 8} y={latY(23.44) - 6} textAnchor="end" className="wm-note">
+        {/* graticule */}
+        <g className="wm-grid" fill="currentColor">
+          {lons.map((lon) => (
+            <g key={lon}>
+              <line x1={lonX(lon)} x2={lonX(lon)} y1={-10} y2={h + 10} stroke="currentColor" />
+              <text x={lonX(lon)} y={h + 26} textAnchor="middle">
+                {lon}°E
+              </text>
+            </g>
+          ))}
+          {lats.map((lat) => (
+            <g key={lat}>
+              <line y1={latY(lat)} y2={latY(lat)} x1={-10} x2={w + 10} stroke="currentColor" />
+              <text x={-14} y={latY(lat) + 4} textAnchor="end">
+                {lat}°N
+              </text>
+            </g>
+          ))}
+          <line className="wm-tropic" y1={latY(23.44)} y2={latY(23.44)} x1={-10} x2={w + 10} stroke="currentColor" />
+          <text x={w + 8} y={latY(23.44) - 6} textAnchor="end" className="wm-note">
+            Tropic of Cancer
+          </text>
+        </g>
+
+        <text x={lonX(80.6)} y={latY(5.4)} textAnchor="middle" className="ws-sea">
+          Indian Ocean
+        </text>
+
+        {/* land: a printed misregistration shadow, paper, then two dot screens */}
+        <path d={INDIA_PATH} transform="translate(7 9)" className="ws-shadow" />
+        <path d={INDIA_PATH} transform="translate(7 9)" fill="url(#ws-hatch)" className="ws-shadow-hatch" />
+        <path d={INDIA_PATH} className="ws-cut" />
+        <path d={INDIA_PATH} fill="url(#ws-paper)" />
+        <g clipPath="url(#wm-clip)">
+          <circle cx={home[0]} cy={home[1]} r="230" fill="url(#ws-heat)" className="ws-heat" />
+          <rect x="0" y="0" width={w} height={h} fill="url(#wm-dots-fine)" className="wm-land-fine" />
+          <rect x="0" y="0" width={w} height={h} fill="url(#wm-dots)" mask="url(#wm-mask)" className="wm-land" />
+        </g>
+        <path d={INDIA_PATH} className="wm-coast" fill="none" stroke="currentColor" />
+        <text x={w + 8} y={latY(23.44) - 6} textAnchor="end" className="ws-tropic">
           Tropic of Cancer
         </text>
-      </g>
 
-      <text x={lonX(80.6)} y={latY(5.4)} textAnchor="middle" className="ws-sea">
-        Indian Ocean
-      </text>
+        {/* routes from home */}
+        <g fill="none">
+          {ROUTES.map((c, i) => {
+            const d = arc(home, CITY_XY[c]);
+            const on = active === c;
+            return (
+              <g key={c} style={{ "--i": i } as CSSProperties}>
+                <path d={d} className="ws-route-under" />
+                <path
+                  d={d}
+                  className={`wm-route ${on ? "is-on" : ""}`}
+                  pathLength={1}
+                  markerEnd="url(#wm-tip)"
+                  filter={on ? "url(#ws-glow)" : undefined}
+                />
+              </g>
+            );
+          })}
+        </g>
+      </svg>
 
-      {/* land: a printed misregistration shadow, paper, then two dot screens */}
-      <path d={INDIA_PATH} transform="translate(7 9)" className="ws-shadow" />
-      <path d={INDIA_PATH} transform="translate(7 9)" fill="url(#ws-hatch)" className="ws-shadow-hatch" />
-      <path d={INDIA_PATH} className="ws-cut" />
-      <path d={INDIA_PATH} fill="url(#ws-paper)" />
-      <g clipPath="url(#wm-clip)">
-        <circle cx={home[0]} cy={home[1]} r="230" fill="url(#ws-heat)" className="ws-heat" />
-        <rect x="0" y="0" width={w} height={h} fill="url(#wm-dots-fine)" className="wm-land-fine" />
-        <rect x="0" y="0" width={w} height={h} fill="url(#wm-dots)" mask="url(#wm-mask)" className="wm-land" />
-      </g>
-      <path d={INDIA_PATH} className="wm-coast" fill="none" stroke="currentColor" />
-      <text x={w + 8} y={latY(23.44) - 6} textAnchor="end" className="ws-tropic">
-        Tropic of Cancer
-      </text>
+      <div className={`ws-map wm-fx${is}`} aria-hidden="true">
+        <style>{FLIGHTS}</style>
+        {ROUTES.map((c, i) => (
+          <i
+            key={c}
+            className="wm-traveller"
+            style={{
+              left: cq(-VIEW.x - 3.2),
+              top: cq(-VIEW.y - 3.2),
+              width: cq(6.4),
+              animation: `wm-flight-${i} ${3.2 + i * 0.35}s linear ${i * 0.4}s infinite backwards`,
+            }}
+          >
+            <svg viewBox="-3.2 -3.2 6.4 6.4">
+              <circle r="2.6" />
+            </svg>
+          </i>
+        ))}
+      </div>
 
-      {/* routes from home */}
-      <g fill="none">
-        {routes.map((c, i) => {
-          const d = arc(home, CITY_XY[c]);
-          const on = active === c;
+      <svg viewBox={VIEWBOX} className={`wins-map ws-map wm-over wm-glows${is}`} aria-hidden="true">
+        {CITIES.map((c) => {
+          const p = pinOf(c, counts);
           return (
-            <g key={c} style={{ "--i": i } as CSSProperties}>
-              <path d={d} className="ws-route-under" />
-              <path
-                d={d}
-                className={`wm-route ${on ? "is-on" : ""}`}
-                pathLength={1}
-                markerEnd="url(#wm-tip)"
-                filter={on ? "url(#ws-glow)" : undefined}
-              />
-              <circle r="2.6" className="wm-traveller">
-                <animateMotion dur={`${3.2 + i * 0.35}s`} repeatCount="indefinite" path={d} begin={`${i * 0.4}s`} />
-              </circle>
+            <g key={c} transform={`translate(${p.x} ${p.y})`} style={p.pop}>
+              <g className="ws-pop">
+                <circle r={p.r + 13} className="ws-pin-glow" fill="url(#ws-pin-glow)" />
+              </g>
             </g>
           );
         })}
-      </g>
+      </svg>
 
-      {/* cities */}
-      {CITIES.map((c) => {
-        const [x, y] = CITY_XY[c];
-        const n = counts[c] ?? { won: 0, hosted: 0 };
-        const r = 4 + n.won * 1.6;
-        const on = active === c;
-        const [lx, ly, anchor] = LABEL[c] ?? [1, 0, "start"];
-        return (
-          <g
-            key={c}
-            className={`wm-city ${on ? "is-on" : ""}`}
-            transform={`translate(${x} ${y})`}
-            style={{ "--pop": `${400 + POP.indexOf(c) * 90}ms` } as CSSProperties}
-            onMouseEnter={() => onCity(c)}
-            onMouseLeave={() => onCity("")}
-            onClick={() => onCity(c)}
-          >
-            <g className="ws-pop">
-              <circle r={r + 12} className="ws-hit" />
-              <circle r={r + 13} className="ws-pin-glow" fill="url(#ws-pin-glow)" />
-              <circle r={r + 7} className="wm-halo" />
-              <circle r={r + 2.2} className="ws-pin-ring" />
-              <circle r={r} className="wm-pin" />
-              <circle r={r * 0.38} cx={-r * 0.28} cy={-r * 0.3} className="ws-pin-shine" />
-              {n.hosted > 0 && <circle r={r + 5} className="wm-hosted" />}
-              {c === HOME && (
-                <path
-                  d="M0 -15 L3.2 -4.4 L14.3 -4.6 L5.2 1.8 L8.8 12.1 L0 5.6 L-8.8 12.1 L-5.2 1.8 L-14.3 -4.6 L-3.2 -4.4 Z"
-                  className="wm-home"
-                  transform="scale(0.62)"
-                />
-              )}
+      <div className={`ws-map wm-fx${is}`} aria-hidden="true">
+        {CITIES.map((c) => {
+          const p = pinOf(c, counts);
+          const R = p.r + 7;
+          return (
+            <span key={c} className="ws-pop" style={{ ...p.pop, left: cq(p.x - VIEW.x - R), top: cq(p.y - VIEW.y - R), width: cq(2 * R) }}>
+              <span className={`wm-halo ${active === c ? "is-on" : ""}`}>
+                <svg viewBox={`${-R} ${-R} ${2 * R} ${2 * R}`}>
+                  <circle r={R} />
+                </svg>
+              </span>
+            </span>
+          );
+        })}
+      </div>
+
+      <svg viewBox={VIEWBOX} className={`wins-map ws-map wm-over${is}`} aria-hidden="true">
+        {/* cities */}
+        {CITIES.map((c) => {
+          const { x, y, n, r, pop } = pinOf(c, counts);
+          const on = active === c;
+          const [lx, ly, anchor] = LABEL[c] ?? [1, 0, "start"];
+          return (
+            <g
+              key={c}
+              className={`wm-city ${on ? "is-on" : ""}`}
+              transform={`translate(${x} ${y})`}
+              style={pop}
+              onMouseEnter={() => onCity(c)}
+              onMouseLeave={() => onCity("")}
+              onClick={() => onCity(c)}
+            >
+              <g className="ws-pop">
+                <circle r={r + 12} className="ws-hit" />
+                <circle r={r + 2.2} className="ws-pin-ring" />
+                <circle r={r} className="wm-pin" />
+                <circle r={r * 0.38} cx={-r * 0.28} cy={-r * 0.3} className="ws-pin-shine" />
+                {n.hosted > 0 && <circle r={r + 5} className="wm-hosted" />}
+                {c === HOME && (
+                  <path
+                    d="M0 -15 L3.2 -4.4 L14.3 -4.6 L5.2 1.8 L8.8 12.1 L0 5.6 L-8.8 12.1 L-5.2 1.8 L-14.3 -4.6 L-3.2 -4.4 Z"
+                    className="wm-home"
+                    transform="scale(0.62)"
+                  />
+                )}
+              </g>
+              <text x={lx * (r + 8)} y={4 + ly * 12} textAnchor={anchor} className="wm-label">
+                {c}
+                {n.won > 0 && <tspan className="wm-count">{` ${n.won}`}</tspan>}
+              </text>
             </g>
-            <text x={lx * (r + 8)} y={4 + ly * 12} textAnchor={anchor} className="wm-label">
-              {c}
-              {n.won > 0 && <tspan className="wm-count">{` ${n.won}`}</tspan>}
-            </text>
-          </g>
-        );
-      })}
+          );
+        })}
 
-      {/* compass rose */}
-      <g transform={`translate(${w - 30} 40)`} className="ws-compass" aria-hidden="true">
-        <circle r="22" className="ws-compass-ring" />
-        <circle r="17" className="ws-compass-ring ws-compass-ring-in" />
-        <path d="M0 -30 L5 -4 L0 0 Z" className="ws-compass-dark" />
-        <path d="M0 -30 L-5 -4 L0 0 Z" className="ws-compass-pink" />
-        <path d="M0 30 L5 4 L0 0 Z" className="ws-compass-pink" />
-        <path d="M0 30 L-5 4 L0 0 Z" className="ws-compass-dark" />
-        <path d="M-24 0 L-4 3 L0 0 Z M24 0 L4 -3 L0 0 Z" className="ws-compass-dark" />
-        <path d="M-24 0 L-4 -3 L0 0 Z M24 0 L4 3 L0 0 Z" className="ws-compass-pink" />
-        <text y="-35" textAnchor="middle">
-          N
-        </text>
-      </g>
+        {/* compass rose */}
+        <g transform={`translate(${w - 30} 40)`} className="ws-compass" aria-hidden="true">
+          <circle r="22" className="ws-compass-ring" />
+          <circle r="17" className="ws-compass-ring ws-compass-ring-in" />
+          <path d="M0 -30 L5 -4 L0 0 Z" className="ws-compass-dark" />
+          <path d="M0 -30 L-5 -4 L0 0 Z" className="ws-compass-pink" />
+          <path d="M0 30 L5 4 L0 0 Z" className="ws-compass-pink" />
+          <path d="M0 30 L-5 4 L0 0 Z" className="ws-compass-dark" />
+          <path d="M-24 0 L-4 3 L0 0 Z M24 0 L4 -3 L0 0 Z" className="ws-compass-dark" />
+          <path d="M-24 0 L-4 -3 L0 0 Z M24 0 L4 3 L0 0 Z" className="ws-compass-pink" />
+          <text y="-35" textAnchor="middle">
+            N
+          </text>
+        </g>
 
-      {/* scale bar */}
-      <g transform={`translate(${w - km500 - 10} ${h - 24})`} className="wm-scale">
-        <rect width={km500 / 2} height="4" fill="currentColor" />
-        <rect x={km500 / 2} width={km500 / 2} height="4" fill="none" stroke="currentColor" />
-        <text y="-7">0</text>
-        <text x={km500} y="-7" textAnchor="end">
-          500 km
-        </text>
-      </g>
-    </svg>
+        {/* scale bar */}
+        <g transform={`translate(${w - km500 - 10} ${h - 24})`} className="wm-scale">
+          <rect width={km500 / 2} height="4" fill="currentColor" />
+          <rect x={km500 / 2} width={km500 / 2} height="4" fill="none" stroke="currentColor" />
+          <text y="-7">0</text>
+          <text x={km500} y="-7" textAnchor="end">
+            500 km
+          </text>
+        </g>
+      </svg>
+    </>
   );
 }
 
@@ -389,28 +478,6 @@ function Trophy(props: MapProps) {
     io.observe(el);
     return () => io.disconnect();
   }, []);
-  // The travellers (SMIL) and the pins' pulses are SVG animations: they run on the main thread, every frame,
-  // so they only run while the map shows. The page's off-screen pause leaves the map to this ([data-own-pause]).
-  useEffect(() => {
-    const el = map.current;
-    const svg = el?.querySelector("svg");
-    if (!el || !svg) return;
-    const io = new IntersectionObserver(
-      ([e]) => {
-        const go = e.isIntersecting;
-        if (go) svg.unpauseAnimations();
-        else svg.pauseAnimations();
-        for (const a of svg.getAnimations({ subtree: true })) {
-          if (!(a instanceof CSSAnimation) || a.effect?.getTiming().iterations !== Infinity) continue;
-          if (go && a.playState === "paused") a.play();
-          else if (!go && a.playState === "running") a.pause();
-        }
-      },
-      { rootMargin: "10% 0px" },
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
   const on = drawn ? "" : undefined;
 
   return (
@@ -418,7 +485,7 @@ function Trophy(props: MapProps) {
       <div ref={numeral} className="ws-numeral" data-drawn={on} aria-hidden="true">
         <span>{WINS.length}</span>
       </div>
-      <div ref={map} className="ws-map-wrap" data-own-pause="">
+      <div ref={map} className="ws-map-wrap">
         <IndiaMap {...props} drawn={drawn} />
       </div>
       <div ref={glints} className="ws-glints" aria-hidden="true">

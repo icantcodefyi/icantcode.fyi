@@ -241,6 +241,14 @@ html:not([data-mode="day"]) .ws-glints svg { filter: drop-shadow(0 0 6px rgb(255
 .ws-map .wm-route { stroke-width: 1.8; opacity: 0.9; }
 .ws-map .wm-route.is-on { stroke-width: 3.2; }
 .wm-traveller { stroke: #fff; stroke-width: 1.2; }
+/* the map's layers (wins.tsx): SVGs stacked on the first one, and the HTML boxes that move,
+   placed in map units (cqw of the map's width) */
+.wm-over, .wm-fx { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
+.wm-glows, .wm-fx { pointer-events: none; }
+.wm-fx { container-type: inline-size; }
+.wm-fx > * { position: absolute; aspect-ratio: 1; }
+.wm-fx svg { display: block; width: 100%; height: auto; overflow: visible; }
+.wm-halo { display: block; }
 .ws-hit { fill: transparent; cursor: pointer; }
 .ws-pin-ring { fill: #fff; }
 .ws-pin-shine { fill: #fff; opacity: 0.55; pointer-events: none; }

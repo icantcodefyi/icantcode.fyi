@@ -70,11 +70,8 @@ export function useReveal() {
  * Cheap at the crossings, which land mid-scroll: one look at the page's
  * animations per crossing, whether each is a loop is asked once per
  * animation, and every play state is read before anything is paused or
- * played (each change dirties style, and the next read would flush it).
- * A subtree marked [data-own-pause] pauses itself (the hackathon map, by
- * its own visibility) and is left to it. */
+ * played (each change dirties style, and the next read would flush it). */
 
-const ownPause = (n: Element | null | undefined) => !!n?.closest("[data-own-pause]");
 const targetOf = (a: Animation) => (a.effect as KeyframeEffect | null)?.target ?? null;
 
 export function useOffscreenPause(root: React.RefObject<HTMLElement | null>) {
@@ -87,7 +84,7 @@ export function useOffscreenPause(root: React.RefObject<HTMLElement | null>) {
       let v = loops.get(a);
       if (v === undefined) {
         const t = targetOf(a);
-        v = a instanceof CSSAnimation && !!t && a.effect?.getTiming().iterations === Infinity && !ownPause(t);
+        v = a instanceof CSSAnimation && !!t && a.effect?.getTiming().iterations === Infinity;
         loops.set(a, v);
       }
       return v;
@@ -128,7 +125,6 @@ export function useOffscreenPause(root: React.RefObject<HTMLElement | null>) {
           const off = going.has(el);
           el.toggleAttribute("data-off", off);
           for (const svg of el.querySelectorAll("svg")) {
-            if (ownPause(svg)) continue;
             if (off) svg.pauseAnimations();
             else svg.unpauseAnimations();
           }

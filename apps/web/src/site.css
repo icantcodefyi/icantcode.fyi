@@ -387,13 +387,14 @@ body {
 .wm-route.is-on { stroke-width: 2.6; opacity: 1; }
 .wm-traveller { fill: var(--pink); }
 .wm-pin { fill: var(--blush-ink); transition: fill 200ms; }
-.wm-halo { fill: var(--pink); opacity: 0.16; transform-box: fill-box; transform-origin: center; }
+/* the halo and the traveller are HTML boxes over the map (wins.tsx), so their loops run on the compositor */
+.wm-halo { fill: var(--pink); opacity: 0.16; }
 .wm-hosted { fill: none; stroke: var(--blush-ink); stroke-width: 1.2; stroke-dasharray: 2 2; }
 .wm-home { fill: var(--pink); stroke: var(--blush); stroke-width: 1.6; }
 .wm-label { font: 600 14px "Onest", sans-serif; fill: var(--blush-ink); paint-order: stroke; stroke: var(--blush); stroke-width: 4px; stroke-linejoin: round; }
 .wm-count { fill: #a3124f; font-weight: 800; }
 .wm-city.is-on .wm-pin { fill: var(--pink); }
-.wm-city.is-on .wm-halo { opacity: 0.4; }
+.wm-halo.is-on { opacity: 0.4; }
 .wm-scale text { font: 500 13px "Onest", sans-serif; fill: currentColor; }
 .wins-row { transition: background-color 160ms, padding 200ms var(--ease); border-radius: 12px; }
 .wins-row:hover, .wins-row:focus-visible { background: rgb(255 255 255 / 0.45); padding-inline: 12px; }

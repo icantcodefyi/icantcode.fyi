@@ -1,0 +1,324 @@
+{
+  "cuts": [
+    {
+      "source": "/Users/aniruddhdubge/Desktop/ani/icantcode.fyi/apps/web/public/site/scenes/ship-launch.webp",
+      "cutout": "/tmp/art-work/work-girl-night.png",
+      "offset": [
+        0,
+        0
+      ],
+      "visible_rgb_max_error_255": 0,
+      "recomposite_max_error_255": 0,
+      "visible_pixels": 404891
+    },
+    {
+      "source": "/Users/aniruddhdubge/Desktop/ani/icantcode.fyi/apps/web/public/site/scenes/ship-launch.webp",
+      "cutout": "/tmp/art-work/work-flowers-night.png",
+      "offset": [
+        0,
+        962
+      ],
+      "visible_rgb_max_error_255": 0,
+      "recomposite_max_error_255": 0,
+      "visible_pixels": 88636
+    },
+    {
+      "source": "/Users/aniruddhdubge/Desktop/ani/icantcode.fyi/apps/web/public/site/scenes/ship-launch-day.webp",
+      "cutout": "/tmp/art-work/work-girl-day.png",
+      "offset": [
+        0,
+        0
+      ],
+      "visible_rgb_max_error_255": 0,
+      "recomposite_max_error_255": 0,
+      "visible_pixels": 404891
+    },
+    {
+      "source": "/Users/aniruddhdubge/Desktop/ani/icantcode.fyi/apps/web/public/site/scenes/ship-launch-day.webp",
+      "cutout": "/tmp/art-work/work-flowers-day.png",
+      "offset": [
+        0,
+        962
+      ],
+      "visible_rgb_max_error_255": 0,
+      "recomposite_max_error_255": 0,
+      "visible_pixels": 88636
+    }
+  ],
+  "encoded": [
+    {
+      "file": "work-sky-night.avif",
+      "size": [
+        1224,
+        1836
+      ],
+      "bytes": 215154,
+      "sha256": "0176df5392763b44a71aa75352106cc728a6bd45ed55ae6f46dedd96b4a65ec6"
+    },
+    {
+      "file": "work-sky-night.webp",
+      "size": [
+        1224,
+        1836
+      ],
+      "bytes": 385598,
+      "sha256": "f89c6a4b13ddd44ea2f12ae49af22be009bd9c6ff3777ec7374bd8aef2cc112a"
+    },
+    {
+      "file": "work-sky-night-half.avif",
+      "size": [
+        612,
+        918
+      ],
+      "bytes": 92913,
+      "sha256": "11ed791627dd9673213b2cafcaa6c73283e3599745eb99c66abfae877e6fa9ef"
+    },
+    {
+      "file": "work-sky-night-half.webp",
+      "size": [
+        612,
+        918
+      ],
+      "bytes": 140970,
+      "sha256": "11a22e39e525a4abbdec395b856689ff6e4db54386342d9f1f57b3d947849995"
+    },
+    {
+      "file": "work-girl-night.avif",
+      "size": [
+        1122,
+        1402
+      ],
+      "bytes": 79140,
+      "sha256": "816343cca210e6622224d8ad26a220cb8f59f996a763905641cff96a5b37de16"
+    },
+    {
+      "file": "work-girl-night.webp",
+      "size": [
+        1122,
+        1402
+      ],
+      "bytes": 125296,
+      "sha256": "1fd3601f27699afe77fd62a9b20f12dbb887d409a895d2037cd77ddfac719522"
+    },
+    {
+      "file": "work-girl-night-half.avif",
+      "size": [
+        561,
+        701
+      ],
+      "bytes": 39637,
+      "sha256": "2abd38f31b21273be5b9014cd3cab39fe5e59fb9eaebd1c103764cba6f9fdc9b"
+    },
+    {
+      "file": "work-girl-night-half.webp",
+      "size": [
+        561,
+        701
+      ],
+      "bytes": 61622,
+      "sha256": "990add98a03c61209b0ed3f91a36c75eb2c90bd1497e77fabaaeaa690973ac6d"
+    },
+    {
+      "file": "work-flowers-night.avif",
+      "size": [
+        1122,
+        440
+      ],
+      "bytes": 8977,
+      "sha256": "415b4b7ed869329624a0d7821c65d0446c2319db8a34b912579491531b0d71e4"
+    },
+    {
+      "file": "work-flowers-night.webp",
+      "size": [
+        1122,
+        440
+      ],
+      "bytes": 17780,
+      "sha256": "db66936f96cd37d4d2c389a86c443506381d12a68562d9014ac1b0ae3744ecec"
+    },
+    {
+      "file": "work-flowers-night-half.avif",
+      "size": [
+        561,
+        220
+      ],
+      "bytes": 4872,
+      "sha256": "31180950708064a0becc63879ea3a78ed37731e5e496471e989c43b272cde408"
+    },
+    {
+      "file": "work-flowers-night-half.webp",
+      "size": [
+        561,
+        220
+      ],
+      "bytes": 8828,
+      "sha256": "dcc86b46f8d9c857dea05d9b09e14935d292b35e302e6700fd6e9c10a9e71113"
+    },
+    {
+      "file": "work-depth-night.avif",
+      "size": [
+        1173,
+        921
+      ],
+      "bytes": 23043,
+      "sha256": "64a8499a85e9f144f05055bd57e741ca14ae7ca3c472fd98e9619d5dc033234d"
+    },
+    {
+      "file": "work-depth-night.webp",
+      "size": [
+        1173,
+        921
+      ],
+      "bytes": 106072,
+      "sha256": "2a668a34292b968194fecdabb1f51ed40e808634aac4e5e67483ed1418b8c25d"
+    },
+    {
+      "file": "work-sky-day.avif",
+      "size": [
+        1224,
+        1836
+      ],
+      "bytes": 215768,
+      "sha256": "545107c22797e01d24a8e6a2d183dd36b01f6bf7a12aeda27c3d0825b0abe5a9"
+    },
+    {
+      "file": "work-sky-day.webp",
+      "size": [
+        1224,
+        1836
+      ],
+      "bytes": 354438,
+      "sha256": "661e6c99bb607ee5e9be928f83f048ae35cb685661f05e49dbcc21f7820d06a7"
+    },
+    {
+      "file": "work-sky-day-half.avif",
+      "size": [
+        612,
+        918
+      ],
+      "bytes": 81910,
+      "sha256": "7d8d9bc50396ac85eb67a0efb9a75f7c35b14edad7b75b999b1466f6a1526c82"
+    },
+    {
+      "file": "work-sky-day-half.webp",
+      "size": [
+        612,
+        918
+      ],
+      "bytes": 129318,
+      "sha256": "f2c864fc36a65d446690820e3c285f2fcba051a4fd586f1186cbe1f782f62844"
+    },
+    {
+      "file": "work-girl-day.avif",
+      "size": [
+        1122,
+        1402
+      ],
+      "bytes": 81059,
+      "sha256": "3e8334eedee43e6ceec7972b39d4b5dbd60bf8f16dc665233937e3f2b999a3af"
+    },
+    {
+      "file": "work-girl-day.webp",
+      "size": [
+        1122,
+        1402
+      ],
+      "bytes": 126116,
+      "sha256": "c0a6feb1d0c364faeb7e4dc31a7e5a079b91b1854e874903d71345b3df1aa41b"
+    },
+    {
+      "file": "work-girl-day-half.avif",
+      "size": [
+        561,
+        701
+      ],
+      "bytes": 40135,
+      "sha256": "33df0d4a5b3bcece574b9895ff080779f883baafc54adb17806381caf47d2b11"
+    },
+    {
+      "file": "work-girl-day-half.webp",
+      "size": [
+        561,
+        701
+      ],
+      "bytes": 62318,
+      "sha256": "8983adaba68d30ad171fa8e398a71f2a501ecb28cc8d24d22e95be2f2ea695e3"
+    },
+    {
+      "file": "work-flowers-day.avif",
+      "size": [
+        1122,
+        440
+      ],
+      "bytes": 9911,
+      "sha256": "d140c455e0bb6254fbbdb3d0e341da715bbd012d22b1b0f8fb427cc54de7546a"
+    },
+    {
+      "file": "work-flowers-day.webp",
+      "size": [
+        1122,
+        440
+      ],
+      "bytes": 19586,
+      "sha256": "38b171e7e5cb1eb2a89be60eb3eb6a6d215d1347fd657eb4aeec088dcf49916c"
+    },
+    {
+      "file": "work-flowers-day-half.avif",
+      "size": [
+        561,
+        220
+      ],
+      "bytes": 5350,
+      "sha256": "3799aacbdf0c3edc77ca35399c3c4f6642ee87e55ec0dea410c852bf4a2fd001"
+    },
+    {
+      "file": "work-flowers-day-half.webp",
+      "size": [
+        561,
+        220
+      ],
+      "bytes": 9842,
+      "sha256": "67f29347d75286818ad87805975056cf854d004ba183c4177151907b25efd8ec"
+    },
+    {
+      "file": "work-depth-day.avif",
+      "size": [
+        1173,
+        921
+      ],
+      "bytes": 21569,
+      "sha256": "2f9e82b7aa9ca99ad1e4d620b2b503eebc3350813e1f52d42ef552da5821327f"
+    },
+    {
+      "file": "work-depth-day.webp",
+      "size": [
+        1173,
+        921
+      ],
+      "bytes": 98160,
+      "sha256": "a7a4a94d0670fbcb38b85a193dbf25a52080317afcf4993cab9709fe5b55abe8"
+    }
+  ],
+  "totals_KB": {
+    "night": 318.67,
+    "day": 320.61
+  },
+  "atlas_all_tiles_in_bounds": true,
+  "common_day_night_alpha": true,
+  "depth_source_alpha_identical": true,
+  "composition": {
+    "night": {
+      "feature_landmarks": 282,
+      "max_warp_px": 4.342233657836914,
+      "protected_pixel_count": 915096,
+      "protected_rgb_max_error": 0
+    },
+    "day": {
+      "feature_landmarks": 250,
+      "max_warp_px": 41.55097198486328,
+      "protected_pixel_count": 915096,
+      "protected_rgb_max_error": 0
+    }
+  },
+  "lossy_delivery_note": "Original RGB/recomposite checks apply to lossless staging masters; AVIF and color WebP are intentionally lossy per plan."
+}

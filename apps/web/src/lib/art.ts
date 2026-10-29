@@ -28,6 +28,30 @@ const AVIF = new Set([
   "/site/scenes/ship-launch-day",
   "/site/scenes/sit-cutout",
   "/site/scenes/trophy-cutout",
+  "/site/scenes/work-depth-day",
+  "/site/scenes/work-depth-night",
+  "/site/scenes/work-flowers-day",
+  "/site/scenes/work-flowers-day-half",
+  "/site/scenes/work-flowers-night",
+  "/site/scenes/work-flowers-night-half",
+  "/site/scenes/work-girl-day",
+  "/site/scenes/work-girl-day-half",
+  "/site/scenes/work-girl-night",
+  "/site/scenes/work-girl-night-half",
+  "/site/scenes/work-sky-day",
+  "/site/scenes/work-sky-day-half",
+  "/site/scenes/work-sky-night",
+  "/site/scenes/work-sky-night-half",
+  "/site/scenes/trophy-girl",
+  "/site/scenes/trophy-girl-600",
+  "/site/scenes/trophy-confetti",
+  "/site/scenes/trophy-confetti-600",
+  "/site/finale/meadow-night",
+  "/site/finale/meadow-night-1200",
+  "/site/finale/meadow-day",
+  "/site/finale/meadow-day-1200",
+  "/site/finale/meadow-depth-night",
+  "/site/finale/meadow-depth-day",
 ]);
 
 export const avif = () => typeof window !== "undefined" && window.__avif === true;
@@ -76,3 +100,90 @@ const preloadList = (mode: "night" | "day") =>
  * (they used to wait for React to render the <img>s).
  */
 export const ART_BOOT = `(function(){try{var w=window,i=new Image();i.onload=function(){w.__avif=i.width>0};i.src=${JSON.stringify(AVIF_PROBE)};var P=${JSON.stringify({ night: preloadList("night"), day: preloadList("day") })}[document.documentElement.dataset.mode==="day"?"day":"night"];for(var k=0;k<P.length;k++){var l=document.createElement("link");l.rel="preload";l.as="image";if(P[k][1]){l.type="image/avif";l.href=P[k][0]+".avif"}else l.href=P[k][0]+".webp";document.head.appendChild(l)}}catch(e){}})()`;
+
+/** Recent work: the extended sky, her cut from the original painting, the near flowers, one depth atlas per mode. */
+export const WORK_ART = {
+  night: {
+    sky: "/site/scenes/work-sky-night",
+    girl: "/site/scenes/work-girl-night",
+    flowers: "/site/scenes/work-flowers-night",
+    depth: "/site/scenes/work-depth-night",
+    skyHalf: "/site/scenes/work-sky-night-half",
+    girlHalf: "/site/scenes/work-girl-night-half",
+    flowersHalf: "/site/scenes/work-flowers-night-half",
+  },
+  day: {
+    sky: "/site/scenes/work-sky-day",
+    girl: "/site/scenes/work-girl-day",
+    flowers: "/site/scenes/work-flowers-day",
+    depth: "/site/scenes/work-depth-day",
+    skyHalf: "/site/scenes/work-sky-day-half",
+    girlHalf: "/site/scenes/work-girl-day-half",
+    flowersHalf: "/site/scenes/work-flowers-day-half",
+  },
+  size: [1224, 1836],
+  original: { size: [1122, 1402], offset: [51, 434] },
+  atlas: {
+    size: [1173, 921],
+    tiles: {
+      sky: [0, 0, 612, 918],
+      girl: [612, 0, 561, 701],
+      flowers: [612, 701, 561, 220],
+    },
+  },
+  layers: {
+    sky: { size: [1224, 1836], offset: [0, 0] },
+    girl: { size: [1122, 1402], offset: [51, 434] },
+    flowers: { size: [1122, 440], offset: [51, 1396] },
+  },
+} as const;
+
+/** Footer meadow under the hero sky, and where the sitting cutout rests on it. */
+export const FINALE_ART = {
+  night: {
+    sky: "/site/plate-night-sky",
+    meadow: "/site/finale/meadow-night",
+    meadowHalf: "/site/finale/meadow-night-1200",
+    depth: "/site/finale/meadow-depth-night",
+    sit: "/site/scenes/sit-cutout",
+    ground: "#120A10",
+  },
+  day: {
+    sky: "/site/plate-day-sky",
+    meadow: "/site/finale/meadow-day",
+    meadowHalf: "/site/finale/meadow-day-1200",
+    depth: "/site/finale/meadow-depth-day",
+    sit: "/site/scenes/sit-cutout",
+    ground: "#FFF1F6",
+  },
+} as const;
+
+export const FINALE_ART_LAYOUT = {
+  meadowSize: [2400, 1100],
+  meadowHalfSize: [1200, 550],
+  depthSize: [1200, 550],
+  depthUv: [0, 0, 1, 1],
+  seatPercent: [62, 51.8181818182],
+  sit: {
+    sourceSize: [1448, 1086],
+    x: 44.3333333333,
+    y: 15.1818181818,
+    w: 36,
+    contactAnchor: [710, 675],
+  },
+} as const;
+
+/** Hackathons: the trophy painting split into her and the free-floating confetti. */
+export const TROPHY_ART = {
+  girl: "/site/scenes/trophy-girl",
+  girlHalf: "/site/scenes/trophy-girl-600",
+  confetti: "/site/scenes/trophy-confetti",
+  confettiHalf: "/site/scenes/trophy-confetti-600",
+} as const;
+
+export const TROPHY_LAYERS = [
+  { id: "girl", art: TROPHY_ART.girl, half: TROPHY_ART.girlHalf,
+    size: [1122, 1402], halfSize: [600, 750], distance: 12.5 },
+  { id: "confetti", art: TROPHY_ART.confetti, half: TROPHY_ART.confettiHalf,
+    size: [1122, 1402], halfSize: [600, 750], distance: 7 },
+] as const;

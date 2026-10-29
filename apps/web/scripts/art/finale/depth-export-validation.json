@@ -1,0 +1,32 @@
+{
+  "night": {
+    "size": [
+      1200,
+      550
+    ],
+    "white_is_near": true,
+    "normalization": "independent solid-pixel min/max",
+    "transparent_rgb": "nearest solid (alpha >= 128) dilation",
+    "gaussian_sigma_full_resolution": 1.2,
+    "range": [
+      0,
+      254
+    ],
+    "source_alpha_untouched": true
+  },
+  "day": {
+    "size": [
+      1200,
+      550
+    ],
+    "white_is_near": true,
+    "normalization": "independent solid-pixel min/max",
+    "transparent_rgb": "nearest solid (alpha >= 128) dilation",
+    "gaussian_sigma_full_resolution": 1.2,
+    "range": [
+      0,
+      254
+    ],
+    "source_alpha_untouched": true
+  }
+}

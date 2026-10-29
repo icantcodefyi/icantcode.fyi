@@ -1,0 +1,314 @@
+{
+  "files": [
+    {
+      "file": "public/site/scenes/trophy-girl.avif",
+      "px": [
+        1122,
+        1402
+      ],
+      "bytes": 105551,
+      "KB": 105.55,
+      "sha256": "cb42ea52fcd028918894f14cf30c6fc6e3caa103bbdec0462529400f292bd035"
+    },
+    {
+      "file": "public/site/scenes/trophy-girl.webp",
+      "px": [
+        1122,
+        1402
+      ],
+      "bytes": 1153188,
+      "KB": 1153.19,
+      "sha256": "b7fa524eda9eae5f831ab3b91e78ab62ddc319d240c5dfe78edd37df0b3902d0"
+    },
+    {
+      "file": "public/site/scenes/trophy-girl-600.avif",
+      "px": [
+        600,
+        750
+      ],
+      "bytes": 48160,
+      "KB": 48.16,
+      "sha256": "a61232a9fd754e0c1a7cac131f06f9a44747d12e64f71549aef99679916dddca"
+    },
+    {
+      "file": "public/site/scenes/trophy-girl-600.webp",
+      "px": [
+        600,
+        750
+      ],
+      "bytes": 357422,
+      "KB": 357.42,
+      "sha256": "fce680a0c4f5a637024c80e317fb41afbc1d1d434891f420f2041618b8ae3ecf"
+    },
+    {
+      "file": "public/site/scenes/trophy-confetti.avif",
+      "px": [
+        1122,
+        1402
+      ],
+      "bytes": 32208,
+      "KB": 32.21,
+      "sha256": "0baf091e035a239a0560ff5da1551047c259792e75270f3a4525825e9df873a0"
+    },
+    {
+      "file": "public/site/scenes/trophy-confetti.webp",
+      "px": [
+        1122,
+        1402
+      ],
+      "bytes": 183014,
+      "KB": 183.01,
+      "sha256": "62614b4570dff273b615ed1f2619f5b00448dc44c0d95746750c489e440d3b31"
+    },
+    {
+      "file": "public/site/scenes/trophy-confetti-600.avif",
+      "px": [
+        600,
+        750
+      ],
+      "bytes": 16561,
+      "KB": 16.56,
+      "sha256": "c2a6f2da531e5bf96f11c1098f29cb903e7b3515a2a8caaa896c7924c98cbc9c"
+    },
+    {
+      "file": "public/site/scenes/trophy-confetti-600.webp",
+      "px": [
+        600,
+        750
+      ],
+      "bytes": 40582,
+      "KB": 40.58,
+      "sha256": "25d329584a57c416c9e07ad1138bdbfc36d418ad2ec98ccbeca4828ecd75913d"
+    },
+    {
+      "file": "public/site/finale/meadow-night.avif",
+      "px": [
+        2400,
+        1100
+      ],
+      "bytes": 142291,
+      "KB": 142.29,
+      "sha256": "67dc2607bcef6ed3abc9942b829d90c2c8a8b6aadb09c133e3ab0230dda2387b"
+    },
+    {
+      "file": "public/site/finale/meadow-night.webp",
+      "px": [
+        2400,
+        1100
+      ],
+      "bytes": 1423440,
+      "KB": 1423.44,
+      "sha256": "dbeb0b3505cd27356350c55e559606926acf4399cc92e927b63759d46d3753f4"
+    },
+    {
+      "file": "public/site/finale/meadow-night-1200.avif",
+      "px": [
+        1200,
+        550
+      ],
+      "bytes": 58921,
+      "KB": 58.92,
+      "sha256": "1ef4892c9d9944f300ba15551ce8eed427a52c77e83bccd62e24a233a9d8963b"
+    },
+    {
+      "file": "public/site/finale/meadow-night-1200.webp",
+      "px": [
+        1200,
+        550
+      ],
+      "bytes": 442520,
+      "KB": 442.52,
+      "sha256": "cda7f9784aca47e6ff86b052d7f19bf83414476bd458c008b57d17a4061e091e"
+    },
+    {
+      "file": "public/site/finale/meadow-depth-night.avif",
+      "px": [
+        1200,
+        550
+      ],
+      "bytes": 11237,
+      "KB": 11.24,
+      "sha256": "c3c18138f990acbb3771a2fba751157e381d0c78900c39442c0101667f51b1dd"
+    },
+    {
+      "file": "public/site/finale/meadow-depth-night.webp",
+      "px": [
+        1200,
+        550
+      ],
+      "bytes": 70430,
+      "KB": 70.43,
+      "sha256": "9987341f64d87a86b005a960c82b87303d541c2d7e12b03d5eb99a367d09dfaf"
+    },
+    {
+      "file": "public/site/finale/meadow-day.avif",
+      "px": [
+        2400,
+        1100
+      ],
+      "bytes": 137939,
+      "KB": 137.94,
+      "sha256": "e6567280e71f9f244540296e42efa2dd0c50000c8f6ad19072c74664133c487e"
+    },
+    {
+      "file": "public/site/finale/meadow-day.webp",
+      "px": [
+        2400,
+        1100
+      ],
+      "bytes": 1425274,
+      "KB": 1425.27,
+      "sha256": "95ae8996d3d82e9e1dc1efd35f8c31e7bd33b907fef6bb588d6c76cd404d7bd3"
+    },
+    {
+      "file": "public/site/finale/meadow-day-1200.avif",
+      "px": [
+        1200,
+        550
+      ],
+      "bytes": 55325,
+      "KB": 55.33,
+      "sha256": "2f91a4336d409520c2e565a892f94ff5240fcfec3c67844a601d03dea2315bbc"
+    },
+    {
+      "file": "public/site/finale/meadow-day-1200.webp",
+      "px": [
+        1200,
+        550
+      ],
+      "bytes": 444586,
+      "KB": 444.59,
+      "sha256": "c7ba9c8f8a387c82a31ca960b3a9675fbbbcdc039692c16a794d8c4a9ee122d3"
+    },
+    {
+      "file": "public/site/finale/meadow-depth-day.avif",
+      "px": [
+        1200,
+        550
+      ],
+      "bytes": 11819,
+      "KB": 11.82,
+      "sha256": "b3148f9e9f1a00061400203fd3402873ec4b3545c2522d1ff426c0c7a870fe3e"
+    },
+    {
+      "file": "public/site/finale/meadow-depth-day.webp",
+      "px": [
+        1200,
+        550
+      ],
+      "bytes": 72534,
+      "KB": 72.53,
+      "sha256": "8001586112b527fd87a3057389f5ff1b3e0e28412efa505f1c498530d968a38d"
+    }
+  ],
+  "checks": {
+    "trophy": {
+      "visible_rgba_max_error": 0,
+      "alpha_max_error": 0,
+      "shared_nonzero_alpha_pixels": 0,
+      "master_and_full_webp_recomposite": "byte-identical visible RGBA",
+      "avif": "lossy q45 delivery; preservation gate applies to masters/full WebP"
+    },
+    "night": {
+      "avif": {
+        "top_300px_fully_transparent": true,
+        "bottom_rgb": [
+          [
+            17,
+            10,
+            15
+          ]
+        ],
+        "bottom_target_rgb": [
+          18,
+          10,
+          16
+        ],
+        "max_bottom_channel_delta": 1
+      },
+      "webp": {
+        "top_300px_fully_transparent": true,
+        "bottom_rgb": [
+          [
+            18,
+            10,
+            16
+          ]
+        ],
+        "bottom_target_rgb": [
+          18,
+          10,
+          16
+        ],
+        "max_bottom_channel_delta": 0
+      },
+      "depth_grayscale": true
+    },
+    "day": {
+      "avif": {
+        "top_300px_fully_transparent": true,
+        "bottom_rgb": [
+          [
+            254,
+            242,
+            246
+          ]
+        ],
+        "bottom_target_rgb": [
+          255,
+          241,
+          246
+        ],
+        "max_bottom_channel_delta": 1
+      },
+      "webp": {
+        "top_300px_fully_transparent": true,
+        "bottom_rgb": [
+          [
+            255,
+            241,
+            246
+          ]
+        ],
+        "bottom_target_rgb": [
+          255,
+          241,
+          246
+        ],
+        "max_bottom_channel_delta": 0
+      },
+      "depth_grayscale": true
+    },
+    "placement": {
+      "seat_px": [
+        1488,
+        570
+      ],
+      "seat_pct": [
+        62,
+        51.81818181818182
+      ],
+      "sit_original_px": [
+        1448,
+        1086
+      ],
+      "sit_width_px": 864,
+      "sit_scale": 0.5966850828729282,
+      "sit_top_left_px": [
+        1064,
+        167
+      ],
+      "sit_top_left_pct": [
+        44.333333333333336,
+        15.181818181818182
+      ],
+      "sit_width_percent_of_meadow": 36,
+      "sit_contact_anchor_source_px": [
+        710,
+        675
+      ],
+      "rotation_degrees": 0
+    },
+    "trophy_avif_full_KB": 137.76
+  }
+}

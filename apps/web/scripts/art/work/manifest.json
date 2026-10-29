@@ -1,0 +1,334 @@
+{
+  "canvas": [
+    1224,
+    1836
+  ],
+  "original": {
+    "size": [
+      1122,
+      1402
+    ],
+    "offset": [
+      51,
+      434
+    ]
+  },
+  "depth": {
+    "size": [
+      1173,
+      921
+    ],
+    "tiles": {
+      "sky": [
+        0,
+        0,
+        612,
+        918
+      ],
+      "girl": [
+        612,
+        0,
+        561,
+        701
+      ],
+      "flowers": [
+        612,
+        701,
+        561,
+        220
+      ]
+    },
+    "white_is_near": true
+  },
+  "layers": {
+    "sky": {
+      "size": [
+        1224,
+        1836
+      ],
+      "offset_in_stage": [
+        0,
+        0
+      ],
+      "offset_in_original": [
+        -51,
+        -434
+      ]
+    },
+    "girl": {
+      "size": [
+        1122,
+        1402
+      ],
+      "offset_in_stage": [
+        51,
+        434
+      ],
+      "offset_in_original": [
+        0,
+        0
+      ]
+    },
+    "flowers": {
+      "size": [
+        1122,
+        440
+      ],
+      "offset_in_stage": [
+        51,
+        1396
+      ],
+      "offset_in_original": [
+        0,
+        962
+      ]
+    }
+  },
+  "files": [
+    {
+      "file": "work-sky-night.avif",
+      "width": 1224,
+      "height": 1836,
+      "bytes": 215154,
+      "KB": 210.11,
+      "encoding": "AVIF q54"
+    },
+    {
+      "file": "work-sky-night.webp",
+      "width": 1224,
+      "height": 1836,
+      "bytes": 385598,
+      "KB": 376.56,
+      "encoding": "WebP q84 / alpha100"
+    },
+    {
+      "file": "work-sky-night-half.avif",
+      "width": 612,
+      "height": 918,
+      "bytes": 92913,
+      "KB": 90.74,
+      "encoding": "AVIF q60"
+    },
+    {
+      "file": "work-sky-night-half.webp",
+      "width": 612,
+      "height": 918,
+      "bytes": 140970,
+      "KB": 137.67,
+      "encoding": "WebP q84 / alpha100"
+    },
+    {
+      "file": "work-girl-night.avif",
+      "width": 1122,
+      "height": 1402,
+      "bytes": 79140,
+      "KB": 77.29,
+      "encoding": "AVIF q60"
+    },
+    {
+      "file": "work-girl-night.webp",
+      "width": 1122,
+      "height": 1402,
+      "bytes": 125296,
+      "KB": 122.36,
+      "encoding": "WebP q84 / alpha100"
+    },
+    {
+      "file": "work-girl-night-half.avif",
+      "width": 561,
+      "height": 701,
+      "bytes": 39637,
+      "KB": 38.71,
+      "encoding": "AVIF q60"
+    },
+    {
+      "file": "work-girl-night-half.webp",
+      "width": 561,
+      "height": 701,
+      "bytes": 61622,
+      "KB": 60.18,
+      "encoding": "WebP q84 / alpha100"
+    },
+    {
+      "file": "work-flowers-night.avif",
+      "width": 1122,
+      "height": 440,
+      "bytes": 8977,
+      "KB": 8.77,
+      "encoding": "AVIF q60"
+    },
+    {
+      "file": "work-flowers-night.webp",
+      "width": 1122,
+      "height": 440,
+      "bytes": 17780,
+      "KB": 17.36,
+      "encoding": "WebP q84 / alpha100"
+    },
+    {
+      "file": "work-flowers-night-half.avif",
+      "width": 561,
+      "height": 220,
+      "bytes": 4872,
+      "KB": 4.76,
+      "encoding": "AVIF q60"
+    },
+    {
+      "file": "work-flowers-night-half.webp",
+      "width": 561,
+      "height": 220,
+      "bytes": 8828,
+      "KB": 8.62,
+      "encoding": "WebP q84 / alpha100"
+    },
+    {
+      "file": "work-depth-night.avif",
+      "width": 1173,
+      "height": 921,
+      "bytes": 23043,
+      "KB": 22.5,
+      "encoding": "AVIF q85"
+    },
+    {
+      "file": "work-depth-night.webp",
+      "width": 1173,
+      "height": 921,
+      "bytes": 106072,
+      "KB": 103.59,
+      "encoding": "WebP lossless"
+    },
+    {
+      "file": "work-sky-day.avif",
+      "width": 1224,
+      "height": 1836,
+      "bytes": 215768,
+      "KB": 210.71,
+      "encoding": "AVIF q58"
+    },
+    {
+      "file": "work-sky-day.webp",
+      "width": 1224,
+      "height": 1836,
+      "bytes": 354438,
+      "KB": 346.13,
+      "encoding": "WebP q84 / alpha100"
+    },
+    {
+      "file": "work-sky-day-half.avif",
+      "width": 612,
+      "height": 918,
+      "bytes": 81910,
+      "KB": 79.99,
+      "encoding": "AVIF q60"
+    },
+    {
+      "file": "work-sky-day-half.webp",
+      "width": 612,
+      "height": 918,
+      "bytes": 129318,
+      "KB": 126.29,
+      "encoding": "WebP q84 / alpha100"
+    },
+    {
+      "file": "work-girl-day.avif",
+      "width": 1122,
+      "height": 1402,
+      "bytes": 81059,
+      "KB": 79.16,
+      "encoding": "AVIF q60"
+    },
+    {
+      "file": "work-girl-day.webp",
+      "width": 1122,
+      "height": 1402,
+      "bytes": 126116,
+      "KB": 123.16,
+      "encoding": "WebP q84 / alpha100"
+    },
+    {
+      "file": "work-girl-day-half.avif",
+      "width": 561,
+      "height": 701,
+      "bytes": 40135,
+      "KB": 39.19,
+      "encoding": "AVIF q60"
+    },
+    {
+      "file": "work-girl-day-half.webp",
+      "width": 561,
+      "height": 701,
+      "bytes": 62318,
+      "KB": 60.86,
+      "encoding": "WebP q84 / alpha100"
+    },
+    {
+      "file": "work-flowers-day.avif",
+      "width": 1122,
+      "height": 440,
+      "bytes": 9911,
+      "KB": 9.68,
+      "encoding": "AVIF q60"
+    },
+    {
+      "file": "work-flowers-day.webp",
+      "width": 1122,
+      "height": 440,
+      "bytes": 19586,
+      "KB": 19.13,
+      "encoding": "WebP q84 / alpha100"
+    },
+    {
+      "file": "work-flowers-day-half.avif",
+      "width": 561,
+      "height": 220,
+      "bytes": 5350,
+      "KB": 5.22,
+      "encoding": "AVIF q60"
+    },
+    {
+      "file": "work-flowers-day-half.webp",
+      "width": 561,
+      "height": 220,
+      "bytes": 9842,
+      "KB": 9.61,
+      "encoding": "WebP q84 / alpha100"
+    },
+    {
+      "file": "work-depth-day.avif",
+      "width": 1173,
+      "height": 921,
+      "bytes": 21569,
+      "KB": 21.06,
+      "encoding": "AVIF q85"
+    },
+    {
+      "file": "work-depth-day.webp",
+      "width": 1173,
+      "height": 921,
+      "bytes": 98160,
+      "KB": 95.86,
+      "encoding": "WebP lossless"
+    }
+  ],
+  "totals_KB": {
+    "night": 318.67,
+    "day": 320.61
+  },
+  "avif_entries": [
+    "/site/scenes/work-depth-day",
+    "/site/scenes/work-depth-night",
+    "/site/scenes/work-flowers-day",
+    "/site/scenes/work-flowers-day-half",
+    "/site/scenes/work-flowers-night",
+    "/site/scenes/work-flowers-night-half",
+    "/site/scenes/work-girl-day",
+    "/site/scenes/work-girl-day-half",
+    "/site/scenes/work-girl-night",
+    "/site/scenes/work-girl-night-half",
+    "/site/scenes/work-sky-day",
+    "/site/scenes/work-sky-day-half",
+    "/site/scenes/work-sky-night",
+    "/site/scenes/work-sky-night-half"
+  ],
+  "WORK_ART": "export const WORK_ART = {\n  night: {\n    sky: \"/site/scenes/work-sky-night\",\n    girl: \"/site/scenes/work-girl-night\",\n    flowers: \"/site/scenes/work-flowers-night\",\n    depth: \"/site/scenes/work-depth-night\",\n    skyHalf: \"/site/scenes/work-sky-night-half\",\n    girlHalf: \"/site/scenes/work-girl-night-half\",\n    flowersHalf: \"/site/scenes/work-flowers-night-half\",\n  },\n  day: {\n    sky: \"/site/scenes/work-sky-day\",\n    girl: \"/site/scenes/work-girl-day\",\n    flowers: \"/site/scenes/work-flowers-day\",\n    depth: \"/site/scenes/work-depth-day\",\n    skyHalf: \"/site/scenes/work-sky-day-half\",\n    girlHalf: \"/site/scenes/work-girl-day-half\",\n    flowersHalf: \"/site/scenes/work-flowers-day-half\",\n  },\n  size: [1224, 1836],\n  original: { size: [1122, 1402], offset: [51, 434] },\n  atlas: {\n    size: [1173, 921],\n    tiles: {\n      sky: [0, 0, 612, 918],\n      girl: [612, 0, 561, 701],\n      flowers: [612, 701, 561, 220],\n    },\n  },\n  layers: {\n    sky: { size: [1224, 1836], offset: [0, 0] },\n    girl: { size: [1122, 1402], offset: [51, 434] },\n    flowers: { size: [1122, 440], offset: [51, 1396] },\n  },\n} as const;"
+}

@@ -16,11 +16,11 @@ import { client } from "@/utils/orpc";
  *  3. ready     — signed in, hasn't signed yet. Canvas live, sign button.
  *  4. signed    — signed in, already signed. Shows their signature back.
  *
- * Below the canvas: an editorial list of recent signatures (hairline
- * dividers, index + inline SVG + relative time — no card grid). The
- * list is bounded by a fixed max-height with a soft top/bottom fade
- * mask, so the section never grows past ~400px no matter how many
- * guests sign.
+ * It fills the finale's guestbook band (sections/finale.tsx, a subgrid):
+ * the tally (the count and the three latest marks) joins the copy column,
+ * the panel (the canvas, then every earlier mark in a bounded, faded
+ * list) the right one. The panel is ink glass on the night sky and the
+ * strokes are pink-white with a soft glow; styles in sections/finale.css.
  */
 
 type GuestbookState = Awaited<ReturnType<typeof client.getGuestbookState>>;
@@ -123,11 +123,29 @@ function GoogleG({ className }: { className?: string }) {
   );
 }
 
+/** The dotted line a signature sits on. */
+function Baseline({ width, height }: { width: number; height: number }) {
+  return <line className="gb-base" x1="20" y1={height - 30} x2={width - 20} y2={height - 30} />;
+}
+
+/** A saved signature's ink: filled outlines (current format) or legacy lines. */
+function Ink({ path }: { path: string }) {
+  return <path d={path} className={isFilledPath(path) ? "gb-ink" : "gb-ink-line"} />;
+}
+
+/** One saved signature, small, for the tally and the list. */
+function Mark({ s, className }: { s: SavedSignature; className: string }) {
+  return (
+    <svg viewBox={`0 0 ${s.width} ${s.height}`} className={className} preserveAspectRatio="xMinYMid meet" aria-hidden="true">
+      <Ink path={s.svgPath} />
+    </svg>
+  );
+}
+
 /**
  * The baseline + text prompt shown inside the canvas when the user
- * isn't drawing (loading / anon / signed-and-thanks states). Matches
- * the original "sign here…" affordance visually — dotted baseline
- * with a centered italic line above it.
+ * isn't drawing (loading / anon states): a dotted baseline with a
+ * centred italic line above it.
  */
 function CanvasBaseline({
   message,
@@ -137,44 +155,19 @@ function CanvasBaseline({
   subMessage?: string;
 }) {
   return (
-    <svg
-      viewBox={`0 0 ${CANVAS_WIDTH} ${CANVAS_HEIGHT}`}
-      className="block h-[140px] w-full rounded-lg bg-[oklch(0.99_0.005_60)]"
-      aria-hidden="true"
-    >
-      <line
-        x1="20"
-        y1={CANVAS_HEIGHT - 30}
-        x2={CANVAS_WIDTH - 20}
-        y2={CANVAS_HEIGHT - 30}
-        stroke="oklch(0.85 0.04 60)"
-        strokeDasharray="2 4"
-        strokeWidth="1"
-      />
+    <svg viewBox={`0 0 ${CANVAS_WIDTH} ${CANVAS_HEIGHT}`} className="gb-canvas" aria-hidden="true">
+      <Baseline width={CANVAS_WIDTH} height={CANVAS_HEIGHT} />
       <text
+        className="gb-prompt"
         x={CANVAS_WIDTH / 2}
         y={CANVAS_HEIGHT / 2 - (subMessage ? 6 : 0)}
         textAnchor="middle"
         dominantBaseline="middle"
-        fill="oklch(0.55 0.02 60 / 0.55)"
-        style={{ fontFamily: "var(--font-display)", fontSize: 18, fontStyle: "italic" }}
       >
         {message}
       </text>
       {subMessage ? (
-        <text
-          x={CANVAS_WIDTH / 2}
-          y={CANVAS_HEIGHT / 2 + 14}
-          textAnchor="middle"
-          dominantBaseline="middle"
-          fill="oklch(0.58 0.015 60 / 0.55)"
-          style={{
-            fontFamily: "var(--font-sans)",
-            fontSize: 10,
-            letterSpacing: "0.1em",
-            textTransform: "uppercase",
-          }}
-        >
+        <text className="gb-sub" x={CANVAS_WIDTH / 2} y={CANVAS_HEIGHT / 2 + 16} textAnchor="middle" dominantBaseline="middle">
           {subMessage}
         </text>
       ) : null}
@@ -188,35 +181,10 @@ function CanvasBaseline({
  * echoes states 1–3 without a layout jump.
  */
 function CanvasReplay({ signature }: { signature: SavedSignature }) {
-  const filled = isFilledPath(signature.svgPath);
   return (
-    <svg
-      viewBox={`0 0 ${signature.width} ${signature.height}`}
-      className="block h-[140px] w-full rounded-lg bg-[oklch(0.99_0.005_60)]"
-      role="img"
-      aria-label="Your signature"
-    >
-      <line
-        x1="20"
-        y1={signature.height - 30}
-        x2={signature.width - 20}
-        y2={signature.height - 30}
-        stroke="oklch(0.85 0.04 60)"
-        strokeDasharray="2 4"
-        strokeWidth="1"
-      />
-      {filled ? (
-        <path d={signature.svgPath} fill="oklch(0.22 0.02 60)" stroke="none" />
-      ) : (
-        <path
-          d={signature.svgPath}
-          fill="none"
-          stroke="oklch(0.22 0.02 60)"
-          strokeWidth="2.4"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      )}
+    <svg viewBox={`0 0 ${signature.width} ${signature.height}`} className="gb-canvas" role="img" aria-label="Your signature">
+      <Baseline width={signature.width} height={signature.height} />
+      <Ink path={signature.svgPath} />
     </svg>
   );
 }
@@ -351,246 +319,142 @@ export function GuestbookWall() {
 
   /* ── render ─────────────────────────────────────────────────── */
 
+  // the tally shows the newest three; the panel's list carries on from there
+  const latest = recent.slice(0, 3);
+  const older = recent.slice(3);
+
   return (
-    <section id="guestbook">
-      {/* Header — honest count, matches the Projects "{n} shipped" pattern */}
-      <div className="mb-4 flex items-baseline justify-between">
-        <h2 className="font-display text-lg font-medium text-foreground tracking-tight">
-          Guestbook
-        </h2>
-        <span className="text-[14px] text-muted-foreground tabular-nums">
-          {stateLoading
-            ? "—   signed"
-            : `${totalCount} signed`}
-        </span>
+    <section id="guestbook" className="gb">
+      <div className="gb-tally">
+        <p className="gb-count">
+          <span className="gb-num">{state ? totalCount : "—"}</span>
+          <span className="gb-num-label">signed so far</span>
+        </p>
+        {latest.length > 0 ? (
+          <ol className="gb-latest" aria-label="Latest signatures">
+            {latest.map((s) => (
+              <li key={s.id}>
+                <Mark s={s} className="gb-latest-mark" />
+                <span className="gb-when">{formatRelative(s.createdAt)}</span>
+              </li>
+            ))}
+          </ol>
+        ) : null}
       </div>
 
-      <p className="mb-3 text-sm text-muted-foreground/80 [html[data-mode=day]_&]:text-muted-foreground">
-        Draw a line, a name, a doodle. It'll live here forever — one per
-        guest.
-      </p>
+      <div className="gb-panel">
+        <div className="gb-head">
+          <h3 className="gb-title">Guestbook</h3>
+          <span className="gb-note">one per guest</span>
+        </div>
 
-      {/* ── Canvas card ───────────────────────────────────────── */}
-      <div className="rounded-xl border border-border/60 bg-card/60 p-3">
-        {isLoading ? (
-          <CanvasBaseline message="…" />
-        ) : isSigned && state?.userSignature ? (
-          <CanvasReplay signature={state.userSignature} />
-        ) : isAnon ? (
-          <CanvasBaseline
-            message="leave your mark here"
-            subMessage="guests only"
-          />
-        ) : (
-          // isReady — drawable canvas
-          <svg
-            ref={svgRef}
-            viewBox={`0 0 ${CANVAS_WIDTH} ${CANVAS_HEIGHT}`}
-            className="signature-canvas block h-[140px] w-full cursor-crosshair rounded-lg bg-[oklch(0.99_0.005_60)]"
-            onPointerDown={onDown}
-            onPointerMove={onMove}
-            onPointerUp={onUp}
-            onPointerCancel={onUp}
-          >
-            <line
-              x1="20"
-              y1={CANVAS_HEIGHT - 30}
-              x2={CANVAS_WIDTH - 20}
-              y2={CANVAS_HEIGHT - 30}
-              stroke="oklch(0.85 0.04 60)"
-              strokeDasharray="2 4"
-              strokeWidth="1"
-            />
-            {livePath ? (
-              <path d={livePath} fill="oklch(0.22 0.02 60)" stroke="none" />
-            ) : (
-              <text
-                x={CANVAS_WIDTH / 2}
-                y={CANVAS_HEIGHT / 2}
-                textAnchor="middle"
-                dominantBaseline="middle"
-                fill="oklch(0.55 0.02 60 / 0.55)"
-                style={{
-                  fontFamily: "var(--font-display)",
-                  fontSize: 18,
-                  fontStyle: "italic",
-                }}
-              >
-                sign here…
-              </text>
-            )}
-          </svg>
-        )}
-
-        {/* ── Action row — varies per state ──────────────────── */}
-        <div className="mt-3 flex min-h-[34px] items-center justify-between gap-3">
+        {/* ── Canvas card ───────────────────────────────────────── */}
+        <div className="gb-card">
           {isLoading ? (
-            <span className="text-[11px] text-muted-foreground/50 [html[data-mode=day]_&]:text-muted-foreground">
-              loading…
-            </span>
-          ) : isAnon ? (
-            <>
-              <span className="text-[11px] text-muted-foreground/70 [html[data-mode=day]_&]:text-muted-foreground">
-                sign in to add your signature
-              </span>
-              <button
-                type="button"
-                onClick={handleSignIn}
-                className="group inline-flex min-h-11 items-center gap-2 rounded-full bg-[var(--accent)] px-4 py-2 text-[var(--accent-ink)] transition-transform duration-200 ease-out hover:-translate-y-0.5"
-              >
-                <GoogleG className="h-[13px] w-[13px]" />
-                <span className="text-[15px] font-medium leading-none">
-                  Continue with Google
-                </span>
-                <span
-                  aria-hidden="true"
-                  className="ml-0.5 text-[11px] text-foreground/35 [html[data-mode=day]_&]:text-[var(--accent-ink)] transition-all duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-foreground/75 [html[data-mode=day]_&]:group-hover:text-[var(--accent-ink)]"
-                >
-                  ↗
-                </span>
-              </button>
-            </>
+            <CanvasBaseline message="…" />
           ) : isSigned && state?.userSignature ? (
-            <>
-              <span className="text-[11px] text-muted-foreground/70 [html[data-mode=day]_&]:text-muted-foreground">
-                thanks{firstName ? `, ${firstName}` : ""} — signed{" "}
-                <span className="text-foreground/70">
-                  {formatRelative(state.userSignature.createdAt)}
-                </span>
-              </span>
-              <button
-                type="button"
-                onClick={() => void handleSignOut()}
-                className="text-[11px] text-muted-foreground/60 underline-offset-2 transition-colors hover:text-foreground hover:underline [html[data-mode=day]_&]:text-muted-foreground [html[data-mode=day]_&]:hover:text-foreground"
-              >
-                sign out
-              </button>
-            </>
+            <CanvasReplay signature={state.userSignature} />
+          ) : isAnon ? (
+            <CanvasBaseline message="leave your mark here" subMessage="guests only" />
           ) : (
-            // isReady
-            <>
-              <span className="text-[11px] text-muted-foreground/70 [html[data-mode=day]_&]:text-muted-foreground">
-                {error
-                  ? error
-                  : firstName
-                    ? `signing as ${firstName}`
-                    : "signing in…"}
-              </span>
-              <div className="flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={clearCanvas}
-                  disabled={!hasInk || saving}
-                  className="rounded-md px-2 py-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground disabled:opacity-40"
-                >
-                  clear
+            // isReady — drawable canvas
+            <svg
+              ref={svgRef}
+              viewBox={`0 0 ${CANVAS_WIDTH} ${CANVAS_HEIGHT}`}
+              className="gb-canvas gb-canvas-live"
+              onPointerDown={onDown}
+              onPointerMove={onMove}
+              onPointerUp={onUp}
+              onPointerCancel={onUp}
+            >
+              <Baseline width={CANVAS_WIDTH} height={CANVAS_HEIGHT} />
+              {livePath ? (
+                <path d={livePath} className="gb-ink" />
+              ) : (
+                <text className="gb-prompt" x={CANVAS_WIDTH / 2} y={CANVAS_HEIGHT / 2} textAnchor="middle" dominantBaseline="middle">
+                  sign here…
+                </text>
+              )}
+            </svg>
+          )}
+
+          {/* ── Action row — varies per state ──────────────────── */}
+          <div className="gb-actions">
+            {isLoading ? (
+              <span className="gb-note">loading…</span>
+            ) : isAnon ? (
+              <>
+                <span className="gb-note">sign in to add your signature</span>
+                <button type="button" onClick={handleSignIn} className="gb-google">
+                  <GoogleG className="gb-google-g" />
+                  <span>Continue with Google</span>
+                  <span aria-hidden="true" className="gb-google-arr">
+                    ↗
+                  </span>
                 </button>
-                <button
-                  type="button"
-                  onClick={() => void handleSign()}
-                  disabled={!hasInk || saving}
-                  className="rounded-md bg-foreground px-3 py-1.5 text-xs text-background transition-opacity hover:opacity-90 disabled:opacity-40"
-                >
-                  {saving ? "signing…" : "sign"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => void handleSignOut()}
-                  className="text-[11px] text-muted-foreground/60 underline-offset-2 transition-colors hover:text-foreground hover:underline [html[data-mode=day]_&]:text-muted-foreground [html[data-mode=day]_&]:hover:text-foreground"
-                >
+              </>
+            ) : isSigned && state?.userSignature ? (
+              <>
+                <span className="gb-note">
+                  thanks{firstName ? `, ${firstName}` : ""} — signed{" "}
+                  <span className="gb-note-strong">{formatRelative(state.userSignature.createdAt)}</span>
+                </span>
+                <button type="button" onClick={() => void handleSignOut()} className="gb-link">
                   sign out
                 </button>
-              </div>
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* ── Recent signatures — editorial list, bounded height ──
-          Not a card grid (anti-reference). One row per signature,
-          hairline dividers, index + inline SVG + relative time.
-          The scroll container is masked with a top/bottom fade so
-          the section never grows past ~400px and older signatures
-          visibly "extend beyond the frame." */}
-      {recent.length > 0 && (
-        <div className="mt-10">
-          <div className="mb-3 flex items-baseline justify-between">
-            <h3 className="text-sm font-medium uppercase tracking-[0.14em] text-muted-foreground/80 [html[data-mode=day]_&]:text-muted-foreground">
-              Recent signatures
-            </h3>
-            {totalCount > recent.length ? (
-              <span className="text-[14px] text-muted-foreground tabular-nums">
-                showing {recent.length} of {totalCount}
-              </span>
-            ) : null}
+              </>
+            ) : (
+              // isReady
+              <>
+                <span className="gb-note">{error ? error : firstName ? `signing as ${firstName}` : "signing in…"}</span>
+                <div className="gb-buttons">
+                  <button type="button" onClick={clearCanvas} disabled={!hasInk || saving} className="gb-btn-quiet">
+                    clear
+                  </button>
+                  <button type="button" onClick={() => void handleSign()} disabled={!hasInk || saving} className="gb-btn">
+                    {saving ? "signing…" : "sign"}
+                  </button>
+                  <button type="button" onClick={() => void handleSignOut()} className="gb-link">
+                    sign out
+                  </button>
+                </div>
+              </>
+            )}
           </div>
+        </div>
 
-          <div
-            className="-mx-3 overflow-y-auto px-3"
-            style={{
-              maxHeight: 360,
-              maskImage:
-                "linear-gradient(to bottom, transparent 0, black 20px, black calc(100% - 28px), transparent 100%)",
-              WebkitMaskImage:
-                "linear-gradient(to bottom, transparent 0, black 20px, black calc(100% - 28px), transparent 100%)",
-            }}
-          >
-            <ol className="list-none divide-y divide-border/60">
-              {recent.map((s, i) => {
-                const filled = isFilledPath(s.svgPath);
-                // Row index counts down from total, so the newest
-                // signature is #(totalCount) and older rows decrement.
-                const indexLabel = (totalCount - i)
-                  .toString()
-                  .padStart(3, "0");
-                return (
-                  <li
-                    key={s.id}
-                    className="first:border-t first:border-border/60"
-                  >
-                    <div className="-mx-3 flex items-center gap-5 rounded-lg px-3 py-3 transition-colors duration-300 hover:bg-pastel-lavender/25">
-                      <span
-                        aria-hidden="true"
-                        className="w-7 shrink-0 text-[14px] tabular-nums text-muted-foreground/60 [html[data-mode=day]_&]:text-muted-foreground"
-                      >
-                        {indexLabel}
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <svg
-                          viewBox={`0 0 ${s.width} ${s.height}`}
-                          className="block h-[44px] w-full max-w-[340px]"
-                          preserveAspectRatio="xMinYMid meet"
-                          aria-hidden="true"
-                        >
-                          {filled ? (
-                            <path
-                              d={s.svgPath}
-                              fill="oklch(0.3 0.02 60)"
-                              stroke="none"
-                            />
-                          ) : (
-                            <path
-                              d={s.svgPath}
-                              fill="none"
-                              stroke="oklch(0.3 0.02 60)"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                          )}
-                        </svg>
-                      </div>
-                      <span className="shrink-0 text-[14px] tabular-nums text-muted-foreground/60 [html[data-mode=day]_&]:text-muted-foreground">
-                        {formatRelative(s.createdAt)}
-                      </span>
-                    </div>
+        {/* ── Earlier signatures — editorial list, bounded height ──
+            Not a card grid. One row per signature, hairline dividers,
+            index + inline SVG + relative time. The scroll container is
+            faded top and bottom, so the panel never grows past its
+            frame and older signatures visibly "extend beyond" it. */}
+        {older.length > 0 && (
+          <div className="gb-older">
+            <div className="gb-older-head">
+              <h4 className="gb-label">Earlier marks</h4>
+              {totalCount > recent.length ? (
+                <span className="gb-note">
+                  showing {recent.length} of {totalCount}
+                </span>
+              ) : null}
+            </div>
+            <div className="gb-scroll">
+              <ol className="gb-list">
+                {older.map((s, i) => (
+                  // Row index counts down from total, so older rows decrement.
+                  <li key={s.id} className="gb-row">
+                    <span aria-hidden="true" className="gb-idx">
+                      {(totalCount - latest.length - i).toString().padStart(3, "0")}
+                    </span>
+                    <Mark s={s} className="gb-row-mark" />
+                    <span className="gb-when">{formatRelative(s.createdAt)}</span>
                   </li>
-                );
-              })}
-            </ol>
+                ))}
+              </ol>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </section>
   );
 }

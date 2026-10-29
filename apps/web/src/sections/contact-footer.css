@@ -1,104 +1,38 @@
 /* ──────────────────────────────────────────────────────────────────────
- * Contact + footer: one night scene that ends on pink ground.
- *   sky plate → star field → sparkles → scrim → ridges → flowers
- *   → petals; the front ridge is the footer's own pink, so the page
- *   walks straight from the hill onto the footer's wordmark.
+ * Contact + footer, under the finale's sky (sections/finale.css).
+ *   Contact: copy left, the card beside it, on the sky.
+ *   Footer: the hero's reprise. Wordmark → painted meadow → her on the
+ *   boulder → a ghost of the wordmark on her → fireflies / petals; the
+ *   links sit on the meadow's calm ground. The footer is pulled up over
+ *   the finale's last stretch (.fn-floor), so the sky stays put behind the
+ *   meadow to the very end of the page.
  * ──────────────────────────────────────────────────────────────────── */
 
 /* ═══ Contact ═══ */
 .cf-contact {
-  --gh: clamp(190px, 30svh, 300px); /* ground height */
-  /* ridge paint (night); day overrides these below */
-  --cf-far-0: #4a1d44;
-  --cf-far-1: #1d0f1f;
-  --cf-mid-0: #c23a7c;
-  --cf-mid-1: #6d1d4b;
-  --cf-mid-2: #3b1130;
-  --cf-front-0: #ffd6e6;
-  --cf-rim: #ff2e88;
-  --cf-rim-o: 0.75;
-
   position: relative;
-  isolation: isolate;
-  overflow: hidden;
-  min-height: clamp(600px, 78svh, 740px);
-  display: flex;
-  flex-direction: column;
-  background: #0b0a0d;
+  z-index: 2;
   color: var(--ink);
 }
 
-.cf-sky,
-.cf-stars,
-.cf-sparks,
+/* a soft wash that steadies the copy over the painted clouds; it scrolls with the copy */
 .cf-scrim {
   position: absolute;
-  inset: 0;
+  inset: -10% 0;
+  z-index: -1;
   pointer-events: none;
-}
-.cf-sky {
-  z-index: 0;
-}
-.cf-sky img {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: 70% 20%;
-}
-/* desktop is shorter than the night plate wants: drop it a little so the
-   moon clears the top fade (the day plate's sun already sits clear) */
-@media (min-width: 1024px) {
-  html:not([data-mode="day"]) .cf-sky { background: var(--surface); }
-  html:not([data-mode="day"]) .cf-sky img {
-    top: 9%;
-    height: 100%;
-    object-position: 70% 0%;
-    -webkit-mask-image: linear-gradient(to bottom, transparent, #000 14%);
-    mask-image: linear-gradient(to bottom, transparent, #000 14%);
-  }
-}
-/* the guestbook above is --surface; melt into it, and keep the plate's own
-   ground from showing under our ridges */
-.cf-sky::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(to bottom, var(--surface) 0%, rgb(23 20 26 / 0) 16%),
-    linear-gradient(to top, #1d0f1f 0%, rgb(29 15 31 / 0) 40%);
-}
-.cf-stars {
-  z-index: 1;
-  width: 100%;
-  height: 100%;
-}
-.cf-sparks {
-  z-index: 1;
-}
-.cf-spark {
-  position: absolute;
-  filter: drop-shadow(0 0 6px currentColor);
-}
-.cf-scrim {
-  z-index: 2;
-  background:
-    radial-gradient(90% 75% at 0% 40%, rgb(11 10 13 / 0.82) 0%, rgb(11 10 13 / 0.5) 45%, rgb(11 10 13 / 0) 75%);
+  background: radial-gradient(60% 55% at 12% 50%, rgb(11 10 13 / 0.6) 0%, rgb(11 10 13 / 0.32) 50%, rgb(11 10 13 / 0) 80%);
 }
 
-/* ── copy left, the card beside it; both sit in the sky above the ridges ── */
+/* ── copy left, the card beside it ── */
 .cf-body {
   position: relative;
-  z-index: 6;
-  flex: 1;
   display: grid;
   grid-template-columns: minmax(0, 600px) minmax(0, 440px);
   justify-content: space-between;
-  align-content: center;
   align-items: end;
   gap: 48px clamp(40px, 6vw, 120px);
-  padding: clamp(96px, 13svh, 140px) clamp(var(--margin), 8vw, 140px) calc(var(--gh) * 0.62)
+  padding: calc(var(--section-pad) * 0.75) clamp(var(--margin), 8vw, 140px) calc(var(--section-pad) * 0.6)
     calc(var(--margin) + clamp(0px, 3vw, 48px));
 }
 .cf-copy-col {
@@ -144,7 +78,7 @@
   font-weight: 600;
   font-size: 1.0625rem;
   box-shadow: 0 10px 30px -8px rgb(255 46 136 / 0.6), inset 0 1px 0 rgb(255 255 255 / 0.35);
-  transition: transform 160ms var(--ease), box-shadow 200ms var(--ease);
+  transition: transform var(--dur-micro) var(--ease), box-shadow 200ms var(--ease);
 }
 .cf-btn:hover {
   transform: translateY(-2px);
@@ -160,6 +94,7 @@
   transform: translateX(4px);
 }
 
+/* solid ink glass: no backdrop blur, which would re-blur the sky on every scroll frame */
 .cf-copy {
   display: inline-flex;
   align-items: center;
@@ -168,17 +103,15 @@
   padding: 0 1.3em 0 1.1em;
   border-radius: 999px;
   border: 1px solid rgb(253 241 246 / 0.28);
-  background: rgb(23 20 26 / 0.55);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: rgb(11 10 13 / 0.62);
   color: var(--ink);
   font-size: 1rem;
   cursor: pointer;
-  transition: border-color 200ms, background-color 200ms, transform 160ms var(--ease);
+  transition: border-color 200ms, background-color 200ms, transform var(--dur-micro) var(--ease);
 }
 .cf-copy:hover {
   border-color: rgb(255 179 209 / 0.7);
-  background: rgb(23 20 26 / 0.75);
+  background: rgb(11 10 13 / 0.78);
 }
 .cf-copy:active {
   transform: scale(0.98);
@@ -191,7 +124,7 @@
   border-color: var(--blush);
 }
 .cf-copy[data-copied] .cf-copy-icon {
-  animation: cf-pop 360ms var(--ease);
+  animation: cf-pop 360ms var(--ease-pop);
 }
 @keyframes cf-pop {
   from { transform: scale(0.4); }
@@ -203,10 +136,8 @@
   width: 100%;
   padding: 10px 22px;
   border-radius: 22px;
-  border: 1px solid rgb(253 241 246 / 0.14);
-  background: linear-gradient(160deg, rgb(35 24 38 / 0.78), rgb(17 12 20 / 0.7));
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgb(255 179 209 / 0.2);
+  background: linear-gradient(160deg, rgb(26 17 29 / 0.8), rgb(11 10 13 / 0.72));
   box-shadow: 0 30px 60px -30px rgb(0 0 0 / 0.7), inset 0 1px 0 rgb(255 255 255 / 0.06);
 }
 .cf-row {
@@ -247,125 +178,26 @@
   display: none;
 }
 
-/* ── scene ── */
-.cf-scene {
-  position: absolute;
-  inset: 0;
-  z-index: 3;
-  pointer-events: none;
-}
-.cf-ground {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: -2px; /* no hairline seam into the footer */
-  width: 100%;
-  height: calc(var(--gh) + 2px);
-}
-.cf-flowers {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: calc(var(--gh) * 0.5);
-}
-.cf-flower {
-  position: absolute;
-  transform: translateX(-50%);
-  filter: drop-shadow(0 3px 4px rgb(110 58 82 / 0.35));
-}
-.cf-petals {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-}
-.cf-petal {
-  position: absolute;
-  top: -20px;
-  border-radius: 80% 0 80% 0;
-  background: linear-gradient(135deg, #ffd6e6, #ff7ab6);
-  opacity: 0;
-}
-
-/* ── motion: twinkle, sparkle, drift; all of it off when asked ── */
-@media (prefers-reduced-motion: no-preference) {
-  .cf-twinkle {
-    animation: cf-twinkle 4.5s ease-in-out infinite;
-    animation-delay: var(--d);
-  }
-  .cf-spark {
-    animation: cf-spark 6s ease-in-out infinite;
-    animation-delay: var(--d);
-  }
-  .cf-petal {
-    animation: cf-fall var(--t) linear infinite;
-    animation-delay: var(--d);
-  }
-}
-@keyframes cf-twinkle {
-  0%, 100% { opacity: 0.15; }
-  50% { opacity: 1; }
-}
-@keyframes cf-spark {
-  0%, 100% { transform: scale(0.7) rotate(0deg); opacity: 0.55; }
-  50% { transform: scale(1.1) rotate(20deg); opacity: 1; }
-}
-@keyframes cf-fall {
-  0% { transform: translate3d(0, 0, 0) rotate(0deg); opacity: 0; }
-  10% { opacity: 0.85; }
-  85% { opacity: 0.85; }
-  100% { transform: translate3d(-12vw, 110svh, 0) rotate(540deg); opacity: 0; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .cf-petals { display: none; }
-}
-
-/* ── tablet / phone: copy, then the card, then the ground below them ── */
+/* ── tablet / phone: copy, then the card ── */
 @media (max-width: 1023px) {
-  .cf-contact {
-    --gh: clamp(150px, 26vw, 220px);
-    min-height: 0;
-  }
   .cf-body {
-    flex: none;
     grid-template-columns: minmax(0, 1fr);
     justify-content: stretch;
     align-items: start;
     gap: 40px;
-    padding: clamp(88px, 14vw, 128px) var(--margin) 0;
+    padding: calc(var(--section-pad) * 0.6) var(--margin) calc(var(--section-pad) * 0.5);
   }
-  .cf-copy-col {
-    max-width: 560px;
-  }
-  /* the moon sits just right of the (now two-line) title */
-  .cf-sky img {
-    object-position: 88% 10%;
-  }
+  .cf-copy-col,
   .cf-card {
     max-width: 560px;
   }
-  /* a wash behind the copy that leaves the moon (and sun) clear on the right */
   .cf-scrim {
-    background: linear-gradient(to right, rgb(11 10 13 / 0.72) 0%, rgb(11 10 13 / 0.5) 55%, rgb(11 10 13 / 0) 85%);
-  }
-  .cf-scene {
-    position: relative;
-    inset: auto;
-    height: calc(var(--gh) + clamp(48px, 10vw, 96px));
+    background: linear-gradient(to right, rgb(11 10 13 / 0.62) 0%, rgb(11 10 13 / 0.36) 60%, rgb(11 10 13 / 0) 90%);
   }
 }
 @media (max-width: 639px) {
-  .cf-contact {
-    --gh: 176px;
-  }
-  .cf-scene {
-    height: calc(var(--gh) + 56px);
-  }
-  .cf-sky img {
-    object-position: 70% 20%;
-  }
   .cf-scrim {
-    background: linear-gradient(to bottom, rgb(11 10 13 / 0.7) 0%, rgb(11 10 13 / 0.45) 50%, rgb(11 10 13 / 0) 75%);
+    background: linear-gradient(to bottom, rgb(11 10 13 / 0) 0%, rgb(11 10 13 / 0.5) 20%, rgb(11 10 13 / 0.42) 70%, rgb(11 10 13 / 0) 100%);
   }
   .cf-title {
     font-size: clamp(2.1rem, 9.6vw, 2.8rem);
@@ -383,88 +215,9 @@
   }
 }
 
-/* ═══ Contact, day: a blue sky, the sun where the moon was, light washes ═══ */
-.cf-sky-day,
-.cf-day,
-.cf-stars,
-.cf-sparks {
-  transition: opacity 0.9s var(--ease);
-}
-.cf-sky-day,
-.cf-day {
-  opacity: 0;
-}
-.cf-day {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
-  overflow: hidden;
-}
-.cf-sun {
-  position: absolute;
-  left: 88%;
-  top: 15%;
-  width: clamp(110px, 10vw, 160px);
-  aspect-ratio: 1;
-  translate: -50% -50%;
-}
-.cf-sun-disc {
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  background: radial-gradient(circle at 42% 38%, #fff 0%, #fffaf0 45%, #ffe9c2 72%, #ffd9a6 100%);
-  box-shadow:
-    0 0 0 10px rgb(255 248 230 / 0.35),
-    0 0 60px 20px rgb(255 240 210 / 0.75),
-    0 0 160px 70px rgb(255 214 230 / 0.45);
-}
-.cf-sun-rays {
-  position: absolute;
-  inset: -140%;
-  border-radius: 50%;
-  background: repeating-conic-gradient(from 8deg, rgb(255 250 235 / 0.42) 0deg 5deg, rgb(255 250 235 / 0) 5deg 22deg);
-  -webkit-mask-image: radial-gradient(closest-side, #000 18%, rgb(0 0 0 / 0.45) 45%, transparent 100%);
-  mask-image: radial-gradient(closest-side, #000 18%, rgb(0 0 0 / 0.45) 45%, transparent 100%);
-}
-.cf-cloud {
-  position: absolute;
-  aspect-ratio: 3 / 1;
-  border-radius: 999px;
-  background:
-    radial-gradient(34% 70% at 30% 64%, rgb(255 255 255 / 0.95), rgb(255 255 255 / 0) 100%),
-    radial-gradient(30% 85% at 54% 50%, rgb(255 255 255 / 0.95), rgb(255 255 255 / 0) 100%),
-    radial-gradient(26% 64% at 76% 66%, rgb(255 255 255 / 0.9), rgb(255 255 255 / 0) 100%);
-  filter: blur(4px);
-  opacity: 0.7;
-}
-
-html[data-mode="day"] .cf-contact {
-  --cf-far-0: #fbd7e8;
-  --cf-far-1: #f1b3d1;
-  --cf-mid-0: #ffb0d1;
-  --cf-mid-1: #f584b8;
-  --cf-mid-2: #e8689f;
-  --cf-front-0: #fff0f6;
-  --cf-rim: #ffffff;
-  --cf-rim-o: 0.9;
-  background: #dfe9ff;
-}
-html[data-mode="day"] .cf-sky-day,
-html[data-mode="day"] .cf-day {
-  opacity: 1;
-}
-html[data-mode="day"] .cf-stars,
-html[data-mode="day"] .cf-sparks {
-  opacity: 0;
-}
-html[data-mode="day"] .cf-sky::after {
-  background:
-    linear-gradient(to bottom, var(--surface) 0%, rgb(255 232 241 / 0) 16%),
-    linear-gradient(to top, #f7c6dd 0%, rgb(247 198 221 / 0) 40%);
-}
+/* ═══ Contact, day: the hero's day sky behind it, milk-glass surfaces ═══ */
 html[data-mode="day"] .cf-scrim {
-  background: radial-gradient(90% 75% at 0% 40%, rgb(255 246 250 / 0.9) 0%, rgb(255 246 250 / 0.62) 45%, rgb(255 246 250 / 0) 75%);
+  background: radial-gradient(60% 55% at 12% 50%, rgb(255 246 250 / 0.82) 0%, rgb(255 246 250 / 0.5) 50%, rgb(255 246 250 / 0) 80%);
 }
 html[data-mode="day"] .cf-title-pink {
   text-shadow: 0 0 0.5em rgb(255 255 255 / 0.9);
@@ -481,11 +234,11 @@ html[data-mode="day"] .cf-btn:hover {
 }
 html[data-mode="day"] .cf-copy {
   border-color: rgb(29 11 21 / 0.2);
-  background: rgb(255 255 255 / 0.66);
+  background: rgb(255 255 255 / 0.72);
 }
 html[data-mode="day"] .cf-copy:hover {
   border-color: rgb(224 0 108 / 0.55);
-  background: rgb(255 255 255 / 0.85);
+  background: rgb(255 255 255 / 0.9);
 }
 html[data-mode="day"] .cf-copy-icon {
   color: var(--pink);
@@ -495,8 +248,8 @@ html[data-mode="day"] .cf-copy[data-copied] {
 }
 html[data-mode="day"] .cf-card {
   border-color: rgb(255 255 255 / 0.9);
-  background: linear-gradient(160deg, rgb(255 255 255 / 0.82), rgb(255 240 247 / 0.72));
-  box-shadow: 0 30px 60px -34px rgb(150 40 100 / 0.45), inset 0 1px 0 #fff;
+  background: linear-gradient(160deg, rgb(255 255 255 / 0.86), rgb(255 240 247 / 0.78));
+  box-shadow: 0 30px 60px -34px rgb(60 70 140 / 0.4), inset 0 1px 0 #fff;
 }
 html[data-mode="day"] .cf-row + .cf-row {
   border-top-color: rgb(29 11 21 / 0.1);
@@ -509,63 +262,229 @@ html[data-mode="day"] .cf-links .link:hover {
 }
 @media (max-width: 1023px) {
   html[data-mode="day"] .cf-scrim {
-    background: linear-gradient(to right, rgb(255 246 250 / 0.85) 0%, rgb(255 246 250 / 0.6) 55%, rgb(255 246 250 / 0) 85%);
-  }
-  .cf-sun {
-    left: 86%;
-    top: 17%;
-    width: 96px;
+    background: linear-gradient(to right, rgb(255 246 250 / 0.8) 0%, rgb(255 246 250 / 0.5) 60%, rgb(255 246 250 / 0) 90%);
   }
 }
 @media (max-width: 639px) {
   html[data-mode="day"] .cf-scrim {
-    background: linear-gradient(to bottom, rgb(255 246 250 / 0.85) 0%, rgb(255 246 250 / 0.6) 50%, rgb(255 246 250 / 0) 75%);
+    background: linear-gradient(to bottom, rgb(255 246 250 / 0) 0%, rgb(255 246 250 / 0.66) 20%, rgb(255 246 250 / 0.56) 70%, rgb(255 246 250 / 0) 100%);
   }
-  .cf-sun {
-    left: 80%;
-    top: 6%;
-    width: 72px;
-  }
-}
-@media (prefers-reduced-motion: no-preference) {
-  .cf-sun-rays {
-    animation: cf-spin 120s linear infinite;
-  }
-  .cf-cloud {
-    animation: cf-drift var(--t) linear infinite;
-    animation-delay: var(--d);
-  }
-}
-@keyframes cf-spin {
-  to { rotate: 360deg; }
-}
-@keyframes cf-drift {
-  0% { translate: -40vw 0; }
-  100% { translate: 120vw 0; }
 }
 
-/* ═══ Footer ═══ */
+/* ═══ Footer ═══
+ * Geometry (all from the meadow box, 2400 × 1100):
+ *   --mw   meadow width; --mh its height; --sx its left edge
+ *   --F    wordmark size; --wl / --wt its box in meadow coordinates
+ *   --head room above the meadow (phones: the wordmark rises above her)
+ *   --ext  how far the calm ground runs on below the meadow for the links
+ * The meadow overscans the screen by 24px a side, so the camera's
+ * sideways drift (±13px at her distance, plus the breath) never shows
+ * its edge. --ft-h is the footer's height and the finale's .fn-floor, so
+ * it is declared on both and only uses viewport units (the same
+ * everywhere); inside, the meadow uses the footer's own width (cqi). */
+.ft,
+.fn-floor {
+  --mw-v: calc(100vw + 48px);
+  --head: 0px;
+  --ext: clamp(8px, 1.6vw, 28px);
+  --ft-h: calc(var(--head) + var(--mw-v) * 0.458333 + var(--ext));
+}
 .ft {
+  --mw: calc(100cqi + 48px);
+  --mh: calc(var(--mw) * 0.458333);
+  --sx: -24px;
+  --F: calc((100cqi - 2 * var(--margin)) / 6.3);
+  /* "icantcode" in Unbounded 800 at -0.02em: the i's ink starts 0.037em in; the baseline is
+     0.845em down the box. --wl is in meadow coordinates, so the meadow's own offset comes off. */
+  --wl: calc(var(--margin) - var(--sx) - 0.037 * var(--F));
+  --wt: calc(var(--mh) * 0.5 - 0.845 * var(--F));
+  --ft-ground: #120a10;
+  --ft-word: #ff2e88;
+  --ft-sheen: #ffe8f2;
+  --ft-glow: rgb(255 46 136 / 0.42);
+  --ft-ghost: rgb(255 46 136 / 0.17);
+
   container-type: inline-size;
   position: relative;
-  /* the word's inline box (1.23em) is taller than its line (0.94em); without
-     this the overflow adds a dark strip under the page */
-  overflow: clip;
-  background: var(--blush);
-  color: var(--blush-ink);
-}
-.ft > * {
-  /* "icantcode" in Unbounded 800 at -0.02em is 6.27em of ink; 6.3 leaves a hair of air */
-  --F: calc((100cqi - 2 * var(--margin)) / 6.3);
-  --sit-w: calc(var(--F) * 2);
-  --sit-h: calc(var(--sit-w) * 0.75);
-}
-
-.ft-top {
-  padding: clamp(28px, 4vw, 56px) var(--margin) 0;
+  z-index: 1;
+  margin-top: calc(-1 * var(--ft-h));
+  min-height: var(--ft-h);
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  justify-content: flex-end;
+  overflow: clip;
+  color: var(--ink);
+  /* only the links take the pointer: the art above them never blocks a click */
+  pointer-events: none;
+}
+
+.ft-stage {
+  flex: none;
+  isolation: isolate;
+  width: var(--mw);
+  aspect-ratio: 2400 / 1100;
+  margin-left: var(--sx);
+  /* the links sit on the meadow's flat ground band (its bottom 18%) */
+  margin-bottom: calc(var(--mh) * -0.18);
+}
+
+/* ── wordmark: behind the ridge and behind her ── */
+.ft-wordlayer {
+  position: absolute;
+  left: var(--wl);
+  top: var(--wt);
+  z-index: 1;
+}
+.ft-word {
+  display: block;
+  margin: 0;
+  font-family: "Unbounded", system-ui, sans-serif;
+  font-size: var(--F);
+  font-weight: 800;
+  line-height: 0.94;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+}
+/* the glow is its own still layer, so the sheen never repaints a blur */
+.ft-word-glow {
+  position: absolute;
+  inset: 0;
+  color: transparent;
+  text-shadow: 0 0 0.3em var(--ft-glow);
+}
+.ft-wordlayer > h2 {
+  position: relative;
+  color: var(--ft-word);
+}
+/* The sheen moves on the compositor only: the window (.ft-sheen) and the
+   light copy inside it (.ft-word) translate by exactly opposite amounts on
+   one timeline, so the copy stays on the word while the window crosses it. */
+.ft-sheen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1.4em;
+  height: 100%;
+  font-size: var(--F);
+  overflow: hidden;
+  translate: -1.4em 0;
+  -webkit-mask-image: linear-gradient(100deg, transparent 12%, #000 44%, #000 56%, transparent 88%);
+  mask-image: linear-gradient(100deg, transparent 12%, #000 44%, #000 56%, transparent 88%);
+}
+.ft-sheen > .ft-word {
+  position: absolute;
+  top: 0;
+  left: 0;
+  translate: 1.4em 0;
+  color: var(--ft-sheen);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .ft-sheen {
+    animation: ft-sheen-window 6s var(--ease) infinite;
+  }
+  .ft-sheen > .ft-word {
+    animation: ft-sheen-word 6s var(--ease) infinite;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ft-sheen {
+    display: none;
+  }
+}
+@keyframes ft-sheen-window {
+  0%, 35% { translate: -1.4em 0; }
+  100% { translate: 6.6em 0; }
+}
+@keyframes ft-sheen-word {
+  0%, 35% { translate: 1.4em 0; }
+  100% { translate: -6.6em 0; }
+}
+
+/* ── her, on the boulder (62% across the meadow, 51.8% down) ── */
+.ft-sit {
+  position: absolute;
+  z-index: 4;
+  aspect-ratio: 1448 / 1086;
+}
+.ft-sit > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.ft-sit[data-broken] {
+  display: none;
+}
+.ft-sit-shadow {
+  position: absolute;
+  left: 49.65%;
+  top: 62.35%;
+  width: 46%;
+  height: 7%;
+  translate: -50% -50%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgb(8 3 8 / 0.5), rgb(8 3 8 / 0.28) 55%, rgb(8 3 8 / 0));
+}
+html[data-mode="day"] .ft-sit-shadow {
+  background: radial-gradient(closest-side, rgb(60 50 80 / 0.3), rgb(60 50 80 / 0.16) 55%, rgb(60 50 80 / 0));
+}
+/* the wordmark again, at low alpha, masked to her: a soft print across her coat */
+.ft-ghost {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  -webkit-mask: var(--mask) 0 0 / 100% 100% no-repeat;
+  mask: var(--mask) 0 0 / 100% 100% no-repeat;
+}
+.ft-sit:not([data-ready]) .ft-ghost {
+  display: none;
+}
+.ft-ghost .ft-word {
+  position: absolute;
+  /* her box sits at (44.33%, 15.18%) of the meadow: undo it to land on the wordmark */
+  left: calc(var(--wl) - 0.443333 * var(--mw));
+  top: calc(var(--wt) - 0.151818 * var(--mh));
+  color: var(--ft-ghost);
+}
+
+/* ── ambient: fireflies along the ridge (night), petals (day) ── */
+.ft-life {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+}
+.ft-fly {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  margin: -2.5px 0 0 -2.5px;
+  border-radius: 50%;
+  background: #fff4cf;
+  box-shadow: 0 0 6px 2px rgb(255 214 150 / 0.75), 0 0 16px 4px rgb(255 120 170 / 0.3);
+  opacity: 0;
+}
+.ft-petal {
+  position: absolute;
+  top: 0;
+  border-radius: 80% 0 80% 0;
+  background: linear-gradient(135deg, #ffe0ec, #ff8fc0);
+  opacity: 0;
+}
+
+/* ── links and legal, on the calm ground ── */
+.ft-base {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px 48px;
+  padding: clamp(14px, 2vw, 28px) var(--margin) var(--margin);
+  background: var(--ft-ground);
+  pointer-events: auto;
 }
 .ft-links {
   display: flex;
@@ -578,103 +497,109 @@ html[data-mode="day"] .cf-links .link:hover {
   font-size: 1.0625rem;
 }
 .ft-links .link {
-  text-decoration-color: rgb(42 11 25 / 0.35);
+  text-decoration-color: rgb(253 241 246 / 0.35);
 }
 .ft-links .link:hover {
-  text-decoration-color: var(--blush-ink);
+  color: var(--blush);
+  text-decoration-color: var(--blush);
 }
 .ft-legal {
   display: grid;
   gap: 2px;
   font-size: 1rem;
   line-height: 1.45;
-  color: var(--blush-muted); /* 5.3:1 on blush */
+  color: var(--muted); /* 8:1 on the night ground */
 }
 .ft-legal p {
   margin: 0;
 }
-
-.ft-mark {
-  position: relative;
-  font-size: var(--F);
-  /* room for the part of her above the seat */
-  padding: calc(0.6 * var(--sit-h) - 0.272em + 16px) var(--margin) var(--margin);
-}
-@media (min-width: 1024px) {
-  .ft-mark { padding-top: calc(0.6 * var(--sit-h) - 0.272em + 40px); }
-}
-/* Box maths (per em): ink rises 0.837 above the baseline, the x-height is
-   0.573 and nothing descends past 0.017. With line-height 0.94 the
-   baseline lands at 0.845, so the whole word sits inside the box (the
-   foil is clipped to the box) and the negative margin trims the empty
-   strip under it. */
-.wordmark {
-  margin: 0 0 -0.078em -0.037em;
-  font-family: "Unbounded", system-ui, sans-serif;
-  font-size: 1em;
-  font-weight: 800;
-  line-height: 0.94;
-  letter-spacing: -0.02em;
-  white-space: nowrap;
-}
-/* She sits on the "co", between the t and the d: "co" runs 3.26em to
-   4.76em from the origin (centre 3.973em from the first ink). Her seat is
-   62.5% down the painting and lands on the x-height, 0.59em above the
-   box floor; her legs hang over the letters and stop at the baseline. */
-.ft-sit {
-  position: absolute;
-  left: calc(var(--margin) + 3.973em);
-  bottom: calc(var(--margin) + 0.59em - 0.375 * var(--sit-h) + 0.015em);
-  width: var(--sit-w);
-  aspect-ratio: 4 / 3;
-  transform: translateX(-54%);
-  pointer-events: none;
-}
-.ft-sit img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  object-position: 50% 100%;
-}
-.ft-sit img[data-broken] {
-  display: none;
-}
-
-@media (min-width: 1024px) {
-  /* she sits right of centre, so the links and legal line live to her left */
-  .ft-top {
-    position: absolute;
-    top: 0;
-    left: 0;
-    max-width: calc(var(--margin) + 2.7 * var(--F) - 24px);
-    padding-top: clamp(20px, 2.4vw, 40px);
+@media (min-width: 1280px) {
+  .ft-legal {
+    text-align: right;
   }
 }
-@media (max-width: 1023px) {
-  .ft > * {
-    --sit-w: calc(var(--F) * 2.5);
+
+/* ── narrower: the same composition, links and legal stacked ── */
+@media (max-width: 1279px) {
+  .ft,
+  .fn-floor {
+    --ext: 64px;
+  }
+  .ft-base {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
   }
 }
+
+/* ── phones: the meadow cropped round her rock; "icant / code" above her, her head over "code" ── */
 @media (max-width: 639px) {
-  .ft > * {
-    --sit-w: calc(var(--F) * 3.3);
+  .ft,
+  .fn-floor {
+    --mw-v: max(220vw, 820px);
+    --head: 84px;
+    --ext: 150px;
+  }
+  .ft {
+    --mw: max(220cqi, 820px);
+    --sx: calc(56cqi - 0.62 * var(--mw));
+    --F: calc((100cqi - 2 * var(--margin)) / 3.3);
+    /* the second line's baseline lands at her shoulders */
+    --wt: calc(var(--mh) * 0.3 - 1.785 * var(--F));
+  }
+  .ft-l {
+    display: block;
+  }
+  .ft-links {
+    gap: 8px 22px;
   }
 }
 
-/* day: the wordmark goes deep plum with a hot-pink sheen, still fully solid */
-html[data-mode="day"] .ft .foil-text {
-  background-image: linear-gradient(
-    100deg,
-    #1d0b15 0%,
-    #1d0b15 40%,
-    #e0006c 47%,
-    #fff6fa 50%,
-    #e0006c 53%,
-    #1d0b15 60%,
-    #1d0b15 100%
-  );
+/* ── motion: all of it off when asked ── */
+@media (prefers-reduced-motion: no-preference) {
+  .ft-fly {
+    animation:
+      ft-wander var(--t) ease-in-out var(--d) infinite alternate,
+      ft-blink var(--b) ease-in-out var(--d) infinite;
+  }
+  .ft-petal {
+    animation: ft-fall var(--t) linear var(--d) infinite;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ft-life {
+    display: none;
+  }
+}
+@keyframes ft-wander {
+  0% { translate: 0 0; }
+  33% { translate: 14px -10px; }
+  66% { translate: -8px -22px; }
+  100% { translate: 10px -6px; }
+}
+@keyframes ft-blink {
+  0%, 100% { opacity: 0; }
+  45%, 60% { opacity: 0.8; }
+}
+@keyframes ft-fall {
+  0% { translate: 0 -24px; rotate: 0deg; opacity: 0; }
+  12% { opacity: 0.8; }
+  80% { opacity: 0.8; }
+  100% { translate: -70px calc(var(--mh) * 0.7); rotate: 420deg; opacity: 0; }
 }
 
-/* the wordmark block overlaps the link row on wide screens; keep links on top */
-.ft-top { position: relative; z-index: 2; }
-.ft-mark { pointer-events: none; }
+/* ═══ Footer, day: navy wordmark (the hero's day name), cream ground ═══ */
+html[data-mode="day"] .ft {
+  --ft-ground: #fff1f6;
+  --ft-word: #1f2660;
+  --ft-sheen: #c9cff7;
+  --ft-glow: rgb(255 255 255 / 0.6);
+  --ft-ghost: rgb(31 38 96 / 0.11);
+}
+html[data-mode="day"] .ft-links .link {
+  text-decoration-color: rgb(29 11 21 / 0.3);
+}
+html[data-mode="day"] .ft-links .link:hover {
+  color: var(--pink);
+  text-decoration-color: var(--pink);
+}

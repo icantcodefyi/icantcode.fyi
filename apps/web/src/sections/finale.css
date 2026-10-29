@@ -1,0 +1,594 @@
+/* ──────────────────────────────────────────────────────────────────────
+ * The finale: Guestbook + Contact under the hero's sky, then the footer's
+ * meadow rising over it (contact-footer.css).
+ *   sticky sky (the hero's plate, in its cover rect) → moon halo, twinkles
+ *   on the painted stars, a rare shooting star (night) / drifting painted
+ *   clouds (day) → the opening fade from the page ground → the bands.
+ * ──────────────────────────────────────────────────────────────────── */
+
+.finale {
+  position: relative;
+  isolation: isolate;
+  color: var(--ink);
+}
+
+/* ── the sky: at infinity, so it holds still while everything scrolls over it ── */
+.fn-sky {
+  /* the plate's object-position: the moon stays in view on every screen */
+  --px: 0.7;
+  --py: 0.2;
+  position: sticky;
+  top: 0;
+  z-index: 0;
+  height: 100vh;
+  height: 100lvh;
+  margin-bottom: -100vh;
+  margin-bottom: -100lvh;
+  overflow: clip;
+  container-type: size;
+  pointer-events: none;
+  background: #0d0a13;
+}
+/* object-fit: cover, in CSS: the painting's rect, so its moon and stars are % of it */
+.fn-paint {
+  --pw: max(100cqw, 177.6833cqh); /* 1672 / 941 */
+  --ph: max(100cqh, 56.2799cqw);
+  position: absolute;
+  left: calc((100cqw - var(--pw)) * var(--px));
+  top: calc((100cqh - var(--ph)) * var(--py));
+  width: var(--pw);
+  height: var(--ph);
+}
+.fn-paint > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.fn-paint > img[data-set="day"],
+.fn-day {
+  opacity: 0;
+  transition: opacity var(--dur-scene) var(--ease-io);
+}
+.fn-night {
+  transition: opacity var(--dur-scene) var(--ease-io);
+}
+html[data-mode="day"] .fn-sky {
+  background: #8bb8f8;
+}
+html[data-mode="day"] .fn-paint > img[data-set="day"],
+html[data-mode="day"] .fn-day {
+  opacity: 1;
+}
+html[data-mode="day"] .fn-night {
+  opacity: 0;
+}
+html[data-mode="day"] .fn-meteor {
+  display: none;
+}
+
+/* the moon's halo, on the painted moon; it breathes */
+.fn-halo {
+  position: absolute;
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  border-radius: 50%;
+  background: radial-gradient(
+    closest-side,
+    rgb(255 150 196 / 0) 34%,
+    rgb(255 150 196 / 0.3) 39%,
+    rgb(255 110 170 / 0.12) 60%,
+    rgb(255 90 160 / 0) 100%
+  );
+}
+/* twinkles on the painting's own brightest stars */
+.fn-tw {
+  position: absolute;
+  width: 14px;
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  opacity: 0;
+  background:
+    radial-gradient(circle, #fff 0 1px, rgb(255 222 236 / 0.7) 1.8px, rgb(255 222 236 / 0) 4.5px),
+    linear-gradient(to right, rgb(255 236 244 / 0), rgb(255 236 244 / 0.85), rgb(255 236 244 / 0)) center / 100% 1px no-repeat,
+    linear-gradient(to bottom, rgb(255 236 244 / 0), rgb(255 236 244 / 0.85), rgb(255 236 244 / 0)) center / 1px 100% no-repeat;
+}
+/* the shooting star: its head is the right end; useMeteor() places it and flies it */
+.fn-meteor {
+  position: absolute;
+  width: 140px;
+  height: 2px;
+  margin-left: -140px;
+  transform-origin: 100% 50%;
+  border-radius: 2px;
+  opacity: 0;
+  background: linear-gradient(to right, rgb(255 200 225 / 0), rgb(255 200 225 / 0.5) 70%, #fff);
+  box-shadow: 0 0 6px rgb(255 160 205 / 0.7);
+}
+/* day: three of the hero's painted clouds, crossing over minutes */
+.fn-cloud {
+  position: absolute;
+  left: 0;
+  width: calc(var(--pw) * var(--wf));
+  background-repeat: no-repeat;
+  opacity: 0.8;
+  translate: calc(var(--pw) * var(--wf) * -1) 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .fn-halo {
+    animation: fn-breathe 13.7s ease-in-out infinite;
+  }
+  .fn-tw {
+    animation: fn-tw var(--t) ease-in-out var(--d) infinite;
+  }
+  .fn-cloud {
+    animation: fn-drift var(--t) linear var(--d) infinite;
+  }
+}
+@keyframes fn-breathe {
+  0%, 100% { opacity: 0.6; scale: 0.97; }
+  50% { opacity: 1; scale: 1.03; }
+}
+@keyframes fn-tw {
+  0%, 100% { opacity: 0; scale: 0.55; }
+  50% { opacity: 0.8; scale: 1; }
+}
+@keyframes fn-drift {
+  from { translate: calc(var(--pw) * var(--wf) * -1) 0; }
+  to { translate: var(--pw) 0; }
+}
+
+/* phones: the moon sits right of the copy */
+@media (max-width: 1023px) {
+  .fn-sky {
+    --px: 0.86;
+    --py: 0.1;
+  }
+}
+
+/* ── the opening: from the page ground (BTS fades to it) into the sky ── */
+.fn-open {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1;
+  height: 30svh;
+  pointer-events: none;
+  background: linear-gradient(var(--bg), color-mix(in srgb, var(--bg) 60%, transparent) 35%, transparent);
+}
+
+/* ── Guestbook: copy and the wall's tally on the left, the wall on the right.
+   The wall is a deferred chunk; it joins this grid through subgrid. ── */
+.fn-gb {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: [copy-start] minmax(0, 5fr) [copy-end] minmax(0, 1fr) [wall-start] minmax(0, 6fr) [wall-end];
+  grid-template-rows: auto 1fr;
+  column-gap: clamp(24px, 3vw, 48px);
+  padding: calc(var(--section-pad) + 6svh) var(--margin) calc(var(--section-pad) * 0.75);
+}
+.fn-gb::before {
+  content: "";
+  position: absolute;
+  inset: 0 40% 0 0;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(70% 60% at 20% 45%, rgb(11 10 13 / 0.5), rgb(11 10 13 / 0) 75%);
+}
+.fn-gb-copy {
+  grid-column: copy;
+  grid-row: 1;
+}
+.fn-gb-lede {
+  margin-top: 1.5rem;
+  max-width: 36ch;
+  font-size: var(--step-body);
+  line-height: 1.5;
+  color: #f3dde7;
+}
+.fn-gb-wall {
+  grid-column: 1 / -1;
+  grid-row: 1 / -1;
+  display: grid;
+  grid-template-columns: subgrid;
+  grid-template-rows: subgrid;
+  pointer-events: none;
+}
+.fn-gb-wall > .defer-ph {
+  grid-column: wall;
+  grid-row: 1 / -1;
+}
+
+@media (max-width: 1023px) {
+  .fn-gb {
+    grid-template-columns: [copy-start wall-start] minmax(0, 1fr) [copy-end wall-end];
+    grid-template-rows: auto auto auto;
+    padding-top: calc(var(--section-pad) + 4svh);
+  }
+  .fn-gb::before {
+    inset: 0;
+    background: linear-gradient(to right, rgb(11 10 13 / 0.5), rgb(11 10 13 / 0) 85%);
+  }
+  .fn-gb-wall > .defer-ph {
+    grid-row: 3;
+  }
+}
+
+html[data-mode="day"] .fn-gb::before {
+  background: radial-gradient(70% 60% at 20% 45%, rgb(255 246 250 / 0.72), rgb(255 246 250 / 0) 75%);
+}
+html[data-mode="day"] .fn-gb-lede {
+  color: #3d1d2d;
+}
+@media (max-width: 1023px) {
+  html[data-mode="day"] .fn-gb::before {
+    background: linear-gradient(to right, rgb(255 246 250 / 0.72), rgb(255 246 250 / 0) 85%);
+  }
+}
+
+/* ═══ The wall (components/guestbook-wall.tsx) ═══
+   It spans the whole band as a subgrid, so #guestbook starts where the
+   heading does; only its own pieces take the pointer. */
+.gb {
+  --gb-ink: #ffe6f1;
+  --gb-glow: drop-shadow(0 0 2px rgb(255 46 136 / 0.75)) drop-shadow(0 0 7px rgb(255 46 136 / 0.35));
+  --gb-line: rgb(255 179 209 / 0.14);
+  --gb-soft: #cdb4c2;
+  grid-column: 1 / -1;
+  grid-row: 1 / -1;
+  display: grid;
+  grid-template-columns: subgrid;
+  grid-template-rows: subgrid;
+  scroll-margin-top: clamp(24px, 8svh, 96px);
+}
+.gb > * {
+  pointer-events: auto;
+}
+
+/* ── tally: the count, then the three newest marks ── */
+.gb-tally {
+  grid-column: copy;
+  grid-row: 2;
+  align-self: start;
+  margin-top: clamp(36px, 5svh, 56px);
+  max-width: 420px;
+}
+.gb-count {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  margin: 0;
+}
+.gb-num {
+  font-family: "Unbounded", system-ui, sans-serif;
+  font-weight: 800;
+  font-size: clamp(2.4rem, 1.6rem + 2.2vw, 3.75rem);
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: var(--pink);
+  text-shadow: 0 0 0.4em rgb(255 46 136 / 0.4);
+  font-variant-numeric: tabular-nums;
+}
+.gb-num-label {
+  color: var(--gb-soft);
+}
+.gb-latest {
+  margin: 20px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.gb-latest li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 8px 0;
+  border-top: 1px solid var(--gb-line);
+}
+.gb-latest-mark {
+  display: block;
+  height: 46px;
+  width: 100%;
+  max-width: 280px;
+  filter: var(--gb-glow);
+}
+.gb-when {
+  flex: none;
+  font-size: 0.875rem;
+  color: var(--gb-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── the panel: ink glass on the night sky (solid fill, no blur) ── */
+.gb-panel {
+  grid-column: wall;
+  grid-row: 1 / -1;
+  align-self: start;
+  padding: 18px 20px 20px;
+  border-radius: 22px;
+  border: 1px solid rgb(255 179 209 / 0.24);
+  background: rgb(11 10 13 / 0.62);
+  box-shadow: 0 40px 80px -40px rgb(0 0 0 / 0.75), inset 0 1px 0 rgb(255 255 255 / 0.05);
+}
+.gb-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.gb-title {
+  margin: 0;
+  font-family: "Unbounded", system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 1.125rem;
+  letter-spacing: -0.01em;
+}
+.gb-note {
+  font-size: 0.875rem;
+  color: var(--gb-soft);
+}
+.gb-note-strong {
+  color: var(--ink);
+}
+
+.gb-canvas {
+  display: block;
+  width: 100%;
+  height: 140px;
+  border-radius: 14px;
+  background: rgb(255 255 255 / 0.035);
+  box-shadow: inset 0 0 0 1px rgb(255 179 209 / 0.12);
+  filter: var(--gb-glow);
+}
+.gb-canvas-live {
+  cursor: crosshair;
+  touch-action: none;
+}
+.gb-base {
+  stroke: rgb(255 179 209 / 0.32);
+  stroke-width: 1;
+  stroke-dasharray: 2 4;
+}
+.gb-prompt {
+  fill: rgb(253 241 246 / 0.5);
+  font-family: "Unbounded", system-ui, sans-serif;
+  font-size: 18px;
+  font-style: italic;
+}
+.gb-sub {
+  fill: rgb(253 241 246 / 0.42);
+  font-family: "Onest", system-ui, sans-serif;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.gb-ink {
+  fill: var(--gb-ink);
+}
+.gb-ink-line {
+  fill: none;
+  stroke: var(--gb-ink);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.gb-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 12px;
+  min-height: 44px;
+  margin-top: 12px;
+}
+.gb-buttons {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.gb-google {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  box-shadow: 0 10px 26px -10px rgb(255 46 136 / 0.6);
+  transition: transform var(--dur-micro) var(--ease), box-shadow var(--dur-short) var(--ease);
+}
+.gb-google:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 30px -10px rgb(255 46 136 / 0.7);
+}
+.gb-google:active {
+  transform: scale(0.98);
+}
+.gb-google-g {
+  width: 14px;
+  height: 14px;
+  padding: 3px;
+  box-sizing: content-box;
+  border-radius: 50%;
+  background: #fff;
+}
+.gb-google-arr {
+  font-size: 0.75rem;
+  opacity: 0.6;
+  transition: transform var(--dur-short) var(--ease), opacity var(--dur-micro);
+}
+.gb-google:hover .gb-google-arr {
+  transform: translate(2px, -2px);
+  opacity: 1;
+}
+.gb-btn,
+.gb-btn-quiet {
+  min-height: 36px;
+  padding: 0 16px;
+  border-radius: 999px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: opacity var(--dur-micro), color var(--dur-micro), transform var(--dur-micro) var(--ease);
+}
+.gb-btn {
+  background: var(--ink);
+  color: var(--bg);
+}
+.gb-btn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+.gb-btn-quiet {
+  color: var(--gb-soft);
+}
+.gb-btn-quiet:hover:not(:disabled) {
+  color: var(--ink);
+}
+.gb-btn:disabled,
+.gb-btn-quiet:disabled {
+  opacity: 0.4;
+}
+.gb-link {
+  font-size: 0.8125rem;
+  color: var(--gb-soft);
+  text-underline-offset: 0.2em;
+  transition: color var(--dur-micro);
+}
+.gb-link:hover {
+  color: var(--ink);
+  text-decoration: underline;
+}
+
+/* ── earlier marks: a bounded list, faded at both ends ── */
+.gb-older {
+  margin-top: 26px;
+}
+.gb-older-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+.gb-label {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gb-soft);
+}
+.gb-scroll {
+  max-height: 300px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 16px, #000 calc(100% - 28px), transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 16px, #000 calc(100% - 28px), transparent 100%);
+}
+.gb-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.gb-row {
+  display: grid;
+  grid-template-columns: 2.4rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+  padding: 9px 0;
+  border-top: 1px solid var(--gb-line);
+}
+.gb-idx {
+  font-size: 0.875rem;
+  color: var(--gb-soft);
+  opacity: 0.75;
+  font-variant-numeric: tabular-nums;
+}
+.gb-row-mark {
+  display: block;
+  height: 40px;
+  width: 100%;
+  max-width: 320px;
+  filter: var(--gb-glow);
+}
+
+@media (max-width: 1023px) {
+  .gb-tally {
+    margin-top: 32px;
+  }
+  .gb-panel {
+    grid-row: 3;
+    margin-top: 32px;
+    max-width: 640px;
+  }
+}
+@media (max-width: 639px) {
+  .gb-panel {
+    padding: 14px 14px 16px;
+  }
+}
+
+/* ── day: milk glass and navy ink, the hero's day name colour ── */
+html[data-mode="day"] .gb {
+  --gb-ink: #1f2660;
+  --gb-glow: none;
+  --gb-line: rgb(31 38 96 / 0.12);
+  --gb-soft: var(--muted);
+}
+html[data-mode="day"] .gb-num {
+  text-shadow: 0 0 0.5em rgb(255 255 255 / 0.9);
+}
+html[data-mode="day"] .gb-panel {
+  border-color: rgb(255 255 255 / 0.9);
+  background: rgb(255 255 255 / 0.76);
+  box-shadow: 0 30px 60px -34px rgb(60 70 140 / 0.4), inset 0 1px 0 #fff;
+}
+html[data-mode="day"] .gb-canvas {
+  background: rgb(255 255 255 / 0.85);
+  box-shadow: inset 0 0 0 1px rgb(31 38 96 / 0.1);
+}
+html[data-mode="day"] .gb-base {
+  stroke: rgb(31 38 96 / 0.28);
+}
+html[data-mode="day"] .gb-prompt {
+  fill: rgb(31 38 96 / 0.45);
+}
+html[data-mode="day"] .gb-sub {
+  fill: rgb(31 38 96 / 0.45);
+}
+html[data-mode="day"] .gb-google {
+  box-shadow: 0 10px 24px -12px rgb(224 0 108 / 0.55);
+}
+
+/* the stretch the footer is pulled up over (its height is the footer's, see contact-footer.css) */
+.fn-floor {
+  height: var(--ft-h);
+}
+
+/* ── reduced motion: nothing pinned; the sky waits at the bottom, under the footer ── */
+@media (prefers-reduced-motion: reduce) {
+  .finale {
+    background: linear-gradient(var(--bg), #0d0a13 30svh);
+  }
+  html[data-mode="day"] .finale {
+    background: linear-gradient(var(--bg), #8bb8f8 30svh);
+  }
+  .fn-sky {
+    position: absolute;
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    margin: 0;
+    -webkit-mask-image: linear-gradient(transparent, #000 30%);
+    mask-image: linear-gradient(transparent, #000 30%);
+  }
+}

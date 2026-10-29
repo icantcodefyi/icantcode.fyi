@@ -429,19 +429,19 @@ body {
 .defer-ph[data-ph="teyvat"] { --ph-h: 1470px; }
 /* Valorant: the text column wraps taller as phones get wider (steeply to 430, then gently), and fills the screen on desktop */
 .defer-ph[data-ph="valorant"] { --ph-h: min(772px + 163vw, 1360px + 22.5vw); }
-/* Anime: a manga strip on phones (grows with the width), stacked pages from 664, a two-page spread from 1324 */
-.defer-ph[data-ph="anime"] { --ph-h: calc(747vw + 160px); }
-/* BTS: a 230svh pinned run, then the overture and the record crate */
-.defer-ph[data-ph="bts"] { --ph-h: calc(230svh + 1180px); }
+/* Anime: a manga strip on phones (grows with the width to 3646px), stacked pages from 676, a two-page spread from 1264 */
+.defer-ph[data-ph="anime"] { --ph-h: min(735.5vw + 204px, 3646px); }
+/* BTS: a 230svh pinned run, then the overture and the record crate (which widen with the screen on desktop) */
+.defer-ph[data-ph="bts"] { --ph-h: calc(230svh + 1160px); }
 .defer-ph[data-ph="guestbook"] { --ph-h: 960px; }
 @media (min-width: 640px) {
   .defer-ph[data-ph="hackathons"] { --ph-h: 2830px; }
   .defer-ph[data-ph="teyvat"] { --ph-h: 1520px; }
   .defer-ph[data-ph="valorant"] { --ph-h: calc(1062px + 33vw); }
-  .defer-ph[data-ph="anime"] { --ph-h: calc(747vw - 108px); }
-  .defer-ph[data-ph="bts"] { --ph-h: calc(230svh + 1100px); }
+  .defer-ph[data-ph="anime"] { --ph-h: 3676px; }
+  .defer-ph[data-ph="bts"] { --ph-h: calc(230svh + 1150px); }
 }
-@media (min-width: 664px) {
+@media (min-width: 676px) {
   .defer-ph[data-ph="anime"] { --ph-h: min(300vw + 94px, 2626px); }
 }
 @media (min-width: 768px) {
@@ -452,23 +452,19 @@ body {
   .defer-ph[data-ph="hackathons"] { --ph-h: calc(4790px - 212vw); }
   .defer-ph[data-ph="teyvat"] { --ph-h: 1000px; }
   .defer-ph[data-ph="valorant"] { --ph-h: clamp(800px, 100vh, 966px); }
-  .defer-ph[data-ph="bts"] { --ph-h: calc(230svh + 1250px); }
+  .defer-ph[data-ph="bts"] { --ph-h: calc(230svh + min(90vw + 331px, 1610px)); }
   .defer-ph[data-ph="guestbook"] { --ph-h: 640px; }
 }
 /* the list wraps the event names below 1100 (the dock's gutter), then unwraps them one by one */
 @media (min-width: 1100px) {
   .defer-ph[data-ph="hackathons"] { --ph-h: max(4512px - 195vw, 2946px - 60vw); }
 }
+@media (min-width: 1264px) {
+  .defer-ph[data-ph="anime"] { --ph-h: min(74.6vw + 216px, 1219px); }
+}
 @media (min-width: 1280px) {
   /* the map and the list both shrink a little as the screen widens */
   .defer-ph[data-ph="hackathons"] { --ph-h: calc(3017px - 65.6vw); }
-  .defer-ph[data-ph="bts"] { --ph-h: calc(230svh + 1480px); }
-}
-@media (min-width: 1324px) {
-  .defer-ph[data-ph="anime"] { --ph-h: 1219px; }
-}
-@media (min-width: 1440px) {
-  .defer-ph[data-ph="bts"] { --ph-h: calc(230svh + 1610px); }
 }
 @media (min-width: 1800px) {
   .defer-ph[data-ph="hackathons"] { --ph-h: 1825px; }

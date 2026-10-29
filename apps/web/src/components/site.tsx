@@ -134,24 +134,20 @@ export function useOffscreenPause(root: React.RefObject<HTMLElement | null>) {
       // next section's loops tick the main thread while you are still scrolling this one
       { rootMargin: "15% 0px" },
     );
-    // loops that start while their section is off, gathered per burst (a section mounting) and held in a microtask
-    let starts: AnimationEvent[] = [];
+    // Loops that start while their section is off (a section mounting) are held in idle time, a burst at a
+    // time, with one look at the page's animations. Starts arrive at the top of a frame, before its style
+    // pass, so looking then would force that pass early, mid-scroll; while the page scrolls the frames are
+    // drawn anyway, and once it rests the burst is held within an idle moment.
+    let queued = false;
+    const idle = window.requestIdleCallback ?? ((cb: () => void) => window.setTimeout(cb, 250));
     const flushStarts = () => {
-      const found = new Set<Animation>();
-      for (const ev of starts) {
-        const t = ev.target as Element;
-        for (const a of ev.pseudoElement ? t.getAnimations({ subtree: true }) : t.getAnimations()) {
-          const fx = a.effect as KeyframeEffect | null;
-          if (a instanceof CSSAnimation && a.animationName === ev.animationName && fx?.target === t && (fx.pseudoElement ?? "") === ev.pseudoElement && isLoop(a)) found.add(a);
-        }
-      }
-      starts = [];
-      hold([...found]);
+      queued = false;
+      hold(document.getAnimations().filter((a) => !held.has(a) && isLoop(a) && !!targetOf(a)?.closest("[data-off]")));
     };
     const started = (ev: AnimationEvent) => {
-      if (!(ev.target as Element).closest?.("[data-off]")) return;
-      if (!starts.length) queueMicrotask(flushStarts);
-      starts.push(ev);
+      if (queued || !(ev.target as Element).closest?.("[data-off]")) return;
+      queued = true;
+      idle(flushStarts, { timeout: 1000 });
     };
     host.addEventListener("animationstart", started, true);
     const watch = () => {

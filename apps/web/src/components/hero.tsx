@@ -1,10 +1,13 @@
-import { Fragment, useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
-const TWITTER = "https://twitter.com/icantcodefyi";
-import type { Mode, PetalField } from "./hero/petal-field";
+import { Fragment, useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
+import type { Mode } from "./hero/petal-field";
+import type { HeroScene, PlateImages } from "./hero/scene";
 import { SkyToggle } from "./hero/sky-toggle";
+import { driveStage, type Stage } from "./hero/stage";
 import { art, HERO_ART } from "@/lib/art";
 import { setMode, useMode } from "@/lib/mode";
 import "./hero.css";
+
+const TWITTER = "https://twitter.com/icantcodefyi";
 
 const NAV = [
   { href: "#work", label: "Work" },
@@ -67,19 +70,42 @@ function useBrokenGuard(root: React.RefObject<HTMLElement | null>) {
 }
 
 function layer(mode: Mode, set: keyof typeof ART) {
-  return { a: ART[set], eager: set === "night", on: mode === set };
+  return { a: ART[set], set, eager: set === "night", on: mode === set };
+}
+
+const DEPTH_ART = { night: "/site/hero-depth-night", day: "/site/hero-depth-day" } as const;
+
+/** Resolves once the hero's entrances (and the canvases' fade-in) have played out. */
+function settled(el: HTMLElement) {
+  const nodes = [...el.querySelectorAll(".hero-in, .hero-canvas")];
+  return Promise.all(nodes.flatMap((n) => n.getAnimations()).map((a) => a.finished.catch(() => {})));
+}
+
+function plateImages(el: HTMLElement, set: Mode): PlateImages | null {
+  const pick = (plate: string) => el.querySelector<HTMLImageElement>(`.hero-img[data-plate="${plate}"][data-set="${set}"]`);
+  const sky = pick("sky");
+  const char = pick("char");
+  const hill = pick("hill");
+  return sky && char && hill && !sky.hasAttribute("data-broken") && !char.hasAttribute("data-broken") && !hill.hasAttribute("data-broken")
+    ? { sky, char, hill }
+    : null;
 }
 
 export function Hero() {
   const root = useRef<HTMLElement>(null);
   const back = useRef<HTMLCanvasElement>(null);
+  const charCanvas = useRef<HTMLCanvasElement>(null);
   const front = useRef<HTMLCanvasElement>(null);
-  const field = useRef<PetalField | null>(null);
+  const scene = useRef<HeroScene | null>(null);
+  const stage = useRef<Stage | null>(null);
+  const upgrade = useRef<(mode: Mode) => void>(() => {});
   const mode = useMode();
   const [dayOk, setDayOk] = useState(false);
   const [ready, setReady] = useState(false);
   const modeRef = useRef(mode);
   modeRef.current = mode;
+  const dayOkRef = useRef(dayOk);
+  dayOkRef.current = dayOk;
 
   useBrokenGuard(root);
 
@@ -97,110 +123,53 @@ export function Hero() {
     };
   }, []);
 
-  // Pointer parallax + scroll exit, damped, written as CSS custom properties.
-  const input = useRef({ mx: 0, my: 0, scroll: 0 });
-  useEffect(() => {
-    const el = root.current;
-    if (!el) return;
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduced) {
-      el.setAttribute("data-reduced", "");
-      return;
-    }
-    const fine = window.matchMedia("(pointer: fine)").matches;
-    const goal = { mx: 0, my: 0, scroll: 0 };
-    const cur = input.current;
-    let raf = 0;
-    let last = performance.now();
-
-    const write = () => {
-      el.style.setProperty("--mx", cur.mx.toFixed(4));
-      el.style.setProperty("--my", cur.my.toFixed(4));
-      el.style.setProperty("--p", cur.scroll.toFixed(4));
-    };
-    const loop = (now: number) => {
-      const dt = Math.min(0.05, (now - last) / 1000);
-      last = now;
-      const kp = 1 - Math.exp(-dt * 4.5);
-      const ks = 1 - Math.exp(-dt * 10);
-      cur.mx += (goal.mx - cur.mx) * kp;
-      cur.my += (goal.my - cur.my) * kp;
-      cur.scroll += (goal.scroll - cur.scroll) * ks;
-      write();
-      const settled =
-        Math.abs(goal.mx - cur.mx) < 1e-4 && Math.abs(goal.my - cur.my) < 1e-4 && Math.abs(goal.scroll - cur.scroll) < 1e-4;
-      raf = settled ? 0 : requestAnimationFrame(loop);
-    };
-    const kick = () => {
-      if (!raf) {
-        last = performance.now();
-        raf = requestAnimationFrame(loop);
-      }
-    };
-    const onMove = (e: PointerEvent) => {
-      if (e.pointerType !== "mouse" && e.pointerType !== "pen") return;
-      goal.mx = (e.clientX / window.innerWidth) * 2 - 1;
-      goal.my = (e.clientY / window.innerHeight) * 2 - 1;
-      kick();
-    };
-    const onLeave = () => {
-      goal.mx = 0;
-      goal.my = 0;
-      kick();
-    };
-    // the hero's height, kept by a ResizeObserver so scrolling never reads layout
-    let heroH = el.offsetHeight;
-    const ro = new ResizeObserver(([e]) => {
-      heroH = e.borderBoxSize?.[0]?.blockSize ?? el.offsetHeight;
-    });
-    ro.observe(el);
-    const onScroll = () => {
-      const h = heroH || window.innerHeight;
-      goal.scroll = Math.min(1, Math.max(0, window.scrollY / h));
-      kick();
-    };
-    if (fine) {
-      window.addEventListener("pointermove", onMove, { passive: true });
-      document.documentElement.addEventListener("pointerleave", onLeave);
-    }
-    window.addEventListener("scroll", onScroll, { passive: true });
-    onScroll();
-    return () => {
-      cancelAnimationFrame(raf);
-      ro.disconnect();
-      window.removeEventListener("pointermove", onMove);
-      document.documentElement.removeEventListener("pointerleave", onLeave);
-      window.removeEventListener("scroll", onScroll);
-    };
-  }, []);
-
-  // Three.js petal field: loaded after first paint, paused off-screen / hidden tab.
+  // The camera rig drives the DOM layers from the start; the WebGL scene (petals,
+  // then the depth plates) joins after first paint and is paused off-screen.
   useEffect(() => {
     const el = root.current;
     const b = back.current;
+    const c = charCanvas.current;
     const f = front.current;
-    if (!el || !b || !f) return;
-    let disposed = false;
-    let visible = true;
-    let io: IntersectionObserver | undefined;
-    let ro: ResizeObserver | undefined;
+    if (!el || !b || !c || !f) return;
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduced) el.setAttribute("data-reduced", "");
+    const st = driveStage(el, { reduced, dims: DIMS });
+    stage.current = st;
+    let disposed = false;
 
-    const sync = () => field.current?.setActive(visible && !document.hidden);
+    const net = (navigator as Navigator & { connection?: { saveData?: boolean }; deviceMemory?: number });
+    // the plates are an upgrade: not for reduced motion, data saver or the smallest devices
+    const depth = !reduced && !net.connection?.saveData && (net.deviceMemory ?? 8) > 2;
+
+    upgrade.current = async (m) => {
+      const s = scene.current;
+      const images = plateImages(el, m);
+      if (!s || !images || st.spent) return;
+      const ok = await s.load(m, images, art(DEPTH_ART[m]));
+      await settled(el);
+      if (!ok || disposed || modeRef.current !== m || scene.current !== s) return;
+      st.relayout();
+      st.swap();
+      if (m === "night" && dayOkRef.current) {
+        const day = plateImages(el, "day");
+        if (day) void s.load("day", day, art(DEPTH_ART.day));
+      }
+    };
+
     const start = async () => {
       try {
-        const { createPetalField } = await import("./hero/petal-field");
+        const { createHeroScene } = await import("./hero/scene");
         if (disposed) return;
-        field.current = createPetalField(b, f, () => input.current, { mode: modeRef.current, reduced });
+        const s = createHeroScene({ back: b, char: c, front: f }, { mode: modeRef.current, depth });
+        scene.current = s;
+        st.attach(s);
         setReady(true);
-        io = new IntersectionObserver(([entry]) => {
-          visible = entry.isIntersecting;
-          sync();
-        });
-        io.observe(el);
-        ro = new ResizeObserver(() => field.current?.resize());
-        ro.observe(el);
-        document.addEventListener("visibilitychange", sync);
+        const lost = () => {
+          st.unswap();
+          scene.current = null;
+        };
+        for (const cv of [b, c, f]) cv.addEventListener("webglcontextlost", lost, { once: true });
+        if (depth) upgrade.current(modeRef.current);
       } catch {
         // No WebGL: the painted layers stand on their own.
       }
@@ -211,17 +180,34 @@ export function Hero() {
     return () => {
       disposed = true;
       if (window.cancelIdleCallback && typeof handle === "number") window.cancelIdleCallback(handle);
-      io?.disconnect();
-      ro?.disconnect();
-      document.removeEventListener("visibilitychange", sync);
-      field.current?.dispose();
-      field.current = null;
+      st.dispose();
+      scene.current?.dispose();
+      scene.current = null;
     };
   }, []);
 
-  useEffect(() => {
-    field.current?.setMode(mode);
+  // The new mode has to be on the canvases before a view transition snapshots
+  // the page, so this runs in the commit, not after paint.
+  useLayoutEffect(() => {
+    const s = scene.current;
+    if (!s) return;
+    // instant under a view transition (it animates the change) and for reduced motion (nothing ticks)
+    s.setMode(mode, document.documentElement.classList.contains("mode-instant") || !!root.current?.hasAttribute("data-reduced"));
+    stage.current?.relayout();
+    if (!s.has(mode)) {
+      stage.current?.unswap();
+      upgrade.current(mode);
+    }
   }, [mode]);
+
+  // decode the day plates ahead of the first switch
+  useEffect(() => {
+    const s = scene.current;
+    const el = root.current;
+    if (!dayOk || !s || !el || !s.has(modeRef.current)) return;
+    const day = plateImages(el, "day");
+    if (day) void s.load("day", day, art(DEPTH_ART.day));
+  }, [dayOk]);
 
   const toggle = useCallback(
     (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -236,6 +222,25 @@ export function Hero() {
   const [first] = useState(() => ART[mode]);
   const showDay = dayOk || mode === "day";
 
+  const plate = (name: keyof typeof DIMS, className: string) =>
+    sets.map(({ a, set, eager, on }) =>
+      eager || showDay ? (
+        <img
+          key={a[name]}
+          className={`hero-img ${className}`}
+          data-plate={name}
+          data-set={set}
+          data-on={on ? "" : undefined}
+          src={art(a[name])}
+          alt=""
+          width={DIMS[name][0]}
+          height={DIMS[name][1]}
+          decoding="async"
+          fetchPriority={first === a ? "high" : "low"}
+        />
+      ) : null,
+    );
+
   return (
     <section
       id="top"
@@ -245,93 +250,53 @@ export function Hero() {
       data-ready={ready ? "" : undefined}
       aria-labelledby="hero-title"
     >
-      {/* back: sky plates */}
-      <div className="hero-layer hero-l-sky" aria-hidden="true">
-        <div className="hero-in">
-          {sets.map(({ a, eager, on }) =>
-            eager || showDay ? (
-              <img
-                key={a.sky}
-                className="hero-img hero-sky"
-                data-on={on ? "" : undefined}
-                src={art(a.sky)}
-                alt=""
-                width={DIMS.sky[0]}
-                height={DIMS.sky[1]}
-                decoding="async"
-                fetchPriority={first === a ? "high" : "low"}
-              />
-            ) : null,
-          )}
-        </div>
-      </div>
-
-      <canvas ref={back} className="hero-canvas hero-canvas-back" aria-hidden="true" />
-
-      {/* mid: the name, partly behind the character */}
-      <div className="hero-layer hero-l-name">
-        <h1 id="hero-title" className="hero-name" aria-label="Aniruddh Dubge">
-          <span className="hero-name-art">
-            <Letters />
-          </span>
-        </h1>
-      </div>
-
-      {/* front: the character */}
-      <div className="hero-layer hero-l-char" aria-hidden="true">
-        <div className="hero-in">
-          <div className="hero-char">
-            {sets.map(({ a, eager, on }) =>
-              eager || showDay ? (
-                <img
-                  key={a.char}
-                  className="hero-img hero-char-img"
-                  data-on={on ? "" : undefined}
-                  src={art(a.char)}
-                  alt=""
-                  width={DIMS.char[0]}
-                  height={DIMS.char[1]}
-                  decoding="async"
-                  fetchPriority={first === a ? "high" : "low"}
-                />
-              ) : null,
-            )}
+      {/* the stage holds still (sticky) while the next section rises over it */}
+      <div className="hero-track">
+        <div className="hero-stage">
+          {/* back: sky plates, then the far petals (and, once loaded, the sky in depth) */}
+          <div className="hero-layer hero-l-sky" aria-hidden="true">
+            <div className="hero-in">{plate("sky", "hero-sky")}</div>
           </div>
+          <canvas ref={back} className="hero-canvas hero-canvas-back" aria-hidden="true" />
+
+          {/* mid: the name, partly behind the character */}
+          <div className="hero-layer hero-l-name">
+            <h1 id="hero-title" className="hero-name" aria-label="Aniruddh Dubge">
+              <span className="hero-name-art">
+                <Letters />
+              </span>
+            </h1>
+          </div>
+
+          {/* front: the character */}
+          <div className="hero-layer hero-l-char" aria-hidden="true">
+            <div className="hero-in">
+              <div className="hero-char">{plate("char", "hero-char-img")}</div>
+            </div>
+          </div>
+          <canvas ref={charCanvas} className="hero-canvas hero-canvas-char" aria-hidden="true" />
+
+          {/* the name again, as a hairline, so letters behind her still read */}
+          <div className="hero-layer hero-l-name hero-l-ghost" aria-hidden="true">
+            <div className="hero-name hero-name-ghost">
+              <span className="hero-name-art">
+                <Letters />
+              </span>
+            </div>
+          </div>
+
+          {/* very front: hill and flowers */}
+          <div className="hero-layer hero-l-hill" aria-hidden="true">
+            <div className="hero-in">{plate("hill", "hero-hill")}</div>
+          </div>
+
+          <div className="hero-scrim" aria-hidden="true" />
+          <canvas ref={front} className="hero-canvas hero-canvas-front" aria-hidden="true" />
         </div>
       </div>
 
-      {/* the name again, as a hairline, so letters behind her still read */}
-      <div className="hero-layer hero-l-name hero-l-ghost" aria-hidden="true">
-        <div className="hero-name hero-name-ghost">
-          <span className="hero-name-art">
-            <Letters />
-          </span>
-        </div>
-      </div>
-
-      {/* very front: hill and flowers */}
-      <div className="hero-layer hero-l-hill" aria-hidden="true">
-        <div className="hero-in">
-          {sets.map(({ a, eager, on }) =>
-            eager || showDay ? (
-              <img
-                key={a.hill}
-                className="hero-img hero-hill"
-                data-on={on ? "" : undefined}
-                src={art(a.hill)}
-                alt=""
-                width={DIMS.hill[0]}
-                height={DIMS.hill[1]}
-                decoding="async"
-                fetchPriority={first === a ? "high" : "low"}
-              />
-            ) : null,
-          )}
-        </div>
-      </div>
-
-      <div className="hero-scrim" aria-hidden="true" />
-      <canvas ref={front} className="hero-canvas hero-canvas-front" aria-hidden="true" />
+      {/* rides the hero's bottom edge, so the painting dissolves into the next section */}
+      <div className="hero-fade" aria-hidden="true" />
 
       <header className="hero-top">
         <nav className="hero-nav" aria-label="Primary">

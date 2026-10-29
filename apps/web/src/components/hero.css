@@ -2,15 +2,14 @@
  * Hero: a layered key visual.
  *   sky plate → back petals → name → character → hairline name → hill
  *   → scrim → front petals → nav + copy
- * --mx / --my (pointer, -1..1) and --p (exit progress, 0..1) are written by
- * hero.tsx; each layer moves by its depth. Entrances live on .hero-in so they
- * never fight the parallax transform on .hero-layer.
+ * One camera (hero/rig.ts) places every layer by its depth: hero/stage.ts
+ * writes each .hero-layer's transform, and the canvases draw the plates in
+ * depth once they have loaded (the <img>s are hidden under [data-depth]).
+ * The transforms below are each layer's resting pose. Entrances live on
+ * .hero-in so they never fight the camera's transform on .hero-layer.
  * ──────────────────────────────────────────────────────────────────── */
 
 .hero {
-  --mx: 0;
-  --my: 0;
-  --p: 0;
   --hero-ease: cubic-bezier(0.22, 1, 0.36, 1);
   --hero-pad: clamp(18px, 2.4vw, 36px);
 
@@ -34,7 +33,9 @@
   isolation: isolate;
   height: 100svh;
   min-height: 620px;
+  /* clip, not hidden: a scroll container here would stop the stage sticking */
   overflow: hidden;
+  overflow: clip;
   background: #0b0a0d;
   color: #fdf1f6;
 }
@@ -48,6 +49,40 @@
   --hero-copy: #161b45;
   --hero-chip: rgba(255, 255, 255, 0.42);
   --hero-chip-line: rgba(27, 33, 80, 0.18);
+}
+
+/* ── stage ──
+ * The track is twice the hero's height, so the stage sticks for the hero's
+ * first screen of scroll: the camera dives while the next section rises
+ * over it. The hero's own clip trims the stage exactly at that section's
+ * edge, and the page's scroll length never changes. */
+.hero-track {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 200%;
+}
+.hero-stage {
+  position: sticky;
+  top: 0;
+  height: 50%;
+  overflow: clip;
+}
+.hero-fade {
+  position: absolute;
+  z-index: 1;
+  inset: auto 0 0;
+  height: 28svh;
+  pointer-events: none;
+  opacity: 0;
+  transform-origin: 50% 100%;
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--bg) 0%, transparent),
+    color-mix(in srgb, var(--bg) 18%, transparent) 30%,
+    color-mix(in srgb, var(--bg) 55%, transparent) 60%,
+    color-mix(in srgb, var(--bg) 86%, transparent) 84%,
+    var(--bg)
+  );
 }
 
 /* ── layers ── */
@@ -79,8 +114,7 @@
 .hero-l-sky {
   z-index: 1;
   inset: -3%;
-  transform: translate3d(calc(var(--mx) * -10px), calc(var(--my) * -6px + var(--p) * 14svh), 0)
-    scale(calc(1.02 + var(--p) * 0.08));
+  transform: scale(1.02);
 }
 .hero-sky {
   inset: 0;
@@ -106,14 +140,10 @@
 
 .hero-l-name {
   z-index: 3;
-  transform: translate3d(calc(var(--mx) * -22px), calc(var(--my) * -12px + var(--p) * 30svh), 0);
-  opacity: calc(1 - var(--p) * 1.25);
 }
-.hero-l-char {
+.hero-l-char,
+.hero-canvas-char {
   z-index: 4;
-  transform: translate3d(calc(var(--mx) * -34px), calc(var(--my) * -16px - var(--p) * 6svh), 0)
-    scale(calc(1 + var(--p) * 0.06));
-  transform-origin: var(--char-x) 100%;
 }
 .hero-l-ghost {
   z-index: 5;
@@ -121,8 +151,13 @@
 .hero-l-hill {
   z-index: 6;
   /* The foreground never slides off her feet: it grows up from its bottom edge. */
-  transform: translate3d(calc(var(--mx) * -56px), calc(var(--my) * -14px), 0) scale(calc(1.06 + var(--p) * 0.34));
+  transform: scale(1.06);
   transform-origin: 50% 100%;
+}
+/* the plates in depth have taken over: the painted <img>s (and the scrim, which
+   the front canvas draws between the hill and the near petals) step aside */
+.hero[data-depth] :is(.hero-l-sky, .hero-l-char, .hero-l-hill, .hero-scrim) {
+  visibility: hidden;
 }
 .hero-scrim {
   z-index: 7;
@@ -328,8 +363,6 @@
   max-width: 31rem;
   color: var(--hero-copy);
   transition: color 0.9s var(--hero-ease);
-  opacity: calc(1 - var(--p) * 1.6);
-  transform: translate3d(0, calc(var(--p) * -8svh), 0);
 }
 .hero-copy > * {
   animation: hero-up 0.8s var(--hero-ease) both;
@@ -520,12 +553,19 @@
   }
 }
 
-/* ── reduced motion: the painted layers, still ── */
+/* ── reduced motion: the painted layers, still, scrolling away as a page ── */
 @media (prefers-reduced-motion: reduce) {
   .hero *,
   .hero *::before,
   .hero *::after {
     animation: none !important;
+  }
+  .hero-track,
+  .hero-stage {
+    height: 100%;
+  }
+  .hero-fade {
+    display: none;
   }
   .hero-layer,
   .hero-copy {

@@ -9,36 +9,31 @@ import {
   InstancedMesh,
   LinearMipmapLinearFilter,
   Matrix4,
-  PerspectiveCamera,
   PlaneGeometry,
   Points,
-  Scene,
   ShaderMaterial,
-  WebGLRenderer,
 } from "three";
 import { paintPetalAtlas } from "./petal-texture";
 
 /**
- * Two transparent canvases share one camera: `back` sits behind the name and
- * the character, `front` sits over the character. Petals are GPU-animated
- * (the vertex shader integrates fall, sway, drift and tumble from per-instance
- * seeds), so a frame costs two draw calls per canvas and no matrix uploads.
+ * Falling petals and sparks in two depth bands: `back` lives behind the name
+ * and the character, `front` between her and the lens. The host scene adds
+ * each band to the canvas at its slot and renders both with the hero's one
+ * camera. Petals are GPU-animated (the vertex shader integrates fall, sway,
+ * drift and tumble from per-instance seeds), so a band costs two draw calls
+ * and no matrix uploads.
  */
 
 export type Mode = "day" | "night";
 
-export interface FieldInput {
-  /** pointer, damped by the caller: -1..1 */
-  mx: number;
-  my: number;
-  /** hero exit progress 0..1 */
-  scroll: number;
-}
-
-export interface PetalField {
-  setMode(mode: Mode): void;
-  setActive(active: boolean): void;
-  resize(): void;
+export interface Petals {
+  back: [InstancedMesh, Points];
+  front: [InstancedMesh, Points];
+  /** advance the fall and ease colours toward the current mode */
+  tick(dt: number): void;
+  setMode(mode: Mode, instant: boolean): void;
+  /** canvas height in device px */
+  resize(heightPx: number): void;
   dispose(): void;
 }
 
@@ -207,22 +202,10 @@ function rand(seed: number) {
   };
 }
 
-interface Layer {
-  renderer: WebGLRenderer;
-  scene: Scene;
-  petals: InstancedMesh;
-  sparks: Points;
-}
-
 const BOX = { x: 9, y: 6.5 };
 const FOCUS = 14;
 
-export function createPetalField(
-  back: HTMLCanvasElement,
-  front: HTMLCanvasElement,
-  read: () => FieldInput,
-  opts: { mode: Mode; reduced: boolean },
-): PetalField {
+export function createPetals(mode: Mode): Petals {
   const r = rand(0x5a4b11);
   const narrow = window.innerWidth < 700;
   const density = narrow ? 0.5 : window.innerWidth < 1100 ? 0.75 : 1;
@@ -232,9 +215,9 @@ export function createPetalField(
   atlas.generateMipmaps = true;
   atlas.anisotropy = 4;
 
-  const pal = PALETTE[opts.mode];
+  const pal = PALETTE[mode];
   const petalUniforms = {
-    uTime: { value: 0 },
+    uTime: { value: 12.0 }, // start mid-flight so the field is already populated
     uBox: { value: [BOX.x, BOX.y, 0] },
     uFocus: { value: FOCUS },
     uMap: { value: atlas },
@@ -257,7 +240,7 @@ export function createPetalField(
     uBox: petalUniforms.uBox,
     uPx: { value: 1 },
     uColor: { value: pal.spark.clone() },
-    uOpacity: { value: opts.mode === "night" ? 1 : 0.55 },
+    uOpacity: { value: mode === "night" ? 1 : 0.55 },
   };
   const sparkMat = new ShaderMaterial({
     vertexShader: sparkVert,
@@ -329,139 +312,52 @@ export function createPetalField(
     return pts;
   }
 
-  const camera = new PerspectiveCamera(38, 1, 0.1, 80);
-  camera.position.set(0, 0, FOCUS);
-
-  function makeLayer(canvas: HTMLCanvasElement, petals: InstancedMesh, sparks: Points): Layer {
-    const renderer = new WebGLRenderer({
-      canvas,
-      alpha: true,
-      antialias: true,
-      premultipliedAlpha: true,
-      powerPreference: "high-performance",
-    });
-    renderer.setClearColor(0x000000, 0);
-    const scene = new Scene();
-    scene.add(petals, sparks);
-    return { renderer, scene, petals, sparks };
-  }
-
   // Back: deep field behind the name (z -26..-1). Front: between character and lens.
-  const backLayer = makeLayer(
-    back,
+  const back: Petals["back"] = [
     makePetals(Math.round(300 * density), -26, -1, 0.16, 0.3),
     makeSparks(Math.round(22 * density), -18, -2),
-  );
-  const frontLayer = makeLayer(
-    front,
+  ];
+  const front: Petals["front"] = [
     makePetals(Math.round(110 * density), 1.5, 12.5, 0.14, 0.26),
     makeSparks(Math.round(8 * density), 2, 9),
-  );
-  const layers = [backLayer, frontLayer];
-
-  let w = 0;
-  let h = 0;
-  function resize() {
-    const rect = back.getBoundingClientRect();
-    w = Math.max(1, Math.round(rect.width));
-    h = Math.max(1, Math.round(rect.height));
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    for (const l of layers) {
-      l.renderer.setPixelRatio(dpr);
-      l.renderer.setSize(w, h, false);
-    }
-    camera.aspect = w / h;
-    // Keep the petal volume framed on tall phones: widen the vertical fov.
-    camera.fov = w / h < 0.8 ? 52 : 38;
-    camera.updateProjectionMatrix();
-    sparkUniforms.uPx.value = h * dpr * 0.06;
-    if (!running) renderOnce();
-  }
+  ];
 
   // Smooth colour transitions between modes.
   const target = { base: pal.base.clone(), tip: pal.tip.clone(), glow: pal.glow, spark: pal.spark.clone(), sparkOp: sparkUniforms.uOpacity.value };
 
-  let raf = 0;
-  let running = false;
-  let active = true;
-  let last = performance.now();
-  let time = 12.0; // start mid-flight so the field is already populated
-
-  function tick(now: number) {
-    const dt = Math.min(0.05, (now - last) / 1000);
-    last = now;
-    if (!opts.reduced) time += dt;
-    step(dt);
-    raf = requestAnimationFrame(tick);
-  }
-
-  function step(dt: number) {
-    const k = 1 - Math.exp(-dt * 3);
+  function ease(k: number) {
     petalUniforms.uBase.value.lerp(target.base, k);
     petalUniforms.uTip.value.lerp(target.tip, k);
     petalUniforms.uGlow.value += (target.glow - petalUniforms.uGlow.value) * k;
     sparkUniforms.uColor.value.lerp(target.spark, k);
     sparkUniforms.uOpacity.value += (target.sparkOp - sparkUniforms.uOpacity.value) * k;
-    petalUniforms.uTime.value = time;
-
-    const input = opts.reduced ? { mx: 0, my: 0, scroll: 0 } : read();
-    // Scroll flies the camera into the field; the pointer orbits it a little.
-    camera.position.set(input.mx * 0.9, -input.my * 0.55 + input.scroll * 0.8, FOCUS - input.scroll * 9);
-    camera.lookAt(input.mx * 0.2, input.scroll * 0.4, -20);
-    for (const l of layers) l.renderer.render(l.scene, camera);
   }
-
-  function renderOnce() {
-    step(1);
-  }
-
-  function start() {
-    if (running || opts.reduced) return;
-    running = true;
-    last = performance.now();
-    raf = requestAnimationFrame(tick);
-  }
-  function stop() {
-    running = false;
-    cancelAnimationFrame(raf);
-  }
-
-  resize();
-  if (opts.reduced) renderOnce();
-  else start();
 
   return {
-    setMode(mode) {
-      const p = PALETTE[mode];
+    back,
+    front,
+    tick(dt) {
+      petalUniforms.uTime.value += dt;
+      ease(1 - Math.exp(-dt * 3));
+    },
+    setMode(next, instant) {
+      const p = PALETTE[next];
       target.base.copy(p.base);
       target.tip.copy(p.tip);
       target.glow = p.glow;
       target.spark.copy(p.spark);
-      target.sparkOp = mode === "night" ? 1 : 0.55;
-      if (opts.reduced) {
-        petalUniforms.uBase.value.copy(p.base);
-        petalUniforms.uTip.value.copy(p.tip);
-        petalUniforms.uGlow.value = p.glow;
-        sparkUniforms.uColor.value.copy(p.spark);
-        sparkUniforms.uOpacity.value = target.sparkOp;
-        renderOnce();
-      }
+      target.sparkOp = next === "night" ? 1 : 0.55;
+      if (instant) ease(1);
     },
-    setActive(next) {
-      if (next === active) return;
-      active = next;
-      if (active) start();
-      else stop();
+    // point sprites are sized in device px: keep them a constant share of the canvas height
+    resize(heightPx) {
+      sparkUniforms.uPx.value = heightPx * 0.06;
     },
-    resize,
     dispose() {
-      stop();
-      for (const l of layers) {
-        l.petals.geometry.dispose();
-        l.petals.dispose();
-        l.sparks.geometry.dispose();
-        l.renderer.dispose();
-        l.renderer.forceContextLoss();
+      for (const [petals, sparks] of [back, front]) {
+        petals.geometry.dispose();
+        petals.dispose();
+        sparks.geometry.dispose();
       }
       petalGeo.dispose();
       petalMat.dispose();

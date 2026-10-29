@@ -43,13 +43,12 @@ function Letters({ offset = 0 }: { offset?: number }) {
   );
 }
 
-function probe(src: string) {
-  return new Promise<boolean>((resolve) => {
-    const img = new Image();
-    img.onload = () => resolve(img.naturalWidth > 0);
-    img.onerror = () => resolve(false);
-    img.src = src;
-  });
+/** Whether a painting is there, without fetching it (a HEAD request). */
+function exists(src: string) {
+  return fetch(src, { method: "HEAD" }).then(
+    (r) => r.ok,
+    () => false,
+  );
 }
 
 /** Hide an <img> that failed, including failures that happened before hydration. */
@@ -108,6 +107,21 @@ function plateImages(el: HTMLElement, set: Mode): PlateImages | null {
     : null;
 }
 
+/** Render the day plates (`show`) if they aren't yet; resolves once they can paint, false if one can't. */
+async function dayPainted(el: HTMLElement | null, show: () => void) {
+  show();
+  let imgs = el && plateImages(el, "day");
+  for (let i = 0; el && !imgs && i < 30; i++) {
+    await frame();
+    imgs = plateImages(el, "day");
+  }
+  if (!imgs) return false;
+  return Promise.all(Object.values(imgs).map((img) => img.decode())).then(
+    () => true,
+    () => false,
+  );
+}
+
 export function Hero() {
   const root = useRef<HTMLElement>(null);
   const back = useRef<HTMLCanvasElement>(null);
@@ -119,6 +133,8 @@ export function Hero() {
   const preloadDay = useRef(() => {});
   const mode = useMode();
   const [dayOk, setDayOk] = useState(false);
+  // the day <img>s render (and load) in night mode only after the first scroll, or for a switch
+  const [dayImgs, setDayImgs] = useState(false);
   const [ready, setReady] = useState(false);
   const modeRef = useRef(mode);
   modeRef.current = mode;
@@ -127,11 +143,11 @@ export function Hero() {
 
   useBrokenGuard(root);
 
-  // Day art is fetched after first paint; the toggle appears only once it exists.
+  // The day art is checked for after first paint; the toggle appears only once it exists.
   useEffect(() => {
     let alive = true;
     const go = () =>
-      Promise.all([probe(art(ART.day.sky)), probe(art(ART.day.char))]).then(([s, c]) => {
+      Promise.all([exists(art(ART.day.sky)), exists(art(ART.day.char))]).then(([s, c]) => {
         if (alive && s && c) setDayOk(true);
       });
     const t = window.setTimeout(go, 600);
@@ -140,6 +156,16 @@ export function Hero() {
       window.clearTimeout(t);
     };
   }, []);
+
+  // In night mode the day plates only make a first switch seamless, so nothing
+  // of them loads before the visitor's first scroll (and then in idle time).
+  useEffect(() => {
+    if (!dayOk || dayImgs) return;
+    const go = () => later(0, () => setDayImgs(true));
+    if (window.scrollY > 0) return go();
+    window.addEventListener("scroll", go, { once: true, passive: true });
+    return () => window.removeEventListener("scroll", go);
+  }, [dayOk, dayImgs]);
 
   // The camera rig drives the DOM layers from the start; the WebGL scene (petals,
   // then the depth plates) joins after first paint and is paused off-screen.
@@ -232,12 +258,14 @@ export function Hero() {
     if (day) void s.load("day", day, stageArt("day"));
   };
   useEffect(() => {
-    if (dayOk && scene.current?.has(modeRef.current)) later(DAY_AFTER, preloadDay.current);
-  }, [dayOk]);
+    if (dayImgs && scene.current?.has(modeRef.current)) later(DAY_AFTER, preloadDay.current);
+  }, [dayImgs]);
 
   const toggle = useCallback(
-    (e: React.MouseEvent<HTMLButtonElement>) => {
+    async (e: React.MouseEvent<HTMLButtonElement>) => {
       const r = e.currentTarget.getBoundingClientRect();
+      // before a scroll the day plates aren't fetched yet: switch once they can paint, never to an empty frame
+      if (mode === "night" && !(await dayPainted(root.current, () => setDayImgs(true)))) return;
       setMode(mode === "night" ? "day" : "night", { x: r.left + r.width / 2, y: r.top + r.height / 2 });
     },
     [mode],
@@ -246,7 +274,7 @@ export function Hero() {
   const sets = (["night", "day"] as const).map((set) => layer(mode, set));
   // the set showing on first paint is the LCP: it alone gets high priority
   const [first] = useState(() => ART[mode]);
-  const showDay = dayOk || mode === "day";
+  const showDay = dayImgs || mode === "day";
 
   const plate = (name: keyof typeof DIMS, className: string) =>
     sets.map(({ a, set, eager, on }) =>

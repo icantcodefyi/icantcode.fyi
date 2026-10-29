@@ -9,9 +9,11 @@ import {
 } from "react";
 
 import { DepthStage, useDepthLayer } from "@/components/depth-stage";
+import { art, BTS_STAGE, halfSet } from "@/lib/art";
+import { useDayArt } from "@/lib/day-art";
 import { STRENGTH } from "@/lib/depth/camera";
 import type { StageSpec } from "@/lib/depth/types";
-import { useMode } from "@/lib/mode";
+import { useMode, type Mode } from "@/lib/mode";
 
 /* ───────── data (mirrors public/bts/manifest.json) ───────── */
 
@@ -194,18 +196,22 @@ const rand = (seed: number) => {
   };
 };
 
-/* ───────── stage illustration ─────────
-   Kept deliberately quiet: one clean truss, four heads, a dark screen with a
-   halo, and a glossy deck the members fade into. They are the show.
+/* ───────── stage ─────────
+   A painted stadium stage, empty: the arena and its LED wall, the truss with
+   four moving heads and their beams, a glossy floor. The members are the show.
 
-   The stage is on the site camera (worlds strength), back to front: the LED
-   wall at 18, the beams and the rig that throws them at 16, the member at
-   12.5. The beams stay behind the member at every depth, so a photo is never
-   lit over. Each SVG layer overscans the stage by OVER viewBox units top and
-   bottom so its drift never opens an edge. */
+   It is on the site camera (worlds strength), back to front: the arena at 18,
+   the beams and the truss that throws them at 16 (registered: they move as
+   one), the floor lip at 14, the member at 12.5 in front of all of it. The
+   painting keeps its middle half free of light, so a beam never crosses the
+   photo; the beams sweep a degree or two about their heads. The beams are
+   soft light, so they always come from the half-size file. */
 
 const STAGE: StageSpec = { id: "bts", plates: [], camera: { strength: STRENGTH.world } };
-const D = { wall: 18, rig: 16, confetti: 14, member: 12.5, sleeve: 12, record: 13.5 } as const;
+const D = { back: 18, rig: 16, confetti: 15, front: 14, member: 12.5, sleeve: 12, record: 13.5 } as const;
+
+const ARENA = { w: 2000, h: 1400, half: 1000 } as const;
+type Plate = "back" | "beams" | "mid" | "front";
 
 /** A few pieces of confetti still falling behind the member long after the encore. */
 const CONFETTI = (() => {
@@ -220,8 +226,6 @@ const CONFETTI = (() => {
     color: colors[i % 3],
   }));
 })();
-const OVER = 24;
-const VIEW = `0 ${-OVER} 800 ${720 + OVER * 2}`;
 
 function Layer({ d, className, children }: { d: number; className: string; children: ReactNode }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -233,180 +237,51 @@ function Layer({ d, className, children }: { d: number; className: string; child
   );
 }
 
-const FIXTURES = [150, 310, 490, 650];
-const LENS_Y = 74;
-
-function beamAngles(i: number) {
-  return FIXTURES.map((x, k) => {
-    const aim = (400 - x) * 0.09; // every head leans in toward centre stage
-    return +(aim + Math.sin(i * 1.9 + k * 2.3) * 7).toFixed(2);
-  });
-}
-
-function Truss() {
-  const bays = 20;
-  const w = 800 / bays;
-  let zig = "M0 32";
-  for (let i = 0; i < bays; i++)
-    zig += ` L${i * w + w / 2} ${i % 2 ? 32 : 50} L${(i + 1) * w} ${i % 2 ? 50 : 32}`;
+function ArenaImg({ plate, m }: { plate: Plate; m: Mode }) {
+  const set = BTS_STAGE[m];
+  const half = art(set[`${plate}Half`]);
+  const beams = plate === "beams";
+  const full = beams ? half : art(set[plate]);
   return (
-    <g className="bt-truss">
-      <rect x="0" y="30" width="800" height="2" />
-      <rect x="0" y="50" width="800" height="2" />
-      <path d={zig} fill="none" strokeWidth="1" className="bt-truss-web" />
-    </g>
+    <img
+      src={full}
+      srcSet={beams ? undefined : halfSet(full, ARENA.w, half, ARENA.half, 1.6)}
+      sizes={beams ? undefined : "auto, 100vw"}
+      data-set={m}
+      alt=""
+      width={beams ? ARENA.half : ARENA.w}
+      height={beams ? ARENA.half * 0.7 : ARENA.h}
+      loading="lazy"
+      decoding="async"
+    />
   );
 }
 
-/* every head and its beam sway together, a few degrees, on their own slow clock */
-const sway = (x: number, y: number, k: number) => ({ transformOrigin: `${x}px ${y}px`, "--bt-k": k }) as CSSProperties;
-
-function MovingHead({ x, angle, k }: { x: number; angle: number; k: number }) {
-  const style = {
-    transformOrigin: `${x}px ${LENS_Y - 10}px`,
-    transform: `rotate(${angle}deg)`,
-  } as CSSProperties;
-  return (
-    <g>
-      <rect
-        className="bt-fix-body"
-        x={x - 6}
-        y="52"
-        width="12"
-        height="5"
-        rx="1.5"
-      />
-      <g className="bt-swing" style={style}>
-        <g className="bt-sway" style={sway(x, LENS_Y, k)}>
-          <path
-            className="bt-fix-body"
-            d={`M${x - 13} 57h26v3h-3v12h-2.5v-12h-15v12H${x - 10}v-12h-3z`}
-          />
-          <rect
-            className="bt-fix-body"
-            x={x - 9.5}
-            y="60"
-            width="19"
-            height="14"
-            rx="4.5"
-          />
-          <ellipse className="bt-fix-lens" cx={x} cy={LENS_Y + 1} rx="6" ry="2" />
-        </g>
-      </g>
-    </g>
+/** One plate of the painting, cover-fitted in the painting's own aspect so its points sit at fixed %. */
+function Arena({ plate, day, children }: { plate: Plate; day: boolean; children?: ReactNode }) {
+  const imgs = (
+    <>
+      <ArenaImg plate={plate} m="night" />
+      {day ? <ArenaImg plate={plate} m="day" /> : null}
+    </>
   );
-}
-
-function Beam({ x, angle, k }: { x: number; angle: number; k: number }) {
-  const style = {
-    transformOrigin: `${x}px ${LENS_Y}px`,
-    transform: `rotate(${angle}deg)`,
-  } as CSSProperties;
-  const spread = k % 2 ? 96 : 76;
   return (
-    <g className="bt-swing" style={style}>
-      <g className="bt-sway" style={sway(x, LENS_Y, k)}>
-        <path
-          className="bt-beam"
-          style={{ "--bt-k": k } as CSSProperties}
-          d={`M${x - 4} ${LENS_Y + 2}L${x + 4} ${LENS_Y + 2}L${x + spread} 720L${x - spread} 720Z`}
-          fill="url(#bt-beam-g)"
-        />
-      </g>
-    </g>
-  );
-}
-
-function StageBack() {
-  const r = rand(7);
-  const stars = Array.from({ length: 22 }, () => ({
-    x: r() * 800,
-    y: 70 + r() * 220,
-    s: 0.6 + r() * 0.8,
-    o: 0.2 + r() * 0.4,
-  }));
-  return (
-    <svg className="bt-stage-svg" viewBox={VIEW} preserveAspectRatio="xMidYMid slice">
-      <defs>
-        <linearGradient id="bt-sky" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" className="bt-sky-0" />
-          <stop offset="0.62" className="bt-sky-1" />
-          <stop offset="1" className="bt-sky-2" />
-        </linearGradient>
-        <radialGradient id="bt-halo" cx="0.5" cy="0.5" r="0.5">
-          <stop offset="0" className="bt-halo-0" />
-          <stop offset="0.55" className="bt-halo-1" />
-          <stop offset="1" className="bt-halo-2" />
-        </radialGradient>
-        <linearGradient id="bt-beam-g" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" className="bt-beam-0" />
-          <stop offset="0.55" className="bt-beam-1" />
-          <stop offset="1" className="bt-beam-2" />
-        </linearGradient>
-      </defs>
-
-      <rect y={-OVER} width="800" height={720 + OVER * 2} fill="url(#bt-sky)" />
-
-      {/* night: a few stars over the roof; day: sun and two slow clouds */}
-      <g className="bt-night-only">
-        {stars.map((s, i) => (
-          <circle
-            key={i}
-            cx={s.x}
-            cy={s.y}
-            r={s.s}
-            className="bt-star"
-            opacity={s.o}
-            style={{ "--bt-d": `${(i % 7) * 0.7}s` } as CSSProperties}
-          />
-        ))}
-      </g>
-      <g className="bt-day-only">
-        <circle cx="620" cy="150" r="92" className="bt-sun-glow" />
-        <circle cx="620" cy="150" r="52" className="bt-sun" />
-        {[
-          { x: 130, y: 150, s: 1.1 },
-          { x: 560, y: 230, s: 0.85 },
-        ].map((c, i) => (
-          <g
-            key={i}
-            className="bt-cloud"
-            transform={`translate(${c.x} ${c.y}) scale(${c.s})`}
-          >
-            <path d="M-70 18c-16 0-22-20-6-26 0-18 22-26 34-14 8-18 38-20 48 0 14-10 34-2 34 14 18 0 22 26 0 26z" />
-          </g>
-        ))}
-      </g>
-
-      {/* screen: a dark panel with a halo behind the performer, running past
-          the bottom so no edge cuts across the photo */}
-      <rect x="160" y="100" width="480" height="700" rx="4" className="bt-wall" />
-      <circle cx="400" cy="320" r="270" fill="url(#bt-halo)" />
-      <rect x="160.5" y="100.5" width="479" height="699" rx="4" fill="none" className="bt-wall-edge" />
-    </svg>
-  );
-}
-
-function StageLight({ index }: { index: number }) {
-  const angles = beamAngles(index);
-  return (
-    <svg className="bt-stage-svg" viewBox={VIEW} preserveAspectRatio="xMidYMid slice">
-      {FIXTURES.map((x, k) => (
-        <Beam key={x} x={x} angle={angles[k]} k={k} />
-      ))}
-    </svg>
-  );
-}
-
-function StageRig({ index }: { index: number }) {
-  const angles = beamAngles(index);
-  return (
-    <svg className="bt-stage-svg" viewBox={VIEW} preserveAspectRatio="xMidYMid slice">
-      <Truss />
-      {FIXTURES.map((x, k) => (
-        <MovingHead key={x} x={x} angle={angles[k]} k={k} />
-      ))}
-    </svg>
+    <div className={`bt-art bt-art-${plate}`}>
+      {plate === "beams" ? (
+        // each pair of beams sweeps about its own heads, mirrored
+        <>
+          <div className="bt-sweep" data-side="l">
+            {imgs}
+          </div>
+          <div className="bt-sweep" data-side="r">
+            {imgs}
+          </div>
+        </>
+      ) : (
+        imgs
+      )}
+      {children}
+    </div>
   );
 }
 
@@ -998,6 +873,12 @@ export function BtsWorld() {
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const member = MEMBERS[index];
   const rotation = useAutoAdvance(index, setIndex);
+  // the day painting, probed once for the stage (every plate or none)
+  const dayBack = useDayArt(art(BTS_STAGE.day.back), sectionRef);
+  const dayBeams = useDayArt(art(BTS_STAGE.day.beamsHalf), sectionRef);
+  const dayMid = useDayArt(art(BTS_STAGE.day.mid), sectionRef);
+  const dayFront = useDayArt(art(BTS_STAGE.day.front), sectionRef);
+  const day = dayBack && dayBeams && dayMid && dayFront;
   const { set: setHold } = rotation;
 
   useEffect(() => {
@@ -1069,22 +950,22 @@ export function BtsWorld() {
       {/* ── line-up ── */}
       <div className="bt-show bt-wrap">
         <DepthStage spec={STAGE} className="bt-stage" data-member={member.slug} {...hoverProps}>
-          <Layer d={D.wall} className="bt-wall-layer">
-            <StageBack />
-            <div className="bt-screen-name" style={{ "--bt-len": Math.max(member.name.length, 3) } as CSSProperties}>
-              <span key={member.slug}>{member.name}</span>
-            </div>
+          <Layer d={D.back} className="bt-plate">
+            <Arena plate="back" day={day}>
+              <div className="bt-screen-name" style={{ "--bt-len": Math.max(member.name.length, 3) } as CSSProperties}>
+                <span key={member.slug}>{member.name}</span>
+              </div>
+            </Arena>
           </Layer>
-          {/* the beams blend onto the wall, so they are their own layer; the rig that throws them sits on top */}
-          <Layer d={D.rig} className="bt-beam-layer">
-            <StageLight index={index} />
+          <Layer d={D.rig} className="bt-plate">
+            <Arena plate="beams" day={day} />
             <div className="bt-haze">
               <span />
               <span />
             </div>
           </Layer>
-          <Layer d={D.rig} className="bt-rig-layer">
-            <StageRig index={index} />
+          <Layer d={D.rig} className="bt-plate">
+            <Arena plate="mid" day={day} />
           </Layer>
           <Layer d={D.confetti} className="bt-confetti">
             {CONFETTI.map((c, i) => (
@@ -1092,6 +973,9 @@ export function BtsWorld() {
                 <i style={{ "--flip": `${c.flip}s` } as CSSProperties} />
               </span>
             ))}
+          </Layer>
+          <Layer d={D.front} className="bt-plate">
+            <Arena plate="front" day={day} />
           </Layer>
           <Figures index={index} />
           <div className="bt-floor-fade" aria-hidden="true" />

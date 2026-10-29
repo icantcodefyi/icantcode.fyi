@@ -1,6 +1,6 @@
 /* ───────── BTS: a night concert in purple and black ─────────
-   Every colour is a variable so day mode can repaint the room, the SVG
-   stage and the canvas equaliser from one place. */
+   Every colour is a variable so day mode can repaint the room and the
+   canvas equaliser from one place; the stage itself is painted, per mode. */
 .bt {
   --bt-ground: #0d0718;
   --bt-ground-2: #140a24;
@@ -28,24 +28,13 @@
   --bt-haze: rgb(176 140 255 / 0.2);
   --bt-confetti-light: #f3ecff;
 
-  /* stage */
-  --bt-sky-0: #05020b;
-  --bt-sky-1: #170a2e;
-  --bt-sky-2: #2b1155;
-  --bt-halo-0: rgb(196 150 255 / 0.55);
-  --bt-halo-1: rgb(124 62 226 / 0.2);
-  --bt-wall: #0c0618;
-  --bt-led-text: #3a1f6b;
-  --bt-wall-edge: rgb(201 167 255 / 0.3);
-  --bt-floor-0: #1d0c3a;
+  /* stage: the ground under the painting while it loads, the floor the member
+     fades into, the name on the LED wall, the house fixtures */
+  --bt-stage: #170a2e;
+  --bt-led-text: #1a0b38;
   --bt-floor-1: #08030f;
-  --bt-truss: #3d2a66;
   --bt-fix: #1f1338;
   --bt-fix-ring: #6c51a6;
-  --bt-lens: #f6efff;
-  --bt-beam-0: rgb(218 196 255 / 0.34);
-  --bt-beam-1: rgb(160 110 255 / 0.1);
-  --bt-edge: #c9a7ff;
 
   /* equaliser (read by canvas) */
   --bt-eq-top: #f3ecff;
@@ -126,7 +115,7 @@
   overflow: hidden;
   height: clamp(520px, 62vw, 720px);
   border-radius: 28px;
-  background: var(--bt-sky-1);
+  background: var(--bt-stage);
   container-type: size;
   box-shadow: 0 0 0 1px var(--bt-line), 0 40px 80px -40px rgb(124 62 226 / 0.55);
 }
@@ -143,22 +132,38 @@
   width: 100%;
   height: 100%;
 }
-/* each SVG layer overscans the stage (OVER in bts.tsx) so its drift never shows an edge */
-.bt-stage-svg {
-  position: absolute;
-  left: -16px;
-  top: -24px;
-  width: calc(100% + 32px);
-  height: calc(100% + 48px);
-}
-.bt-wall-layer { z-index: 0; }
-/* beams live behind the members, never over them */
-.bt-beam-layer { z-index: 1; mix-blend-mode: screen; }
-.bt-rig-layer { z-index: 1; }
+/* the painted stage: each plate cover-fits the stage in the painting's own
+   10:7 (so a point of the painting is a fixed % of .bt-art), overscanned so
+   the camera's drift never shows an edge. Everything stays under the member. */
+.bt-plate, .bt-confetti { z-index: 1; }
 .bt-figures { z-index: 2; }
-.bt-confetti { z-index: 1; overflow: hidden; }
+.bt-confetti { overflow: hidden; }
+.bt-art {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: max(calc(100cqw + 32px), calc((100cqh + 48px) * 10 / 7));
+  aspect-ratio: 10 / 7;
+  transform: translate(-50%, -50%);
+}
+.bt-art img,
+.bt-sweep {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.bt-art img { display: block; max-width: none; }
+.bt-art img[data-set="day"] {
+  opacity: 0;
+  transition: opacity var(--dur-scene) var(--ease-io);
+}
+html[data-mode="day"] .bt-art img[data-set="day"] { opacity: 1; }
+/* the beams in two halves, each turning about its pair of heads (the painting's lenses sit at 20% / 80%, 10% down) */
+.bt-sweep[data-side="l"] { clip-path: inset(0 50% 0 0); transform-origin: 20.1% 10%; }
+.bt-sweep[data-side="r"] { clip-path: inset(0 0 0 50%); transform-origin: 79.9% 10%; }
 
-/* haze hanging in the beams, behind the member; it lives in the beams' screen-blended layer */
+/* haze hanging in the beams, behind the member */
 .bt-haze { position: absolute; inset: 0; }
 .bt-haze span {
   position: absolute;
@@ -196,43 +201,15 @@
   background: linear-gradient(to top, var(--bt-floor-1) 0%, color-mix(in srgb, var(--bt-floor-1) 60%, transparent) 40%, transparent);
 }
 
-/* sky + stage svg paint */
-.bt-sky-0 { stop-color: var(--bt-sky-0); }
-.bt-sky-1 { stop-color: var(--bt-sky-1); }
-.bt-sky-2 { stop-color: var(--bt-sky-2); }
-.bt-halo-0 { stop-color: var(--bt-halo-0); }
-.bt-halo-1 { stop-color: var(--bt-halo-1); }
-.bt-halo-2 { stop-color: transparent; }
-.bt-floor-0 { stop-color: var(--bt-floor-0); }
-.bt-floor-1 { stop-color: var(--bt-floor-1); }
-.bt-beam-0 { stop-color: var(--bt-beam-0); }
-.bt-beam-1 { stop-color: var(--bt-beam-1); }
-.bt-beam-2 { stop-color: transparent; }
-.bt-edge-0 { stop-color: var(--bt-edge); }
-
-.bt-star { fill: #efe4ff; }
-.bt-wall { fill: var(--bt-wall); }
-.bt-wall-edge { stroke: var(--bt-wall-edge); stroke-width: 1; }
-.bt-truss rect, .bt-truss path { fill: var(--bt-truss); }
-.bt-truss .bt-truss-web { fill: none; stroke: var(--bt-truss); }
-.bt-fix-body { fill: var(--bt-fix); stroke: var(--bt-fix-ring); stroke-width: 0.8; }
-.bt-fix-lens { fill: var(--bt-lens); }
-.bt-swing {
-  transform-box: view-box;
-  transition: transform 1100ms var(--bt-ease);
-}
-.bt-day-only { display: none; }
-
-/* member name on the LED wall, in dot matrix */
+/* member name on the LED wall, as pixels switched off (the painting's wall spans about 29-67% down) */
 .bt-screen-name {
   position: absolute;
-  inset: 0;
+  inset: 31% 0 auto;
   display: flex;
   justify-content: center;
-  align-items: flex-start;
-  padding-top: 16cqh;
   pointer-events: none;
   user-select: none;
+  opacity: 0.5;
 }
 .bt-screen-name span {
   font: 800 min(calc(84cqw / var(--bt-len)), 26cqh) / 0.9 "Unbounded", system-ui, sans-serif;
@@ -944,9 +921,6 @@
   .bt-figures > .bt-figure { transition: opacity 800ms var(--bt-ease), translate 900ms var(--bt-ease); }
   .bt-swap { animation: bt-rise 560ms var(--bt-ease) both; }
   .bt-screen-name span { animation: bt-flicker 700ms steps(6) both; }
-  .bt-star { animation: bt-twinkle 3.6s ease-in-out infinite; animation-delay: var(--bt-d); }
-  .bt-beam { animation: bt-breathe 4.8s ease-in-out infinite; animation-delay: calc(var(--bt-k) * -0.9s); }
-  .bt-cloud path { animation: bt-drift 22s ease-in-out infinite alternate; }
   .bt-player[data-playing] .bt-disc-spin { animation: bt-spin 3.6s linear infinite; }
   .bt-disc-spin { animation: bt-spin 3.6s linear infinite paused; }
   /* a mirror turns the other way */
@@ -958,10 +932,8 @@
   .bt-track-eq rect:nth-child(3) { animation-delay: -600ms !important; }
 
   .bt-house-beam > span { transition: opacity var(--dur-in) var(--ease) calc(var(--i) * 120ms); }
-  .bt-sway {
-    transform-box: view-box;
-    animation: bt-sway calc(13.7s + var(--bt-k) * 3.1s) ease-in-out calc(var(--bt-k) * -4.3s) infinite alternate;
-  }
+  .bt-sweep { animation: bt-sweep 17.9s var(--ease-io) -4.3s infinite alternate; }
+  .bt-sweep[data-side="r"] { animation-direction: alternate-reverse; animation-name: bt-sweep-r; }
   .bt-haze span:first-child { animation: bt-haze 23.1s ease-in-out -6s infinite alternate; }
   .bt-haze span:last-child { animation: bt-haze 17.9s ease-in-out -11s infinite alternate-reverse; }
   .bt-confetti span { animation: bt-fall var(--dur) linear var(--delay) infinite; }
@@ -973,7 +945,7 @@
   .bt-js .bt-show { transition: opacity 700ms ease 120ms, translate 900ms var(--bt-ease) 120ms; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .bt-swing, .bt-record-slot, .bt-sleeve { transition: none; }
+  .bt-record-slot, .bt-sleeve { transition: none; }
   .bt-era:hover .bt-record-slot { rotate: 0deg; }
 }
 
@@ -981,12 +953,11 @@
 @keyframes bt-flicker {
   0% { opacity: 0; } 30% { opacity: 0.7; } 45% { opacity: 0.15; } 70% { opacity: 1; } 100% { opacity: 1; }
 }
-@keyframes bt-twinkle { 50% { opacity: 0.15; } }
 @keyframes bt-breathe { 50% { opacity: 0.6; } }
-@keyframes bt-wave { 0%, 100% { rotate: -6deg; } 50% { rotate: 6deg; } }
-@keyframes bt-drift { to { translate: 40px 0; } }
 @keyframes bt-spin { to { rotate: 360deg; } }
-@keyframes bt-sway { from { rotate: -3.5deg; } to { rotate: 3.5deg; } }
+/* the left pair swings out and in; the right pair mirrors it */
+@keyframes bt-sweep { from { rotate: 1.6deg; } to { rotate: -1.4deg; } }
+@keyframes bt-sweep-r { from { rotate: 1.4deg; } to { rotate: -1.6deg; } }
 @keyframes bt-haze { from { transform: translateX(-7%); } to { transform: translateX(7%); } }
 @keyframes bt-fall {
   0% { opacity: 0; transform: translate(0, 0); }
@@ -1027,23 +998,11 @@ html[data-mode="day"] .bt {
   --bt-haze: rgb(255 255 255 / 0.4);
   --bt-confetti-light: #ffffff;
 
-  --bt-sky-0: #a98ced;
-  --bt-sky-1: #d9cbfa;
-  --bt-sky-2: #f1eaff;
-  --bt-halo-0: rgb(255 255 255 / 0.75);
-  --bt-halo-1: rgb(236 224 255 / 0.35);
-  --bt-wall: #2a1652;
-  --bt-led-text: #4a2d8c;
-  --bt-wall-edge: rgb(42 22 82 / 0.5);
-  --bt-floor-0: #c4adf0;
+  --bt-stage: #d9cbfa;
+  --bt-led-text: #2a1652;
   --bt-floor-1: #9f83de;
-  --bt-truss: #4a2f82;
   --bt-fix: #2e1a57;
   --bt-fix-ring: #7a5cc0;
-  --bt-lens: #ffffff;
-  --bt-beam-0: rgb(255 255 255 / 0.4);
-  --bt-beam-1: rgb(255 255 255 / 0.1);
-  --bt-edge: #ffffff;
 
   --bt-eq-top: #8b5cf6;
   --bt-eq-bottom: #3b1d82;
@@ -1053,13 +1012,7 @@ html[data-mode="day"] .bt {
     radial-gradient(90% 50% at 50% 0%, rgb(196 168 255 / 0.5), transparent 70%),
     linear-gradient(var(--bt-ground), var(--bt-ground-2) 45%, var(--bt-ground));
 }
-html[data-mode="day"] .bt-night-only { display: none; }
-html[data-mode="day"] .bt-day-only { display: inline; }
-html[data-mode="day"] .bt-sun { fill: #fffaf2; }
-html[data-mode="day"] .bt-sun-glow { fill: rgb(255 250 242 / 0.45); filter: blur(18px); }
-html[data-mode="day"] .bt-cloud path { fill: rgb(255 255 255 / 0.8); }
 html[data-mode="day"] .bt-stage { box-shadow: 0 0 0 1px var(--bt-line), 0 40px 80px -44px rgb(90 43 184 / 0.55); }
-html[data-mode="day"] .bt-beam-layer { mix-blend-mode: soft-light; }
 html[data-mode="day"] .bt-position { background: #ffffff; }
 html[data-mode="day"] .bt-tab-face { background: radial-gradient(circle at 50% 30%, #ffffff, #dccdfb); }
 html[data-mode="day"] .bt-tab[aria-selected="true"] .bt-tab-face { box-shadow: 0 0 0 3px var(--bt-ground), 0 0 0 5px var(--bt-soft); }

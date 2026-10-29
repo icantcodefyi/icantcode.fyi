@@ -1,8 +1,11 @@
 import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
 
 import { DepthStage, useDepthLayer } from "@/components/depth-stage";
+import { art, halfSet, VALORANT_STAGE } from "@/lib/art";
+import { useDayArt } from "@/lib/day-art";
 import { STRENGTH } from "@/lib/depth/camera";
 import type { StageSpec } from "@/lib/depth/types";
+import type { Mode } from "@/lib/mode";
 import { kick } from "@/lib/scroll-loop";
 
 type Agent = {
@@ -72,12 +75,52 @@ const AGENTS: Agent[] = [
 const src = (file: string) => `/lobby/val/${file}.webp`;
 
 /**
- * The stage on the site camera (worlds strength): the outline name hangs
- * behind at 16, the HUD sits on the glass at 12.5 and the agent stands
- * forward at 11.5, all shifting against the pointer by 1/d.
+ * The stage on the site camera (worlds strength). Through the red field, a
+ * rooftop over the city at dusk under a red wash: the sky far off at 36, the
+ * city at 26 and the near parapet at 19 (the art's planes). The outline name
+ * hangs in front at 16, the HUD sits on the glass at 12.5 and the agent
+ * stands forward at 11.5, all shifting against the pointer by 1/d.
  */
 const STAGE: StageSpec = { id: "valorant", plates: [], camera: { strength: STRENGTH.world } };
-const D = { name: 16, air: 14, hud: 12.5, agent: 11.5 } as const;
+const D = { sky: 36, far: 26, near: 19, name: 16, air: 14, hud: 12.5, agent: 11.5 } as const;
+
+/** The painting's crop and red wash, from the art job, as CSS variables on the stage. */
+const { tint } = VALORANT_STAGE;
+const ROOF_VARS = {
+  "--vl-roof-pos": VALORANT_STAGE.objectPosition,
+  "--vl-wash": `color-mix(in srgb, ${tint.color} ${tint.night * 100}%, transparent)`,
+  "--vl-wash-day": `color-mix(in srgb, ${tint.color} ${tint.day * 100}%, transparent)`,
+} as CSSProperties;
+
+function RoofPlate({ plate, d, day }: { plate: "sky" | "far" | "near"; d: number; day: boolean }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useDepthLayer(ref, d);
+  const [w, h] = VALORANT_STAGE.size;
+  const img = (m: Mode) => {
+    const set = VALORANT_STAGE[m];
+    const full = art(set[plate]);
+    return (
+      <img
+        src={full}
+        // the painting covers a box a little smaller than itself: 1.15 keeps the half file honest
+        srcSet={halfSet(full, w, art(set[`${plate}Half`]), VALORANT_STAGE.halfSize[0], 1.15)}
+        sizes="auto, 100vw"
+        data-set={m}
+        alt=""
+        width={w}
+        height={h}
+        loading="lazy"
+        decoding="async"
+      />
+    );
+  };
+  return (
+    <div ref={ref} className={`vl-roof vl-roof-${plate}`} aria-hidden="true">
+      {img("night")}
+      {day ? img("day") : null}
+    </div>
+  );
+}
 
 const seeded = (seed: number) => () => {
   seed = (seed * 16807) % 2147483647;
@@ -134,14 +177,18 @@ function Layer({ d, className, style, children }: { d: number; className: string
   );
 }
 
-function StageLayer({ agent, wipe }: { agent: Agent; wipe?: boolean }) {
+function StageLayer({ agent, wipe, day }: { agent: Agent; wipe?: boolean; day: boolean }) {
   const portrait = useRef<HTMLImageElement>(null);
   useDepthLayer(portrait, D.agent);
   const style = { "--vl-a": agent.colors[0], "--vl-b": agent.colors[1] } as CSSProperties;
   const word = agent.name.toUpperCase();
   return (
     <div className={`vl-layer ${wipe ? "vl-wipe" : ""}`} style={style} aria-hidden={wipe ? undefined : true}>
-      <div className="vl-field" />
+      <div className="vl-field">
+        <RoofPlate plate="sky" d={D.sky} day={day} />
+        <RoofPlate plate="far" d={D.far} day={day} />
+        <RoofPlate plate="near" d={D.near} day={day} />
+      </div>
       <div className="vl-seam" />
       <img className="vl-texture" src={src(`${agent.id}-bg`)} alt="" width={700} height={1024} decoding="async" />
       <Layer d={D.name} className="vl-bigname" style={{ "--vl-len": word.length } as CSSProperties}>
@@ -311,6 +358,11 @@ export function Valorant() {
   const sectionRef = useRef<HTMLElement>(null);
   const tileRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const agent = AGENTS[index];
+  // probed once here, not per agent layer, so a swap never shows a frame of the other mode
+  const daySky = useDayArt(art(VALORANT_STAGE.day.sky), sectionRef);
+  const dayFar = useDayArt(art(VALORANT_STAGE.day.far), sectionRef);
+  const dayNear = useDayArt(art(VALORANT_STAGE.day.near), sectionRef);
+  const day = daySky && dayFar && dayNear;
 
   useEffect(() => {
     const el = sectionRef.current;
@@ -371,9 +423,9 @@ export function Valorant() {
           </p>
         </header>
 
-        <DepthStage spec={STAGE} className="vl-stage" aria-live="polite">
-          {prev !== null && <StageLayer agent={AGENTS[prev]} />}
-          <StageLayer key={`${agent.id}-${swap}`} agent={agent} wipe={swap > 0} />
+        <DepthStage spec={STAGE} className="vl-stage" style={ROOF_VARS} aria-live="polite">
+          {prev !== null && <StageLayer agent={AGENTS[prev]} day={day} />}
+          <StageLayer key={`${agent.id}-${swap}`} agent={agent} wipe={swap > 0} day={day} />
           {swap > 0 && (
             <>
               <div key={`slash-${swap}`} className="vl-slash" aria-hidden="true" onAnimationEnd={() => setPrev(null)} />

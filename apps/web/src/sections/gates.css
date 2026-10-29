@@ -1,5 +1,566 @@
-/* ── Off-the-clock gates ── */
-.gate { transition: transform 400ms var(--ease); }
-.gate:hover { transform: translateY(-6px) rotate(-0.6deg); }
-.gate-art { transition: transform 700ms var(--ease); transform-origin: bottom right; }
-.gate:hover .gate-art { transform: scale(1.06) translateX(-4%); }
+/* ──────────────────────────────────────────────────────────────────────
+ * Off the clock (sections/gates.tsx): four doorways, each a title card in
+ * its world's idiom. The frame is rigid; its four planes (ground, motif,
+ * title, character) are depth layers, so never give those `translate` or
+ * `scale`: their own motion goes through `transform`.
+ *
+ * Hover and keyboard focus set --g-on (0 → 1) and --g-play on the card;
+ * every "doorway opens" change reads them.
+ * ──────────────────────────────────────────────────────────────────── */
+
+.gates {
+  position: relative;
+  /* the S2 cloud seam hangs over the first --seam-overlap */
+  padding: calc(var(--seam-overlap) + clamp(16px, 3vw, 48px)) var(--margin) clamp(32px, 3vw, 44px);
+  background: var(--bg);
+}
+.gates-stage { margin-top: clamp(40px, 5vw, 64px); }
+.gates-list { display: grid; gap: 12px; }
+@media (min-width: 640px) { .gates-list { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1024px) { .gates-list { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+
+/* ── the card ── */
+.gate {
+  --g-on: 0;
+  --g-play: paused;
+  position: relative;
+  display: block;
+  aspect-ratio: 4 / 5;
+  container-type: inline-size;
+  border-radius: var(--g-r);
+  color: var(--g-ink);
+  outline: 2px solid transparent;
+  outline-offset: 4px;
+  transition: outline-color var(--dur-micro);
+  -webkit-tap-highlight-color: transparent;
+}
+@media (max-width: 639px) { .gate { aspect-ratio: 16 / 10; } }
+@media (hover: hover) {
+  .gate:hover { --g-on: 1; --g-play: running; }
+}
+.gate:focus-visible { --g-on: 1; --g-play: running; outline-color: var(--g-ink); }
+
+.gate-frame {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  isolation: isolate;
+  border-radius: inherit;
+  background: var(--g-ground);
+}
+.gate-frame > div { position: absolute; inset: 0; pointer-events: none; }
+.gate-frame > div > * { position: absolute; }
+/* the frame's own edge (gold hairline, hazard tape, ink border, house hairline), over every plane */
+.gate-frame::after { content: ""; position: absolute; z-index: 1; pointer-events: none; }
+html[data-mode="day"] .gate-frame {
+  box-shadow: 0 0 0 1px rgb(29 11 21 / 0.08), 0 18px 40px -22px rgb(120 20 70 / 0.45);
+}
+
+/* overscan: the ground drifts and breathes inside the frame */
+.gate-frame > .gate-ground {
+  inset: -14%;
+  background: var(--g-ground);
+  transform: scale(calc(1 + 0.05 * var(--g-on)));
+  transition: transform 700ms var(--ease);
+}
+.gate-frame > .gate-char {
+  transform: translateY(calc(-6px * var(--g-on))) scale(calc(1 + 0.03 * var(--g-on)));
+  transition: transform 500ms var(--ease);
+}
+.gate-char img { max-width: none; user-select: none; }
+.gate-frame > .gate-title {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 8.5cqw 8.5cqw 9cqw;
+}
+.gate-frame > .gate-title > * { position: static; }
+.gate-kind { font: 500 15px/1.2 "Onest", system-ui, sans-serif; color: var(--g-kind); }
+.gate-name { color: var(--g-ink); line-height: 0.95; white-space: nowrap; }
+
+/* ═════════ Teyvat: teal field, red stripe, gold hairline, the astrolabe, Furina ═════════ */
+.gate[data-gate="teyvat"] {
+  --g-r: 16px;
+  --g-ground: #08403f;
+  --g-field: #13786d;
+  --g-stripe: #d4452c;
+  --g-hair: #f2b94a;
+  --g-line: #f4d690;
+  --g-el: #8af5d6;
+  --g-ink: #f4d690;
+  --g-kind: #dcf2ec;
+}
+html[data-mode="day"] .gate[data-gate="teyvat"] {
+  --g-ground: #eaf5f0;
+  --g-field: #c4e8dc;
+  --g-hair: #b8862f;
+  --g-line: #7d5a14;
+  --g-el: #2a9e82;
+  --g-ink: #6e4f10;
+  --g-kind: #2c4a44;
+}
+.gate[data-gate="teyvat"] .gate-ground {
+  background:
+    radial-gradient(42% 34% at 62% 40%, var(--g-field), transparent 72%),
+    radial-gradient(70% 40% at 30% 100%, rgb(0 0 0 / 0.22), transparent 70%),
+    var(--g-ground);
+}
+html[data-mode="day"] .gate[data-gate="teyvat"] .gate-ground {
+  background:
+    radial-gradient(42% 34% at 62% 40%, var(--g-field), transparent 72%),
+    radial-gradient(70% 40% at 30% 100%, rgb(255 255 255 / 0.7), transparent 70%),
+    var(--g-ground);
+}
+.gate-stripe {
+  top: -6%;
+  bottom: -6%;
+  left: 63%;
+  width: 7.5%;
+  background: var(--g-stripe);
+  transform: skewX(-13deg);
+}
+.gate-stripe::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(100% + 9px);
+  width: 1.5px;
+  background: var(--g-hair);
+  opacity: calc(0.6 + 0.4 * var(--g-on));
+  box-shadow: 0 0 calc(10px * var(--g-on)) var(--g-hair);
+  transition: opacity var(--dur-short) var(--ease), box-shadow var(--dur-short) var(--ease);
+}
+.gate[data-gate="teyvat"] .gate-frame::after {
+  inset: 2.8cqw;
+  border: 1px solid var(--g-hair);
+  border-radius: 9px;
+  opacity: calc(0.38 + 0.42 * var(--g-on));
+  transition: opacity var(--dur-short) var(--ease);
+}
+.gate-astro {
+  left: 62%;
+  top: 41%;
+  width: 118%;
+  height: auto;
+  transform: translate(-50%, -50%);
+  overflow: visible;
+  fill: none;
+  stroke: var(--g-line);
+  stroke-width: 0.32;
+  opacity: 0.55;
+}
+.gate-astro-in { stroke-dasharray: 0.6 1.4; }
+.gate-astro-ring { fill: var(--g-ground); }
+.gate-astro-dot { fill: var(--g-line); stroke: none; }
+.gate-char img[src*="furina"] {
+  right: -21%;
+  bottom: -3%;
+  height: 99%;
+  width: auto;
+}
+.gate[data-gate="teyvat"] .gate-name { font: 800 14.5cqw/0.95 "Cinzel", serif; }
+/* hover: a few anemo leaves drift through */
+.gate-leaf {
+  left: 0;
+  width: 4.2cqw;
+  aspect-ratio: 1;
+  background: var(--g-el);
+  -webkit-mask: var(--leaf) center / contain no-repeat;
+  mask: var(--leaf) center / contain no-repeat;
+  --leaf: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-8 -8 16 16'%3E%3Cpath d='M0-7.5C5-4 5 3.5 0 7.5-5 3.5-5-4 0-7.5Z'/%3E%3C/svg%3E");
+  opacity: calc(0.75 * var(--g-on));
+  transition: opacity 600ms var(--ease);
+  animation: gate-leaf 7.3s linear infinite;
+  animation-play-state: var(--g-play);
+}
+.gate-leaf[data-l="0"] { top: 22%; animation-delay: -1.2s; }
+.gate-leaf[data-l="1"] { top: 48%; width: 3.2cqw; animation-duration: 10.3s; animation-delay: -6.4s; }
+.gate-leaf[data-l="2"] { top: 70%; width: 3.6cqw; animation-duration: 8.9s; animation-delay: -3.1s; }
+@keyframes gate-leaf {
+  from { transform: translate(-10cqw, 0) rotate(0deg); }
+  to { transform: translate(112cqw, -26cqw) rotate(560deg); }
+}
+
+/* ═════════ Valorant: black, the red panel at 12°, hazard tape, HUD brackets, Sova ═════════ */
+.gate[data-gate="valorant"] {
+  --g-r: 0px;
+  --g-ground: #111114;
+  --g-red: #ff4655;
+  --g-line: #f4f2f0;
+  --g-ink: #ff4655;
+  --g-kind: #ff4655;
+}
+html[data-mode="day"] .gate[data-gate="valorant"] {
+  --g-ground: #ece8e1;
+  --g-line: #0f1923;
+  --g-ink: #b81d2f;
+  --g-kind: #b81d2f;
+}
+.gate[data-gate="valorant"] .gate-frame {
+  clip-path: polygon(0 0, calc(100% - 20px) 0, 100% 20px, 100% 100%, 20px 100%, 0 calc(100% - 20px));
+}
+.gate[data-gate="valorant"] .gate-frame::after {
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 7px;
+  background: repeating-linear-gradient(-60deg, var(--g-red) 0 8px, transparent 8px 22px);
+}
+.gate-panel {
+  top: 0;
+  bottom: 0;
+  left: 58%;
+  right: 0;
+  background:
+    linear-gradient(90deg, rgb(0 0 0 / 0.14) 0 14%, transparent 14% 22%, rgb(0 0 0 / 0.08) 22% 26%, transparent 26%),
+    var(--g-red);
+  transform: skewX(-12deg);
+  transform-origin: 0 100%;
+}
+/* hover: one red slash wipes across, 240 ms (snaps back unseen on the way out) */
+.gate-slash {
+  top: -10%;
+  bottom: -10%;
+  left: 0;
+  width: 14%;
+  background: linear-gradient(90deg, var(--g-red) 82%, #fff 82%);
+  transform: translateX(calc(-110% + 900% * var(--g-on))) skewX(-12deg);
+  transition: transform calc(240ms * var(--g-on)) var(--ease-in);
+}
+.gate-brk {
+  width: 6cqw;
+  height: 6cqw;
+  border: 2px solid var(--g-line);
+  opacity: 0.6;
+}
+.gate-brk[data-c="tl"] { left: 50%; top: 9%; border-right: 0; border-bottom: 0; }
+.gate-brk[data-c="tr"] { right: 6%; top: 9%; border-left: 0; border-bottom: 0; }
+.gate-brk[data-c="bl"] { left: 50%; bottom: 7%; border-right: 0; border-top: 0; }
+.gate-brk[data-c="br"] { right: 6%; bottom: 7%; border-left: 0; border-top: 0; }
+.gate-ladder {
+  right: 3.4%;
+  top: 30%;
+  height: 34%;
+  width: 5px;
+  background: repeating-linear-gradient(var(--g-line) 0 1px, transparent 1px 7px);
+  opacity: 0.45;
+}
+/* hover: a scanline sweeps the stage every 6 s */
+.gate-scan {
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 26%;
+  background: linear-gradient(transparent, rgb(255 70 85 / 0.1) 86%, rgb(255 255 255 / 0.45) 99%, transparent);
+  opacity: var(--g-on);
+  transition: opacity var(--dur-short);
+  animation: gate-scan 6s linear infinite;
+  animation-play-state: var(--g-play);
+}
+@keyframes gate-scan {
+  from { transform: translateY(-100%); }
+  to { transform: translateY(390%); }
+}
+.gate-char img[src*="sova"] {
+  left: 0;
+  top: 8%;
+  height: 100%;
+  width: auto;
+}
+/* the agent screen's order: role and name stacked at the top, the agent below them */
+.gate[data-gate="valorant"] .gate-title { justify-content: flex-start; gap: 3cqw; }
+.gate[data-gate="valorant"] .gate-kind { font-size: 13px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; }
+.gate[data-gate="valorant"] .gate-name { font: 400 19cqw/0.88 "Anton", sans-serif; text-transform: uppercase; white-space: normal; width: min-content; }
+
+/* ═════════ Anime: paper, a screentone corner, 18 focus lines, an inked panel, Frieren ═════════ */
+.gate[data-gate="anime"] {
+  --g-r: 3px;
+  --g-ground: #f4f1ea;
+  --g-tone: #0b0a0d;
+  --g-blue: #0078bf;
+  --g-ink: #0b0a0d;
+  --g-kind: #0b0a0d;
+}
+html[data-mode="day"] .gate[data-gate="anime"] { --g-ground: #fdfcfa; }
+/* on the night page the ink border reads as the panel gutter, so the ring sits in the paper */
+.gate[data-gate="anime"]:focus-visible { outline-color: var(--g-ground); }
+html[data-mode="day"] .gate[data-gate="anime"]:focus-visible { outline-color: var(--g-ink); }
+.gate[data-gate="anime"] .gate-frame::after {
+  inset: 0;
+  border: 3px solid var(--g-ink);
+  border-radius: inherit;
+}
+.gate-tone {
+  right: 10%;
+  bottom: 10%;
+  width: 66%;
+  height: 46%;
+  background: radial-gradient(circle, var(--g-tone) 1.15px, transparent 1.6px) 0 0 / 7px 7px;
+  -webkit-mask: radial-gradient(farthest-corner at 100% 100%, #000 8%, transparent 62%);
+  mask: radial-gradient(farthest-corner at 100% 100%, #000 8%, transparent 62%);
+  opacity: 0.55;
+}
+/* hover: the focus lines reach further in */
+.gate-speed {
+  left: 64%;
+  top: 41%;
+  width: 230%;
+  height: auto;
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  fill: var(--g-ink);
+  opacity: 0.85;
+  transform: scale(calc(1 - 0.2 * var(--g-on)));
+  transition: transform 500ms var(--ease);
+}
+.gate-char img[src*="frieren"] {
+  right: 9%;
+  top: 10%;
+  height: 60%;
+  width: auto;
+  border: 3px solid var(--g-ink);
+  box-shadow: 6px 6px 0 var(--g-ink);
+  transform: rotate(7deg);
+}
+.gate-sfx {
+  left: 5%;
+  top: 17%;
+  width: 34%;
+  height: auto;
+  overflow: visible;
+  transform: rotate(-9deg);
+}
+.gate-sfx text { font: 400 96px "Dela Gothic One", sans-serif; stroke-linejoin: round; paint-order: stroke; }
+.gate-sfx-out { fill: var(--g-ink); stroke: var(--g-ink); stroke-width: 26px; }
+.gate-sfx-rim { fill: #fff; stroke: #fff; stroke-width: 13px; }
+.gate-sfx-ink { fill: var(--g-blue); }
+/* lettered over the focus lines with a paper rim, as on a page */
+.gate[data-gate="anime"] .gate-name { font: 400 13.5cqw/1 "Dela Gothic One", sans-serif; -webkit-text-stroke: 1.8cqw var(--g-ground); paint-order: stroke fill; }
+.gate[data-gate="anime"] .gate-kind { -webkit-text-stroke: 5px var(--g-ground); paint-order: stroke fill; }
+
+/* ═════════ BTS: the house before the show, three beams, seven points of light ═════════ */
+.gate[data-gate="bts"] {
+  --g-r: 22px;
+  --g-truss-y: 15%;
+  --g-ground: #140a24;
+  --g-sky: #2e1259;
+  --g-floor: #1d0c3a;
+  --g-floor-2: #08030f;
+  --g-truss: #3d2a66;
+  --g-beam: rgb(218 196 255 / 0.36);
+  --g-light: #a77bff;
+  --g-core: #f6efff;
+  --g-ink: #c9a7ff;
+  --g-kind: #bba8db;
+}
+html[data-mode="day"] .gate[data-gate="bts"] {
+  --g-ground: #f1eaff;
+  --g-sky: #d9cbfa;
+  --g-floor: #d6c6f6;
+  --g-floor-2: #b9a2ea;
+  --g-truss: #4a2f82;
+  --g-beam: rgb(255 255 255 / 0.7);
+  --g-light: #7c3aed;
+  --g-core: #ffffff;
+  --g-ink: #5a2bb8;
+  --g-kind: #4b3a6d;
+}
+.gate[data-gate="bts"] .gate-frame::after {
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--g-ink) 22%, transparent);
+}
+.gate[data-gate="bts"] .gate-ground {
+  background: radial-gradient(80% 46% at 50% 12%, var(--g-sky), transparent 72%), var(--g-ground);
+}
+.gate-floor {
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 44%;
+  background: linear-gradient(transparent, var(--g-floor) 38%, var(--g-floor-2));
+}
+.gate-truss {
+  left: -8%;
+  right: -8%;
+  top: var(--g-truss-y);
+  height: 3.4cqw;
+  border-block: 1px solid var(--g-truss);
+  background: repeating-linear-gradient(60deg, transparent 0 6px, var(--g-truss) 6px 7px);
+}
+/* the three fixtures the beams hang from */
+.gate-truss::after {
+  content: "";
+  position: absolute;
+  inset: 100% 0 auto;
+  height: 2.4cqw;
+  background:
+    radial-gradient(circle at 25.9% 40%, var(--g-core) 0.5cqw, var(--g-truss) 0.6cqw 1cqw, transparent 1.1cqw),
+    radial-gradient(circle at 50% 40%, var(--g-core) 0.5cqw, var(--g-truss) 0.6cqw 1cqw, transparent 1.1cqw),
+    radial-gradient(circle at 74.1% 40%, var(--g-core) 0.5cqw, var(--g-truss) 0.6cqw 1cqw, transparent 1.1cqw);
+}
+/* blurred after the cone is cut, so its edges stay soft */
+.gate-beam {
+  top: calc(var(--g-truss-y) + 4.4cqw);
+  height: 56%;
+  width: 40%;
+  filter: blur(5px);
+  transform-origin: 50% 0;
+  opacity: calc(0.6 + 0.12 * var(--g-on));
+  transition: opacity var(--dur-short) var(--ease);
+}
+.gate-beam::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(var(--g-beam), transparent 80%);
+  clip-path: polygon(48.5% 0, 51.5% 0, 86% 100%, 14% 100%);
+}
+.gate-beam[data-b="0"] { left: 2%; transform: rotate(-11deg); }
+.gate-beam[data-b="1"] { left: 30%; }
+.gate-beam[data-b="2"] { left: 58%; transform: rotate(11deg); }
+/* hover: a slow haze rolls across the house */
+.gate-haze {
+  inset: 24% -30% 12%;
+  background: radial-gradient(38% 48% at 50% 50%, color-mix(in oklab, var(--g-light) 24%, transparent), transparent 72%);
+  opacity: var(--g-on);
+  transition: opacity 700ms var(--ease);
+  animation: gate-haze 13.7s var(--ease-io) infinite alternate;
+  animation-play-state: var(--g-play);
+}
+@keyframes gate-haze {
+  from { transform: translateX(-14%); }
+  to { transform: translateX(14%); }
+}
+.gate-lights {
+  left: 15%;
+  right: 15%;
+  top: 59%;
+  display: flex;
+  justify-content: space-between;
+}
+.gate-lights i {
+  position: relative;
+  width: 2.5cqw;
+  height: 2.5cqw;
+  border-radius: 50%;
+  background: var(--g-core);
+  box-shadow:
+    0 0 1.4cqw 0.4cqw var(--g-light),
+    0 0 5cqw 1.6cqw color-mix(in oklab, var(--g-light) 40%, transparent);
+  opacity: calc(0.5 + 0.5 * var(--g-on));
+  /* on hover they come up one by one, left to right; they dim together */
+  transition: opacity 420ms var(--ease) calc(var(--i) * 70ms * var(--g-on));
+}
+.gate-lights i::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 220%;
+  width: 1px;
+  height: 7cqw;
+  background: linear-gradient(var(--g-light), transparent);
+  opacity: 0.5;
+}
+.gate[data-gate="bts"] .gate-name { font: 800 14.5cqw/1 "Unbounded", system-ui, sans-serif; letter-spacing: -0.02em; }
+
+/* ── phones: landscape cards, the character on the right ── */
+@media (max-width: 639px) {
+  .gate-char img[src*="furina"] { right: -17%; top: -4%; bottom: auto; height: 170%; }
+  .gate-astro { width: 84%; left: 72%; top: 40%; }
+  .gate-stripe { left: 70%; }
+  .gate-char img[src*="sova"] { left: 24%; top: 6%; height: 160%; }
+  .gate-panel { left: 62%; }
+  .gate-brk[data-c="tl"], .gate-brk[data-c="bl"] { left: 56%; }
+  .gate-char img[src*="frieren"] { top: 12%; height: 72%; right: 7%; }
+  .gate-speed { left: 74%; width: 170%; }
+  .gate-sfx { left: 34%; top: 12%; width: 22%; }
+  .gate[data-gate="bts"] { --g-truss-y: 22%; }
+  .gate-lights { top: 58%; left: 46%; right: 6%; }
+  .gate-beam { height: 70%; width: 26%; }
+  .gate-beam[data-b="0"] { left: 40%; }
+  .gate-beam[data-b="1"] { left: 58%; }
+  .gate-beam[data-b="2"] { left: 76%; }
+  .gate[data-gate="teyvat"] .gate-name { font-size: 12cqw; }
+  .gate[data-gate="valorant"] .gate-name { font-size: 12cqw; }
+  .gate[data-gate="anime"] .gate-name { font-size: 9.5cqw; }
+  .gate[data-gate="bts"] .gate-name { font-size: 10cqw; }
+  .gate-frame > .gate-title { padding: 6cqw; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gate-frame > .gate-ground,
+  .gate-frame > .gate-char,
+  .gate-speed { transform: none; }
+  .gate-slash, .gate-leaf, .gate-scan, .gate-haze { display: none; }
+}
+
+/* ── the portal (lib/portal.ts): a wash in the card's ground grows to the viewport ── */
+.portal {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  overflow: hidden;
+  pointer-events: none;
+  background: var(--w);
+}
+.portal > i { position: absolute; }
+.portal[data-gate="teyvat"] { --w: #08403f; }
+html[data-mode="day"] .portal[data-gate="teyvat"] { --w: #eaf5f0; }
+.portal[data-gate="teyvat"] > i {
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1px;
+  background: #f2b94a;
+  box-shadow: 0 0 12px #f2b94a;
+  animation: portal-draw var(--dur-portal-in) var(--ease) both;
+}
+@keyframes portal-draw {
+  from { transform: scaleX(0); }
+}
+/* Valorant: the card's red, then a black slash wipes it into the world's ground */
+.portal[data-gate="valorant"] { --w: #ff4655; --w2: #0b0b0d; }
+html[data-mode="day"] .portal[data-gate="valorant"] { --w2: #ece8e1; }
+.portal[data-gate="valorant"] > i {
+  top: -20%;
+  bottom: -20%;
+  left: -30vw;
+  width: 160vw;
+  background: var(--w2);
+  box-shadow: 4px 0 0 #f4f2f0;
+  transform: translateX(-140vw) skewX(-12deg);
+  animation: portal-slash var(--dur-portal-in) var(--ease-in) both;
+}
+@keyframes portal-slash {
+  to { transform: translateX(0) skewX(-12deg); }
+}
+@property --dot {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+.portal[data-gate="anime"] { --w: #f4f1ea; }
+html[data-mode="day"] .portal[data-gate="anime"] { --w: #fdfcfa; }
+.portal[data-gate="anime"] > i {
+  inset: 0;
+  background: radial-gradient(circle, #0b0a0d var(--dot), transparent calc(var(--dot) + 0.75px)) 50% 50% / 14px 14px;
+  animation: portal-dots var(--dur-portal-in) var(--ease-in) both;
+}
+@keyframes portal-dots {
+  to { --dot: 6px; }
+}
+.portal[data-gate="bts"] { --w: #140a24; }
+html[data-mode="day"] .portal[data-gate="bts"] { --w: #f1eaff; }
+.portal[data-gate="bts"] > i {
+  inset: 0;
+  background: radial-gradient(60% 50% at 50% 0%, rgb(167 123 255 / 0.4), transparent 72%);
+  animation: portal-glow var(--dur-portal-in) var(--ease-io) both;
+}
+@keyframes portal-glow {
+  from { opacity: 0; }
+}
+/* the world the portal moved focus to (keyboard activation) */
+[data-portal-target]:focus { outline: none; }

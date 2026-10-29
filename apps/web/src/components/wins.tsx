@@ -1,6 +1,10 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+
+import { DepthStage, useDepthLayer } from "@/components/depth-stage";
+import { Seam } from "@/components/seam";
+import { art, halfSet, SEAM_ART, TROPHY_LAYERS } from "@/lib/art";
+import type { StageSpec } from "@/lib/depth/types";
 import { CITY_XY, INDIA_PATH, INDIA_VIEW } from "@/lib/india";
-import { art, avif, halfSet } from "@/lib/art";
 import { HOSTED, WINS } from "@/lib/site-data";
 
 const CITIES = Object.keys(CITY_XY);
@@ -21,6 +25,9 @@ const LABEL: Record<string, [number, number, "start" | "end"]> = {
 
 const cityOf = (venue: string) => CITIES.find((c) => venue.includes(c)) ?? "";
 
+/** Pins pop in the order the cities were first won in (WINS runs newest first), then the organised-only ones. */
+const POP = [...new Set([...[...WINS].reverse(), ...HOSTED].map((w) => cityOf(w.venue)))];
+
 // Degrees → map units, matching scripts that generated lib/india.ts.
 const K = 20;
 const COS = Math.cos((22 * Math.PI) / 180);
@@ -40,17 +47,13 @@ function arc([x1, y1]: [number, number], [x2, y2]: [number, number]) {
 
 type Counts = Record<string, { won: number; hosted: number }>;
 
-function IndiaMap({ active, counts, onCity }: { active: string; counts: Counts; onCity: (c: string) => void }) {
-  const ref = useRef<SVGSVGElement>(null);
-  const [drawn, setDrawn] = useState(false);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const io = new IntersectionObserver(([e]) => e.isIntersecting && setDrawn(true), { threshold: 0.3 });
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
+interface MapProps {
+  active: string;
+  counts: Counts;
+  onCity: (c: string) => void;
+}
 
+function IndiaMap({ active, counts, onCity, drawn }: MapProps & { drawn: boolean }) {
   const { w, h } = INDIA_VIEW;
   const home = CITY_XY[HOME];
   const routes = CITIES.filter((c) => c !== HOME);
@@ -60,7 +63,6 @@ function IndiaMap({ active, counts, onCity }: { active: string; counts: Counts; 
 
   return (
     <svg
-      ref={ref}
       viewBox={`-30 -20 ${w + 60} ${h + 50}`}
       role="img"
       aria-label="Map of India marking the cities where ani won or organised hackathons"
@@ -84,6 +86,10 @@ function IndiaMap({ active, counts, onCity }: { active: string; counts: Counts; 
         <radialGradient id="wm-fade" cx={home[0] / w} cy={home[1] / h} r="0.75">
           <stop offset="0" stopColor="#fff" stopOpacity="1" />
           <stop offset="1" stopColor="#fff" stopOpacity="0.15" />
+        </radialGradient>
+        <radialGradient id="ws-pin-glow">
+          <stop offset="0.3" stopColor="#ff2e88" stopOpacity="0.5" />
+          <stop offset="1" stopColor="#ff2e88" stopOpacity="0" />
         </radialGradient>
         <radialGradient id="ws-heat" cx="0.5" cy="0.5" r="0.5">
           <stop offset="0" stopColor="#ff2e88" stopOpacity="0.55" />
@@ -156,7 +162,7 @@ function IndiaMap({ active, counts, onCity }: { active: string; counts: Counts; 
           const d = arc(home, CITY_XY[c]);
           const on = active === c;
           return (
-            <g key={c} style={{ "--i": i } as React.CSSProperties}>
+            <g key={c} style={{ "--i": i } as CSSProperties}>
               <path d={d} className="ws-route-under" />
               <path
                 d={d}
@@ -185,22 +191,27 @@ function IndiaMap({ active, counts, onCity }: { active: string; counts: Counts; 
             key={c}
             className={`wm-city ${on ? "is-on" : ""}`}
             transform={`translate(${x} ${y})`}
+            style={{ "--pop": `${400 + POP.indexOf(c) * 90}ms` } as CSSProperties}
             onMouseEnter={() => onCity(c)}
             onMouseLeave={() => onCity("")}
+            onClick={() => onCity(c)}
           >
-            <circle r={r + 12} className="ws-hit" />
-            <circle r={r + 7} className="wm-halo" />
-            <circle r={r + 2.2} className="ws-pin-ring" />
-            <circle r={r} className="wm-pin" />
-            <circle r={r * 0.38} cx={-r * 0.28} cy={-r * 0.3} className="ws-pin-shine" />
-            {n.hosted > 0 && <circle r={r + 5} className="wm-hosted" />}
-            {c === HOME && (
-              <path
-                d="M0 -15 L3.2 -4.4 L14.3 -4.6 L5.2 1.8 L8.8 12.1 L0 5.6 L-8.8 12.1 L-5.2 1.8 L-14.3 -4.6 L-3.2 -4.4 Z"
-                className="wm-home"
-                transform="scale(0.62)"
-              />
-            )}
+            <g className="ws-pop">
+              <circle r={r + 12} className="ws-hit" />
+              <circle r={r + 13} className="ws-pin-glow" fill="url(#ws-pin-glow)" />
+              <circle r={r + 7} className="wm-halo" />
+              <circle r={r + 2.2} className="ws-pin-ring" />
+              <circle r={r} className="wm-pin" />
+              <circle r={r * 0.38} cx={-r * 0.28} cy={-r * 0.3} className="ws-pin-shine" />
+              {n.hosted > 0 && <circle r={r + 5} className="wm-hosted" />}
+              {c === HOME && (
+                <path
+                  d="M0 -15 L3.2 -4.4 L14.3 -4.6 L5.2 1.8 L8.8 12.1 L0 5.6 L-8.8 12.1 L-5.2 1.8 L-14.3 -4.6 L-3.2 -4.4 Z"
+                  className="wm-home"
+                  transform="scale(0.62)"
+                />
+              )}
+            </g>
             <text x={lx * (r + 8)} y={4 + ly * 12} textAnchor={anchor} className="wm-label">
               {c}
               {n.won > 0 && <tspan className="wm-count">{` ${n.won}`}</tspan>}
@@ -301,39 +312,127 @@ function Medal({ tier }: { tier: Tier }) {
   );
 }
 
-/** Confetti and four-point glints floating around the trophy. */
-function Glints() {
+/** Four-point glints around the trophy, as HTML so each twinkle stays on the compositor. */
+const GLINTS = [
+  [10, 12, 1.2],
+  [85, 6, 0.8],
+  [80, 64, 1],
+  [5, 60, 0.7],
+  [75, 84, 0.9],
+] as const;
+
+/**
+ * Ambient (PLAN §5.3): ten flakes of confetti and ribbon let go from the
+ * trophy and fall past her for 30 to 60 s each. [x %, y % of her box, s, delay s, kind]
+ */
+const FLUTTER = [
+  [70, 6, 41, -3, "pink"],
+  [76, 9, 53, -17, "gold"],
+  [66, 4, 37, -29, "ribbon"],
+  [72, 7, 59, -41, "ink"],
+  [79, 5, 46, -8, "pink"],
+  [68, 10, 33, -21, "gold"],
+  [74, 3, 57, -50, "blush"],
+  [64, 8, 44, -34, "ribbon"],
+  [77, 11, 39, -12, "gold"],
+  [71, 2, 50, -26, "pink"],
+] as const;
+
+const STAGE: StageSpec = { id: "wins", plates: [] };
+const [GIRL, CONFETTI] = TROPHY_LAYERS;
+
+function Cutout({ layer, className }: { layer: (typeof TROPHY_LAYERS)[number]; className?: string }) {
+  const [w, h] = layer.size;
   return (
-    <svg className="ws-glints" viewBox="0 0 400 500" aria-hidden="true" preserveAspectRatio="none">
-      {[
-        [40, 60, 1.2],
-        [340, 30, 0.8],
-        [370, 210, 1],
-        [20, 300, 0.7],
-        [300, 420, 0.9],
-      ].map(([x, y, s], i) => (
-        <path
-          key={i}
-          className="ws-glint"
-          style={{ "--i": i } as React.CSSProperties}
-          transform={`translate(${x} ${y}) scale(${s})`}
-          d="M0 -16 C1.6 -5 5 -1.6 16 0 C5 1.6 1.6 5 0 16 C-1.6 5 -5 1.6 -16 0 C-5 -1.6 -1.6 -5 0 -16 Z"
-        />
-      ))}
-      {[
-        [80, 140, 20, "#ff2e88"],
-        [310, 120, -30, "#f3c98b"],
-        [360, 330, 50, "#2a0b19"],
-        [60, 420, -15, "#f3c98b"],
-        [200, 30, 70, "#ff2e88"],
-      ].map(([x, y, r, c], i) => (
-        <rect key={i} x={x as number} y={y as number} width="9" height="5" rx="1" fill={c as string} transform={`rotate(${r} ${x} ${y})`} />
-      ))}
-    </svg>
+    <img
+      className={className}
+      src={art(layer.art)}
+      srcSet={halfSet(art(layer.art), w, art(layer.half), layer.halfSize[0])}
+      sizes="auto, 100vw"
+      width={w}
+      height={h}
+      alt=""
+      loading="lazy"
+      decoding="async"
+      onError={(e) => e.currentTarget.setAttribute("data-broken", "")}
+    />
+  );
+}
+
+/**
+ * The trophy stage on the site camera (PLAN §7 H2): numeral 16, map paper
+ * 14, girl 12.5, glints 10, the free confetti 7, and the numeral's outline
+ * over her at the numeral's own depth. The
+ * girl and her confetti are one painting split in two, so at rest they are
+ * exactly the original.
+ */
+function Trophy(props: MapProps) {
+  const numeral = useRef<HTMLDivElement>(null);
+  const map = useRef<HTMLDivElement>(null);
+  const girl = useRef<HTMLDivElement>(null);
+  const ghost = useRef<HTMLDivElement>(null);
+  const glints = useRef<HTMLDivElement>(null);
+  const confetti = useRef<HTMLDivElement>(null);
+  useDepthLayer(numeral, 16);
+  useDepthLayer(map, 14);
+  useDepthLayer(girl, GIRL.distance);
+  // the ghost is the numeral seen through her, so it stays registered with it
+  useDepthLayer(ghost, 16);
+  useDepthLayer(glints, 10);
+  useDepthLayer(confetti, CONFETTI.distance);
+
+  const [drawn, setDrawn] = useState(false);
+  useEffect(() => {
+    const el = map.current;
+    if (!el) return;
+    const io = new IntersectionObserver(([e]) => e.isIntersecting && setDrawn(true), { threshold: 0.3 });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+  const on = drawn ? "" : undefined;
+
+  return (
+    <>
+      <div ref={numeral} className="ws-numeral" data-drawn={on} aria-hidden="true">
+        <span>{WINS.length}</span>
+      </div>
+      <div ref={map} className="ws-map-wrap">
+        <IndiaMap {...props} drawn={drawn} />
+      </div>
+      <div ref={glints} className="ws-glints" aria-hidden="true">
+        {GLINTS.map(([x, y, s], i) => (
+          <span key={i} style={{ left: `${x}%`, top: `${y}%`, "--s": s, "--i": i } as CSSProperties}>
+            <svg viewBox="-16 -16 32 32">
+              <path d="M0 -16 C1.6 -5 5 -1.6 16 0 C5 1.6 1.6 5 0 16 C-1.6 5 -5 1.6 -16 0 C-5 -1.6 -1.6 -5 0 -16 Z" />
+            </svg>
+          </span>
+        ))}
+      </div>
+      <div ref={girl} className="ws-girl">
+        <Cutout layer={GIRL} />
+      </div>
+      <div ref={ghost} className="ws-numeral ws-numeral-ghost" data-drawn={on} aria-hidden="true">
+        <span>{WINS.length}</span>
+      </div>
+      <div ref={confetti} className="ws-girl ws-confetti">
+        <Cutout layer={CONFETTI} />
+        {FLUTTER.map(([x, y, t, d, kind], i) => (
+          <i
+            key={i}
+            className="ws-flake"
+            data-kind={kind}
+            style={{ left: `${x}%`, top: `${y}%`, "--t": `${t}s`, "--d": `${d}s`, "--i": i } as CSSProperties}
+          >
+            <b />
+          </i>
+        ))}
+      </div>
+    </>
   );
 }
 
 export function Wins() {
+  const root = useRef<HTMLElement>(null);
   const [active, setActive] = useState("");
   const counts = useMemo(() => {
     const out: Counts = {};
@@ -357,6 +456,7 @@ export function Wins() {
         <button
           type="button"
           onMouseEnter={() => setActive(city)}
+          onClick={() => setActive(city)}
           onFocus={() => setActive(city)}
           onMouseLeave={() => setActive("")}
           onBlur={() => setActive("")}
@@ -380,75 +480,57 @@ export function Wins() {
   };
 
   return (
-    <section id="hackathons" className="ws" aria-labelledby="wins-title">
-      <div className="ws-bg" aria-hidden="true" />
+    <>
+      <Seam kind="cloud-rise" from="var(--bg)" to="var(--blush)" art={SEAM_ART["cloud-rise"]} />
+      <section id="hackathons" ref={root} className="ws" aria-labelledby="wins-title">
+        <div className="ws-bg" aria-hidden="true" />
 
-      <header className="ws-head">
-        <h2 id="wins-title" className="t-head ws-title" data-reveal>
-          Thirteen hackathon wins
-        </h2>
-        <div className="ws-intro" data-reveal style={{ "--d": "80ms" } as React.CSSProperties}>
-          <p>Nine cities and a lot of train rides. Hover a win to see where it happened.</p>
-          <dl className="ws-stats">
-            <div>
-              <dt>cities</dt>
-              <dd>{cityCount}</dd>
-            </div>
-            <div>
-              <dt>organised</dt>
-              <dd>{HOSTED.length}</dd>
-            </div>
-            <div>
-              <dt>first flight</dt>
-              <dd>1</dd>
-            </div>
-          </dl>
-        </div>
-      </header>
-
-      <div className="ws-body">
-        <div className="ws-stage-col">
-          <div className="ws-stage" data-reveal style={{ "--d": "120ms" } as React.CSSProperties}>
-            <span className="ws-numeral" aria-hidden="true">
-              {WINS.length}
-            </span>
-            <div className="ws-map-wrap">
-              <IndiaMap active={active} counts={counts} onCity={setActive} />
-            </div>
-            <Glints />
-            <img
-              className="ws-girl"
-              src={art("/site/scenes/trophy-cutout")}
-              srcSet={
-                avif()
-                  ? halfSet("/site/scenes/trophy-cutout.avif", 1122, "/site/scenes/trophy-cutout-600.avif", 600)
-                  : undefined
-              }
-              sizes={avif() ? "auto, 100vw" : undefined}
-              width={1122}
-              height={1402}
-              alt=""
-              loading="lazy"
-              decoding="async"
-              onError={(e) => e.currentTarget.setAttribute("data-broken", "")}
-            />
-            <span className="ws-numeral ws-numeral-ghost" aria-hidden="true">
-              {WINS.length}
-            </span>
+        <header className="ws-head">
+          <h2 id="wins-title" className="t-head ws-title" data-reveal>
+            Thirteen hackathon wins
+          </h2>
+          <div className="ws-intro" data-reveal style={{ "--d": "80ms" } as CSSProperties}>
+            <p>
+              Nine cities and a lot of train rides. <span className="ws-hover-copy">Hover a win to see where it happened.</span>
+              <span className="ws-touch-copy">Tap a win to see where it happened.</span>
+            </p>
+            <dl className="ws-stats">
+              <div>
+                <dt>cities</dt>
+                <dd>{cityCount}</dd>
+              </div>
+              <div>
+                <dt>organised</dt>
+                <dd>{HOSTED.length}</dd>
+              </div>
+              <div>
+                <dt>first flight</dt>
+                <dd>1</dd>
+              </div>
+            </dl>
           </div>
-          <p className="ws-legend">
-            <span>Dot size is wins per city; the dashed ring marks a hackathon I organised.</span> Map: Natural Earth.
-          </p>
-        </div>
+        </header>
 
-        <div className="ws-list">
-          <ol data-reveal style={{ "--d": "140ms" } as React.CSSProperties}>
-            {WINS.map((w) => row(w))}
-          </ol>
-          <h3 className="ws-sub">Organised</h3>
-          <ol>{HOSTED.map((w) => row(w, true))}</ol>
+        <div className="ws-body">
+          <div className="ws-stage-col">
+            <DepthStage spec={STAGE} track={root} className="ws-stage" data-reveal style={{ "--d": "120ms" } as CSSProperties}>
+              <Trophy active={active} counts={counts} onCity={setActive} />
+            </DepthStage>
+            <p className="ws-legend">
+              <span>Dot size is wins per city; the dashed ring marks a hackathon I organised.</span> Map: Natural Earth.
+            </p>
+          </div>
+
+          <div className="ws-list">
+            <ol data-reveal style={{ "--d": "140ms" } as CSSProperties}>
+              {WINS.map((w) => row(w))}
+            </ol>
+            <h3 className="ws-sub">Organised</h3>
+            <ol>{HOSTED.map((w) => row(w, true))}</ol>
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
+      <Seam kind="cloud-fall" from="var(--blush)" to="var(--bg)" art={SEAM_ART["cloud-fall"]} />
+    </>
   );
 }

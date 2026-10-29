@@ -3,13 +3,23 @@
  * The original .wm-* map rules live in site.css; overrides sit here.
  * ──────────────────────────────────────────────────────────────────── */
 
-/* ═════════════ Hackathons: a trophy scene beside the map ═════════════ */
+/* ═════════════ Hackathons: a trophy scene beside the map ═════════════
+ * Above the cloud sea: the S1 seam rises out of Recent work into this
+ * section's blush and the S2 seam hangs from its bottom into Off the clock
+ * (both rendered beside the section in wins.tsx), so the padding here is
+ * only what the clouds' solid bands don't already give. */
 
 .ws {
+  /* the seams' box height (seam.css): the art's aspect at full width, at least 200px */
+  --seam-rise-h: max(200px, 30vw);
+  --seam-fall-h: max(200px, 26.67vw);
   position: relative;
+  /* over the seams' flat blush bands, so the copy starts where the clouds end */
+  z-index: 3;
   isolation: isolate;
   overflow: clip;
-  padding: clamp(96px, 10vw, 150px) var(--margin) clamp(96px, 9vw, 140px);
+  margin-block: calc(-0.22 * var(--seam-rise-h)) calc(-0.08 * var(--seam-fall-h));
+  padding: 0 var(--margin) clamp(16px, 2vw, 32px);
   background: var(--blush);
   color: var(--blush-ink);
 }
@@ -18,8 +28,22 @@
   inset: 0;
   z-index: -1;
   pointer-events: none;
+  /* flat blush at both edges, where the seams weld on */
+  -webkit-mask: linear-gradient(transparent, #000 240px, #000 calc(100% - 240px), transparent);
+  mask: linear-gradient(transparent, #000 240px, #000 calc(100% - 240px), transparent);
   background:
     radial-gradient(60% 50% at 22% 58%, rgb(255 255 255 / 0.55), transparent 70%),
+    radial-gradient(40% 40% at 90% 8%, rgb(255 46 136 / 0.22), transparent 70%),
+    radial-gradient(circle at 1px 1px, rgb(42 11 25 / 0.08) 1px, transparent 1.4px) 0 0 / 14px 14px;
+}
+/* night (D1 keeps the blush): the lower third deepens to rose, lit from the
+   clouds below; the mask above takes it back to flat blush at the weld */
+html:not([data-mode="day"]) .ws-bg {
+  background:
+    linear-gradient(transparent 62%, rgb(245 144 189 / 0.8) 90%),
+    radial-gradient(55% 24% at 0% 76%, #f590bd, transparent),
+    radial-gradient(50% 22% at 100% 80%, #f590bd, transparent),
+    radial-gradient(60% 50% at 22% 58%, rgb(255 255 255 / 0.45), transparent 70%),
     radial-gradient(40% 40% at 90% 8%, rgb(255 46 136 / 0.22), transparent 70%),
     radial-gradient(circle at 1px 1px, rgb(42 11 25 / 0.08) 1px, transparent 1.4px) 0 0 / 14px 14px;
 }
@@ -32,8 +56,13 @@
 @media (min-width: 1024px) {
   .ws-head { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); }
 }
-.ws-title { max-width: 11ch; text-wrap: balance; }
+.ws-title { max-width: 10.4em; text-wrap: balance; }
 .ws-intro p { max-width: 40ch; }
+.ws-touch-copy { display: none; }
+@media (hover: none) {
+  .ws-hover-copy { display: none; }
+  .ws-touch-copy { display: inline; }
+}
 .ws-stats {
   display: flex;
   flex-wrap: wrap;
@@ -66,7 +95,9 @@
   .ws-stage-col { position: sticky; top: 24px; }
 }
 
-/* ── the stage: numeral, map, mascot, glints ── */
+/* ── the stage: numeral, map, mascot, glints, confetti ──
+ * Each child is a depth layer (wins.tsx Trophy): their own motion goes
+ * through `transform` on an inner element, never translate/scale. */
 .ws-stage {
   position: relative;
   aspect-ratio: 10 / 9;
@@ -89,7 +120,10 @@
   text-shadow: 0.8cqw 1.1cqw 0 var(--blush-ink);
   pointer-events: none;
   user-select: none;
+  /* clipped along its foot only: the entrance rises out of it */
+  clip-path: inset(-50% -50% 0 -50%);
 }
+.ws-numeral > span { display: block; }
 .ws-numeral-ghost {
   z-index: 4;
   color: transparent;
@@ -98,7 +132,7 @@
 }
 .ws-map-wrap {
   position: absolute;
-  right: -1%;
+  right: -2.5%;
   top: 9%;
   width: 66%;
   z-index: 1;
@@ -111,21 +145,66 @@
   height: 80%;
   z-index: 2;
   pointer-events: none;
-  overflow: visible;
 }
-.ws-glint { fill: #fff; stroke: var(--pink); stroke-width: 2; stroke-linejoin: round; transform-box: fill-box; transform-origin: center; }
+.ws-glints > span {
+  position: absolute;
+  width: calc(7cqw * var(--s));
+  aspect-ratio: 1;
+  margin: calc(-3.5cqw * var(--s)) 0 0 calc(-3.5cqw * var(--s));
+}
+.ws-glints svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  fill: #fff;
+  stroke: var(--pink);
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+/* night: the glints glow (D1) */
+html:not([data-mode="day"]) .ws-glints svg { filter: drop-shadow(0 0 6px rgb(255 46 136 / 0.6)); }
+
+/* her and her free-floating confetti: one painting in two layers, the same box */
 .ws-girl {
   position: absolute;
   left: -7%;
   bottom: -3%;
   z-index: 3;
   height: 76%;
-  width: auto;
+  aspect-ratio: 1122 / 1402;
   pointer-events: none;
   user-select: none;
+}
+.ws-girl > img {
+  display: block;
+  width: 100%;
+  height: 100%;
   filter: drop-shadow(0 24px 30px rgb(42 11 25 / 0.28));
 }
-.ws-girl[data-broken] { display: none; }
+.ws-girl > img[data-broken] { display: none; }
+.ws-confetti { z-index: 5; }
+
+/* ambient confetti (PLAN §5.3): ten flakes fall from the trophy, 30–60 s each */
+.ws-flake {
+  --fall: 58cqw;
+  position: absolute;
+  width: 1.2cqw;
+  height: 0.7cqw;
+  opacity: 0;
+}
+.ws-flake > b {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 1px;
+  background: var(--c);
+}
+.ws-flake[data-kind="pink"] { --c: #ff2e88; }
+.ws-flake[data-kind="gold"] { --c: linear-gradient(120deg, #fff0c9, #f3c98b 45%, #a86a1c); }
+.ws-flake[data-kind="ink"] { --c: #2a0b19; width: 0.9cqw; }
+.ws-flake[data-kind="blush"] { --c: #ffd3e6; }
+.ws-flake[data-kind="ribbon"] { --c: linear-gradient(#ff6fae, #d81b6c); width: 0.5cqw; height: 2.6cqw; }
 .ws-legend {
   margin-top: 18px;
   max-width: 54ch;
@@ -138,10 +217,11 @@
   .ws-map-wrap { width: 104%; right: -2%; top: auto; bottom: 0; }
   .ws-girl { left: auto; right: -8%; top: -2%; bottom: auto; height: 50%; }
   .ws-glints { left: auto; right: 0; top: 0; width: 50%; height: 50%; }
+  .ws-flake { --fall: 36cqw; }
   .ws-numeral { font-size: 36cqw; }
   .ws-map .wm-label { font-size: 21px; stroke-width: 6px; }
   .ws-map .wm-grid text, .ws-map .wm-scale text, .ws-tropic, .ws-sea { font-size: 18px; }
-  .ws-compass { display: none; }
+  .ws-compass, .ws-tropic { display: none; }
 }
 
 /* ── map polish over site.css ── */
@@ -168,6 +248,9 @@
 .ws-map .wm-label { stroke: #fff6fa; stroke-width: 5px; }
 .ws-map .wm-city { transition: transform 300ms var(--ease); }
 .ws-map .wm-city.is-on .wm-pin { fill: var(--pink); }
+.ws-pin-glow { display: none; pointer-events: none; }
+/* night: every pin sits in a soft pink halo (D1) */
+html:not([data-mode="day"]) .ws-pin-glow { display: inline; }
 .ws-compass-ring { fill: rgb(255 255 255 / 0.6); stroke: var(--blush-ink); stroke-width: 1.2; }
 .ws-compass-ring-in { fill: none; stroke-dasharray: 1.5 2.5; }
 .ws-compass-dark { fill: var(--blush-ink); }
@@ -176,6 +259,13 @@
 
 /* ── rows ── */
 .ws-list ol { display: grid; gap: 2px; }
+/* the prize pills keep clear of the corner the mode dock rests in (about 86px wide at the right margin) */
+@media (min-width: 640px) and (max-width: 1023px) {
+  .ws-list { padding-right: 92px; }
+}
+@media (min-width: 1024px) {
+  .ws-head, .ws-body { padding-right: 92px; }
+}
 .ws-row {
   display: grid;
   grid-template-columns: 34px minmax(0, 1fr) auto;
@@ -257,23 +347,54 @@
   letter-spacing: -0.02em;
   color: #a3124f;
 }
+@media (max-width: 639px) {
+  .ws-row {
+    grid-template-columns: 34px minmax(0, 1fr);
+    grid-template-areas: "m e" "m b" "m v" "m p";
+  }
+  .ws-prize { justify-self: start; margin-top: 6px; }
+}
 @media (max-width: 767px) {
-  .ws-prize { align-self: start; font-size: 16px; padding: 4px 10px 5px; }
+  .ws-prize { font-size: 16px; padding: 4px 10px 5px; }
   .ws-row { column-gap: 12px; padding: 12px 4px; }
   .wins-row.ws-row:hover, .ws-row[data-on] { padding-inline: 4px; }
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .ws-glint { animation: ws-twinkle 3.6s ease-in-out infinite; animation-delay: calc(var(--i) * -0.7s); }
+  .ws-glints > span { animation: ws-twinkle calc(2.4s + var(--i) * 0.5s) ease-in-out infinite; animation-delay: calc(var(--i) * -0.7s); }
   @keyframes ws-twinkle {
     0%, 100% { transform: scale(0.7) rotate(0deg); opacity: 0.6; }
     50% { transform: scale(1.1) rotate(20deg); opacity: 1; }
   }
-  .ws-girl { animation: ws-float 6s ease-in-out infinite; }
-  @keyframes ws-float {
-    0%, 100% { translate: 0 0; }
-    50% { translate: 0 -10px; }
+
+  /* entrance (H2): the routes draw, the pins pop in the order the cities were
+     won (--pop, from wins.tsx), and the 13 rises out of its foot */
+  .js .ws-numeral > span { transform: translateY(118%); transition: transform 900ms var(--ease); }
+  .js .ws-numeral[data-drawn] > span { transform: none; }
+  .js .ws-map .ws-pop {
+    transform-box: fill-box;
+    transform-origin: center;
+    transform: scale(0);
+    transition: transform 360ms var(--ease-pop) var(--pop);
   }
+  .js .ws-map.is-drawn .ws-pop { transform: none; }
+  .js .ws-map .wm-label { opacity: 0; transition: opacity var(--dur-short) var(--ease) calc(var(--pop) + 120ms); }
+  .js .ws-map.is-drawn .wm-label { opacity: 1; }
+
+  .ws-flake {
+    animation: ws-fall var(--t) linear var(--d) infinite;
+  }
+  .ws-flake > b { animation: ws-flip calc(var(--t) / 12) linear var(--d) infinite; }
+  @keyframes ws-fall {
+    0% { transform: translate(0, 0) rotate(0deg); opacity: 0; }
+    6%, 86% { opacity: var(--peak, 0.8); }
+    50% { transform: translate(-3cqw, calc(var(--fall) * 0.5)) rotate(200deg); }
+    100% { transform: translate(-6cqw, var(--fall)) rotate(380deg); opacity: 0; }
+  }
+  @keyframes ws-flip {
+    to { transform: rotate3d(1, 0.35, 0, 360deg); }
+  }
+  html[data-mode="day"] .ws-flake { --peak: 0.55; }
 }
 @media (prefers-reduced-motion: reduce) {
   .ws-row, .ws-medal { transition: none; }

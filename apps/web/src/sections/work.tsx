@@ -78,9 +78,7 @@ const STAGE: StageSpec = {
     // plate's own painted field, so lifting off it never shows a line
     plate("flowers", { kind: "cutout", range: { far: 9, near: 4.5, flat: 6.5 }, fade: [0, 0, 0.5, 0], z: 2 }),
   ],
-  // no breath until the rig stops changing every layer's `scale` each frame (REQUESTS R6): at rest it
-  // re-layerized the page, six times the cost of the still scene; the petals keep it alive meanwhile
-  camera: { strength: STRENGTH.main, breath: 0 },
+  camera: { strength: STRENGTH.main },
   ambient: [
     { kind: "petals", count: 10, depth: [18, 30], mask: CLEAR },
     { kind: "petals", count: 6, depth: [7, 9], mask: CLEAR },

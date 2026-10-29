@@ -42,8 +42,6 @@ const STAGE: StageSpec = {
       z: 2,
     },
   ],
-  // no idle breath: in the DOM rig its scale term re-layerizes four big layers every frame at rest
-  camera: { breath: 0 },
 };
 
 /** She is the focus plane; the wordmark sits just behind the ridge (the relief's far end, 15), as the name sits behind her in the hero. */

@@ -268,6 +268,7 @@ export function createGL(stage: HTMLElement, spec: StageSpec, runs: Group[], rig
         swap = false;
         s.plates(true);
         stage.setAttribute("data-depth", "");
+        rig.wake();
         state = "live";
         sinceOn = 0;
         slow = 0;
@@ -284,7 +285,8 @@ export function createGL(stage: HTMLElement, spec: StageSpec, runs: Group[], rig
         view.vp[i][1] = v.lens.vy - (docY + b.y - v.y);
       });
       const busy = s.frame(view);
-      if (state === "live") govern();
+      if (v.paced) lastNow = 0;
+      else if (state === "live") govern();
       return busy;
     },
     measure,
@@ -423,6 +425,7 @@ export function createGL(stage: HTMLElement, spec: StageSpec, runs: Group[], rig
     const cvs = canvases;
     const finish = () => {
       stage.removeAttribute("data-depth");
+      rig.wake();
       swap = false;
       s?.dispose();
       for (const c of cvs) c.remove();
@@ -486,6 +489,7 @@ export function createGL(stage: HTMLElement, spec: StageSpec, runs: Group[], rig
       }
       // not uploaded: the <img>s show the new mode now, and the plates take over again once it's up
       stage.removeAttribute("data-depth");
+      rig.wake();
       s.plates(false);
       swap = false;
       state = "loading";

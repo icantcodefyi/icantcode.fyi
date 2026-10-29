@@ -1,35 +1,39 @@
-import type { CSSProperties } from "react";
+import { memo, type CSSProperties } from "react";
 
 /**
  * The stage's HUD: frame brackets, the radar, the range ladder, the hazard
  * plate and the map callout. Everything that loops is an HTML box moved by
- * transform or opacity (compositor only); the SVGs are static line work.
+ * transform or opacity (compositor only); the SVGs are static line work,
+ * memoised so a pick or a cast never re-renders them.
  */
 
-const BRACKETS = ["tl", "tr", "br", "bl"] as const;
+// no top-right bracket: that corner is the mode dock's, with the radar under it
+const BRACKETS = ["tl", "br", "bl"] as const;
 
-export function Brackets() {
+export const Brackets = memo(function Brackets() {
   return (
     <div className="vl-brackets">
       {BRACKETS.map((c) => (
         <svg key={c} className={`vl-bracket vl-bracket-${c}`} width="96" height="96" viewBox="0 0 96 96" shapeRendering="crispEdges">
           <path d="M1 56V13L13 1h43" fill="none" stroke="currentColor" strokeWidth="2" shapeRendering="geometricPrecision" />
-          <path d="M8 40V16L16 8h24" fill="none" stroke="currentColor" strokeOpacity="0.45" strokeWidth="1" shapeRendering="geometricPrecision" />
+          <g className="vl-bracket-in">
+            <path d="M8 40V16L16 8h24" fill="none" stroke="currentColor" strokeOpacity="0.45" strokeWidth="1" shapeRendering="geometricPrecision" />
+            <rect x="20" y="20" width="4" height="4" fill="#ff4655" />
+            <path d="M30 26h7M33.5 22.5v7" stroke="currentColor" strokeOpacity="0.7" strokeWidth="1" />
+          </g>
           {[64, 70, 76, 82, 88].map((x, i) => (
             <rect key={x} x={x} y="0" width="1" height={i === 0 ? 6 : 3} fill="currentColor" fillOpacity={i === 0 ? 0.9 : 0.5} />
           ))}
           {[64, 70, 76, 82, 88].map((y, i) => (
             <rect key={y} x="0" y={y} width={i === 0 ? 6 : 3} height="1" fill="currentColor" fillOpacity={i === 0 ? 0.9 : 0.5} />
           ))}
-          <rect x="20" y="20" width="4" height="4" fill="#ff4655" />
-          <path d="M30 26h7M33.5 22.5v7" stroke="currentColor" strokeOpacity="0.7" strokeWidth="1" />
         </svg>
       ))}
     </div>
   );
-}
+});
 
-export function Divider() {
+export const Divider = memo(function Divider() {
   return (
     <svg className="vl-divider" width="100%" height="14" aria-hidden="true" shapeRendering="crispEdges">
       <rect x="0" y="6" width="100%" height="1" fill="currentColor" fillOpacity="0.18" />
@@ -42,9 +46,9 @@ export function Divider() {
       </svg>
     </svg>
   );
-}
+});
 
-export function Ladder() {
+export const Ladder = memo(function Ladder() {
   const ticks = Array.from({ length: 41 }, (_, i) => i);
   return (
     <svg className="vl-ladder" width="24" height="324" viewBox="0 0 24 324" aria-hidden="true" shapeRendering="crispEdges">
@@ -63,10 +67,10 @@ export function Ladder() {
       <path d="M2 162l6-4v8z" fill="#ff4655" shapeRendering="geometricPrecision" />
     </svg>
   );
-}
+});
 
 /** The hazard plate, bottom left: stripes running inside a slanted plate, and who's locked in above it. */
-export function HazardPlate({ name }: { name: string }) {
+export const HazardPlate = memo(function HazardPlate({ name }: { name: string }) {
   return (
     <div className="vl-plate">
       <p className="vl-plate-text" key={name}>
@@ -85,18 +89,21 @@ export function HazardPlate({ name }: { name: string }) {
       </div>
     </div>
   );
-}
+});
 
-/** The map callout, top left: Ascent, with the scrambled coordinates the game prints for it. */
-export function MapTag() {
+/** The map callout, top left: Ascent, with the scrambled coordinates the game prints for it, character for character. */
+export const MapTag = memo(function MapTag() {
   return (
     <div className="vl-map">
       <span className="vl-map-bar" />
       <p className="vl-map-name">Ascent</p>
-      <p className="vl-map-coords">45°26&apos;BF&apos;N 12°20&apos;Q&apos;E</p>
+      <p className="vl-map-coords">
+        <span>45°26&apos;BF&apos;N,</span>
+        <span>12°20&apos;Q&apos;E</span>
+      </p>
     </div>
   );
-}
+});
 
 const polar = (r: number, deg: number) => {
   const a = ((deg - 90) * Math.PI) / 180;
@@ -128,7 +135,7 @@ const BLIPS = [
 ];
 const SWEEP_S = 4;
 
-export function Radar({ seed }: { seed: number }) {
+export const Radar = memo(function Radar({ seed }: { seed: number }) {
   const blips = BLIPS[seed % BLIPS.length];
   return (
     <div className="vl-radar" aria-hidden="true">
@@ -171,4 +178,4 @@ export function Radar({ seed }: { seed: number }) {
       </svg>
     </div>
   );
-}
+});

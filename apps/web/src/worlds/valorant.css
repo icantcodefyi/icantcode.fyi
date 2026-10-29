@@ -133,6 +133,10 @@ html[data-mode="day"] .vl-rail span { color: rgb(15 25 35 / 0.45); }
   }
   .vl-info .vl-swap > .vl-kit { grid-column: 2; grid-row: 1 / span 3; margin-top: 0; }
 }
+/* tablets: Killjoy's line runs to three lines in the half column, so every line keeps room for three */
+@media (min-width: 640px) and (max-width: 1023px) {
+  .vl-line { min-height: calc(3 * 1.4em); }
+}
 
 /* desktop: left column is one vertically centred stack on a fixed rhythm */
 @media (min-width: 1024px) {
@@ -168,6 +172,9 @@ html[data-mode="day"] .vl-rail span { color: rgb(15 25 35 / 0.45); }
 
 /* ───────── The stage ───────── */
 .vl-stage {
+  /* the corner brackets' inset, and the HUD's, kept clear of their inner marks */
+  --vl-frame: clamp(12px, 2.4vw, 28px);
+  --vl-hud-in: calc(var(--vl-frame) + 40px);
   position: relative;
   overflow: hidden;
   isolation: isolate;
@@ -237,6 +244,7 @@ html[data-mode="day"] .vl-rail span { color: rgb(15 25 35 / 0.45); }
    Right of it, the red field: the painting under Valorant red. */
 .vl-ink,
 .vl-wash,
+.vl-light,
 .vl-key,
 .vl-shade,
 .vl-seam {
@@ -256,7 +264,10 @@ html[data-mode="day"] .vl-rail span { color: rgb(15 25 35 / 0.45); }
   background: var(--vl-wash);
 }
 
-/* the agent's light: where it falls (screen) and where it doesn't (multiply) */
+/* the agent's light: where it falls (screen) and where it doesn't (multiply); the blend sits on
+   the wrapper, so a cast's light can be revealed and concealed at once and still blend with the paint */
+.vl-light-key { mix-blend-mode: screen; }
+.vl-light-shade { mix-blend-mode: multiply; }
 .vl-key {
   background: radial-gradient(
     circle at var(--kx) var(--ky),
@@ -264,7 +275,6 @@ html[data-mode="day"] .vl-rail span { color: rgb(15 25 35 / 0.45); }
     rgb(var(--vl-light) / calc(var(--kg) * 0.38)) calc(var(--kr) * 0.42),
     rgb(var(--vl-light) / 0) var(--kr)
   );
-  mix-blend-mode: screen;
 }
 .vl-flare {
   position: absolute;
@@ -279,7 +289,6 @@ html[data-mode="day"] .vl-rail span { color: rgb(15 25 35 / 0.45); }
   background:
     linear-gradient(var(--sa), rgb(11 11 13 / var(--sd)) 0%, rgb(11 11 13 / 0) 72%),
     radial-gradient(120% 90% at 60% 45%, rgb(11 11 13 / 0) 55%, rgb(11 11 13 / calc(var(--sd) * 0.9)) 100%);
-  mix-blend-mode: multiply;
 }
 
 .vl-seam {
@@ -296,6 +305,12 @@ html[data-mode="day"] .vl-rail span { color: rgb(15 25 35 / 0.45); }
 }
 
 /* ───────── The agent ───────── */
+.vl-pick {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
 .vl-agent {
   position: absolute;
   inset: 0;
@@ -555,19 +570,18 @@ html[data-mode="day"] .vl-rail span { color: rgb(15 25 35 / 0.45); }
 }
 .vl-brackets {
   position: absolute;
-  inset: clamp(12px, 2.4vw, 28px);
+  inset: var(--vl-frame);
   pointer-events: none;
 }
 .vl-bracket { position: absolute; }
 .vl-bracket-tl { top: 0; left: 0; }
-.vl-bracket-tr { top: 0; right: 0; transform: scaleX(-1); }
 .vl-bracket-br { bottom: 0; right: 0; transform: scale(-1, -1); }
 .vl-bracket-bl { bottom: 0; left: 0; transform: scaleY(-1); }
 
 .vl-map {
   position: absolute;
-  left: clamp(40px, 4.6vw, 70px);
-  top: clamp(46px, 5vw, 74px);
+  left: var(--vl-hud-in);
+  top: calc(var(--vl-frame) + 44px);
 }
 .vl-map-bar {
   display: block;
@@ -587,14 +601,15 @@ html[data-mode="day"] .vl-rail span { color: rgb(15 25 35 / 0.45); }
   font-family: ui-monospace, "SF Mono", Menlo, monospace;
   font-size: 11px;
   font-weight: 500;
-  line-height: 1.2;
+  line-height: 1.3;
   letter-spacing: 0.08em;
   opacity: 0.62;
 }
 
+/* the radar starts under the mode dock (fixed, 14px + 48px tall), so the stage's top-right corner is the dock's */
 .vl-radar {
   position: absolute;
-  top: clamp(24px, 4vw, 52px);
+  top: 76px;
   right: clamp(24px, 4vw, 52px);
   width: clamp(104px, 12vw, 176px);
   aspect-ratio: 1;
@@ -650,18 +665,19 @@ html[data-mode="day"] .vl-rail span { color: rgb(15 25 35 / 0.45); }
 }
 .vl-spike { position: absolute; inset: 0; width: 100%; height: 100%; }
 
+/* centred in the band between the radar (76px + its width) and the kill feed's three rows (102px over its inset) */
 .vl-ladder {
   position: absolute;
   right: clamp(24px, 4vw, 52px);
-  top: 50%;
+  top: calc(50% + (clamp(104px, 12vw, 176px) - var(--vl-frame) - 66px) / 2);
   transform: translateY(-50%);
   display: none;
 }
 
 .vl-plate {
   position: absolute;
-  left: clamp(28px, 4.6vw, 60px);
-  bottom: clamp(28px, 4.6vw, 60px);
+  left: var(--vl-hud-in);
+  bottom: var(--vl-hud-in);
   display: grid;
   justify-items: start;
   gap: 8px;
@@ -715,23 +731,21 @@ html[data-mode="day"] .vl-rail span { color: rgb(15 25 35 / 0.45); }
 }
 .vl-plate-dot { width: 6px; height: 6px; background: var(--vl-red); }
 
-/* the feed, bottom right: lock-ins and casts the way the game reports them */
+/* the kill feed, bottom right, in the game's format: [portrait] NAME [ability] > VICTIM, the victim on the enemy's red */
 .vl-feed {
   position: absolute;
-  right: clamp(28px, 4.6vw, 60px);
-  bottom: clamp(28px, 4.6vw, 60px);
+  right: var(--vl-hud-in);
+  bottom: var(--vl-hud-in);
   display: grid;
   justify-items: end;
   gap: 6px;
 }
 .vl-feed-row {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 8px;
   height: 30px;
-  padding: 0 12px 0 10px;
-  background: rgb(11 11 13 / 0.78);
-  box-shadow: inset 3px 0 0 var(--vl-red);
+  background: linear-gradient(90deg, rgb(11 11 13 / 0.9), rgb(11 11 13 / 0.74));
   font-size: 10px;
   font-weight: 600;
   line-height: 1;
@@ -741,45 +755,67 @@ html[data-mode="day"] .vl-rail span { color: rgb(15 25 35 / 0.45); }
   color: var(--vl-ink);
   opacity: 0;
 }
-.vl-feed-row b {
+/* the game's border on your own kills */
+.vl-feed-row::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  box-shadow: inset 0 0 0 1px rgb(244 242 240 / 0.72);
+  pointer-events: none;
+}
+.vl-feed-face { width: 60px; height: 30px; object-fit: cover; }
+.vl-feed-who { padding: 0 10px 0 8px; opacity: 0.72; }
+.vl-feed-gun { width: 18px; height: 18px; margin-right: 10px; }
+.vl-feed-foe {
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  padding: 0 12px 0 18px;
+  background: var(--vl-red);
+  color: #0b0b0d;
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 8px 50%);
   font-family: "Anton", "Impact", sans-serif;
   font-size: 15px;
   font-weight: 400;
   letter-spacing: 0.04em;
 }
-.vl-feed-row img { width: 18px; height: 18px; }
-.vl-feed-who { opacity: 0.62; }
-.vl-feed-key {
-  display: grid;
-  place-items: center;
-  width: 16px;
-  height: 16px;
-  background: var(--vl-red);
-  color: #0b0b0d;
-  letter-spacing: 0;
-}
 
 @media (min-width: 1024px) {
   .vl-ladder { display: block; }
-  /* the mode dock lives in the top-right 64px of the section: the radar starts below it */
-  .vl-radar { top: clamp(54px, 4.4vw, 64px); }
 }
 /* phones: the radar drops under the dock's corner, the plate shrinks into the bottom-left */
 @media (max-width: 639px) {
   .vl-bracket-tl { display: none; }
+  /* the plate and feed sit right in the corners, so only the brackets' outer line stays */
+  .vl-bracket-in { display: none; }
   .vl-map { left: 16px; top: 18px; }
   .vl-map-coords { font-size: 9px; }
-  .vl-radar { top: 64px; right: 14px; width: 84px; }
+  .vl-radar { right: 14px; width: 84px; }
   .vl-plate { left: 14px; bottom: 16px; }
   .vl-plate-bar { width: 128px; height: 20px; }
   .vl-plate { gap: 6px; }
   .vl-plate-text { font-size: 9px; }
   .vl-plate-text b { font-size: 13px; }
   .vl-feed { right: 14px; bottom: 16px; }
-  .vl-feed-row { height: 24px; padding: 0 8px 0 8px; font-size: 9px; }
-  .vl-feed-row b { font-size: 12px; }
-  .vl-feed-row img { width: 14px; height: 14px; }
+  .vl-feed-row { height: 24px; font-size: 9px; letter-spacing: 0.14em; }
+  .vl-feed-face { width: 48px; height: 24px; }
+  .vl-feed-who { padding: 0 7px 0 6px; }
+  .vl-feed-gun { width: 14px; height: 14px; margin-right: 7px; }
+  .vl-feed-foe { padding: 0 8px 0 14px; font-size: 12px; clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 6px 50%); }
   .vl-portrait { left: 56%; height: 140%; top: -2%; }
+}
+/* a narrow stage: the coordinates take two lines so they stay clear of the seam */
+@container (max-width: 720px) {
+  .vl-map-coords span { display: block; }
+}
+/* a short stage has no room for the ladder between the radar and the feed */
+@container (max-height: 760px) {
+  .vl-ladder { visibility: hidden; }
+}
+/* a phone's stage: the feed drops the name (the portrait says who), so a row never reaches the plate */
+@container (max-width: 479px) {
+  .vl-feed-who { display: none; }
+  .vl-feed-face { margin-right: 7px; }
 }
 
 /* ───────── Info: role, name, line and the ability bar ───────── */
@@ -870,21 +906,23 @@ html[data-mode="day"] .vl-rail span { color: rgb(15 25 35 / 0.45); }
   height: 20px;
   background: rgb(244 242 240 / 0.1);
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1;
 }
 .vl-keycap[data-ult] .vl-keycap-face { box-shadow: inset 0 0 0 1px rgb(255 70 85 / 0.5); }
-/* charges: pips under the face, filling one by one when the key is armed */
+/* pips under the face, filling one by one when the key is armed: a bar per charge,
+   and for X a diamond per ultimate point, the way the game's HUD counts them */
 .vl-charge {
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: minmax(0, 1fr);
-  gap: 3px;
-  height: 3px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  height: 4px;
 }
 .vl-charge i {
+  width: 14px;
+  height: 3px;
   background: rgb(244 242 240 / 0.16);
-  transform-origin: left;
 }
 .vl-charge i::after {
   content: "";
@@ -894,6 +932,9 @@ html[data-mode="day"] .vl-rail span { color: rgb(15 25 35 / 0.45); }
   transform: scaleX(0);
   transform-origin: left;
 }
+.vl-keycap[data-ult] .vl-charge { gap: 3px; }
+.vl-keycap[data-ult] .vl-charge i { width: 4px; height: 4px; rotate: 45deg; }
+.vl-keycap[data-ult] .vl-charge i::after { transform: scale(0); transform-origin: center; }
 
 .vl-keycap[aria-selected="true"] .vl-keycap-face { background: var(--vl-red); box-shadow: none; }
 .vl-keycap[aria-selected="true"] .vl-keycap-face img { filter: brightness(0); }
@@ -910,8 +951,9 @@ html[data-mode="day"] .vl-rail span { color: rgb(15 25 35 / 0.45); }
 }
 .vl-readout-head {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
+  gap: 6px 10px;
 }
 .vl-readout-key {
   display: grid;
@@ -920,7 +962,7 @@ html[data-mode="day"] .vl-rail span { color: rgb(15 25 35 / 0.45); }
   height: 22px;
   box-shadow: inset 0 0 0 1px rgb(244 242 240 / 0.5);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1;
 }
 .vl-readout-name { font-size: 26px; line-height: 1; }
@@ -929,16 +971,34 @@ html[data-mode="day"] .vl-rail span { color: rgb(15 25 35 / 0.45); }
   box-shadow: inset 0 0 0 1px var(--vl-red);
   color: var(--vl-red);
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1;
   letter-spacing: 0.18em;
   text-transform: uppercase;
+}
+.vl-readout-tag-quiet { box-shadow: inset 0 0 0 1px rgb(244 242 240 / 0.4); color: rgb(244 242 240 / 0.78); }
+.vl-readout-count {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgb(244 242 240 / 0.6);
 }
 .vl-readout-what {
   margin-top: 8px;
   font-size: 16px;
   line-height: 1.45;
   color: rgb(244 242 240 / 0.7);
+}
+/* phones: the head on a tighter gap; on the narrowest, Hunter's Fury, its tag and its points still share one line */
+@media (max-width: 639px) {
+  .vl-readout-head { column-gap: 8px; }
+  .vl-readout-count { letter-spacing: 0.02em; }
+}
+@media (max-width: 380px) {
+  .vl-readout-name { font-size: 23px; }
 }
 
 /* ───────── Tiles ───────── */
@@ -1037,7 +1097,8 @@ html[data-mode="day"] .vl-rail span { color: rgb(15 25 35 / 0.45); }
   .vl-slash-edge { animation: vl-blade-edge var(--vl-wipe) var(--vl-ease) both; }
   .vl-slash-pass { animation: vl-blade-pass var(--vl-wipe) var(--vl-ease) both; }
   .vl-agent[data-phase="in"] .vl-portrait { animation: vl-settle 820ms var(--vl-snap) both; }
-  .vl-agent[data-phase="out"] .vl-portrait { animation: vl-leave var(--vl-wipe) var(--vl-cut) both; }
+  /* a landed agent drifts off as the next blade takes them; one cut short keeps settling */
+  .vl-pick[data-phase="out"] .vl-agent[data-phase="rest"] .vl-portrait { animation: vl-leave var(--vl-wipe) var(--vl-cut) both; }
   .vl-agent[data-phase="in"] .vl-type img { animation: vl-type 820ms var(--vl-snap) both; }
   .vl-seam-flare { animation: vl-flare 460ms ease-out both; }
 
@@ -1088,7 +1149,6 @@ html[data-mode="day"] .vl-rail span { color: rgb(15 25 35 / 0.45); }
   .vl-js:not(.vl-in) .vl-info,
   .vl-js:not(.vl-in) .vl-tiles { opacity: 0; transform: translateY(24px); }
   .vl-js:not(.vl-in) .vl-bracket-tl { transform: translate(-24px, -24px); opacity: 0; }
-  .vl-js:not(.vl-in) .vl-bracket-tr { transform: scaleX(-1) translate(-24px, -24px); opacity: 0; }
   .vl-js:not(.vl-in) .vl-bracket-br { transform: scale(-1, -1) translate(-24px, -24px); opacity: 0; }
   .vl-js:not(.vl-in) .vl-bracket-bl { transform: scaleY(-1) translate(-24px, -24px); opacity: 0; }
   .vl-js:not(.vl-in) .vl-plate { transform: translateX(-120%); }
@@ -1308,6 +1368,8 @@ html[data-mode="day"] .vl-role { color: #3b4653; }
 html[data-mode="day"] .vl-readout-what { color: #3b4653; }
 html[data-mode="day"] .vl-readout-key { box-shadow: inset 0 0 0 1px rgb(15 25 35 / 0.5); }
 html[data-mode="day"] .vl-readout-tag { color: var(--vl-red-text); box-shadow: inset 0 0 0 1px var(--vl-red-text); }
+html[data-mode="day"] .vl-readout-tag-quiet { color: #3b4653; box-shadow: inset 0 0 0 1px rgb(15 25 35 / 0.4); }
+html[data-mode="day"] .vl-readout-count { color: #3b4653; }
 
 /* hazard tape: red bars on bone, ink kerb line */
 html[data-mode="day"] .vl-hazard {
@@ -1333,9 +1395,10 @@ html[data-mode="day"] .vl-radar .vl-ko { fill-opacity: 0.94; }
 html[data-mode="day"] .vl-plate-ko { background: rgb(247 245 241 / 0.94); }
 html[data-mode="day"] .vl-plate-text { background: rgb(247 245 241 / 0.92); }
 html[data-mode="day"] .vl-plate-chip { fill: var(--vl-ink); }
-html[data-mode="day"] .vl-feed-row { background: rgb(247 245 241 / 0.92); }
-html[data-mode="day"] .vl-feed-row img { filter: brightness(0); }
-html[data-mode="day"] .vl-feed-key { color: var(--vl-ink); }
+html[data-mode="day"] .vl-feed-row { background: linear-gradient(90deg, rgb(247 245 241 / 0.96), rgb(247 245 241 / 0.86)); }
+html[data-mode="day"] .vl-feed-row::after { box-shadow: inset 0 0 0 1px rgb(15 25 35 / 0.7); }
+html[data-mode="day"] .vl-feed-gun { filter: brightness(0); }
+html[data-mode="day"] .vl-feed-foe { color: var(--vl-ink); }
 html[data-mode="day"] .vl-flare { mix-blend-mode: soft-light; }
 
 /* agent tiles */

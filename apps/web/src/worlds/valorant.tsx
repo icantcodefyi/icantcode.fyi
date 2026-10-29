@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type AnimationEvent, type CSSProperties, type KeyboardEvent } from "react";
+import { memo, useCallback, useEffect, useRef, useState, type AnimationEvent, type CSSProperties, type KeyboardEvent } from "react";
 
 import { DepthStage, useDepthLayer } from "@/components/depth-stage";
 import { VALORANT_STAGE } from "@/lib/art";
@@ -55,9 +55,10 @@ const STAGE: StageSpec = {
     roof("near", { kind: "cutout", range: { ...RANGE, flat: D.near }, depth: RELIEF }),
   ],
   // No idle breath and no GL sprites: either would keep the reliefs drawing every frame while nothing
-  // moves (at worlds strength the breath shifts the city a pixel or two). Scroll, the pointer and the
-  // arrival carry the depth; the dust, glints and signatures live on the compositor.
-  camera: { strength: STRENGTH.world, breath: 0 },
+  // moves (at worlds strength the breath shifts the city a pixel or two). No pointer either: nothing on
+  // the site follows the cursor. Scroll and the arrival carry the depth; the dust, glints and signatures
+  // live on the compositor.
+  camera: { strength: STRENGTH.world, pointer: 0, breath: 0 },
 };
 
 /** The painting's crop and red wash, from the art job, as CSS variables on the stage. */
@@ -83,7 +84,7 @@ const CRYSTALS = [
   { x: 48, y: 35, dur: 10.6, delay: -0.8 },
 ];
 
-function Crystals() {
+const Crystals = memo(function Crystals() {
   return (
     <Layer d={D.crystals} className="vl-frame vl-crystals">
       <div className="vl-cover">
@@ -94,7 +95,7 @@ function Crystals() {
       </div>
     </Layer>
   );
-}
+});
 
 const seeded = (seed: number) => () => {
   seed = (seed * 16807) % 2147483647;
@@ -131,19 +132,33 @@ function Air() {
   );
 }
 
-type Phase = "rest" | "in" | "out";
+/**
+ * Every agent pick is its own light and agent, revealed behind its own
+ * blade ("in"), then at rest. A newer pick conceals it behind the next blade
+ * ("out") on an outer wrapper, so a pick cut short keeps revealing where it
+ * got to: picks made in quick succession are blades chasing each other
+ * across the stage, never a half-revealed agent popping in whole.
+ */
+type AgentPick = { id: number; agent: number; live: boolean };
+const MAX_PICKS = 4;
+const outPhase = (out: boolean) => (out ? "out" : undefined);
 
-/** An agent's light on the painting: a screened key glow and a multiplied shade, straight on the stage so they blend with it. */
-function Light({ agent, phase }: { agent: Agent; phase: Phase }) {
+/** An agent's light on the painting: a screened key glow and a multiplied shade, blended (by their wrappers) straight onto the stage. */
+const Light = memo(function Light({ agent, live, out }: { agent: Agent; live: boolean; out: boolean }) {
   const l = agent.light;
   const style = v({ "--kx": `${l.key[0]}%`, "--ky": `${l.key[1]}%`, "--kr": `${l.r}%`, "--kg": l.glow, "--sa": `${l.from}deg`, "--sd": l.shade });
+  const phase = live ? "in" : "rest";
   return (
     <>
-      <div className="vl-key" data-phase={phase} style={style} aria-hidden="true" />
-      <div className="vl-shade" data-phase={phase} style={style} aria-hidden="true" />
+      <div className="vl-light vl-light-key" data-phase={outPhase(out)} aria-hidden="true">
+        <div className="vl-key" data-phase={phase} style={style} />
+      </div>
+      <div className="vl-light vl-light-shade" data-phase={outPhase(out)} aria-hidden="true">
+        <div className="vl-shade" data-phase={phase} style={style} />
+      </div>
     </>
   );
-}
+});
 
 /** A cast: the agent's key light flares once where it falls. */
 function Flare({ agent, onDone }: { agent: Agent; onDone: () => void }) {
@@ -158,47 +173,79 @@ function Flare({ agent, onDone }: { agent: Agent; onDone: () => void }) {
   );
 }
 
-function AgentLayer({ agent, phase, onSettle }: { agent: Agent; phase: Phase; onSettle?: () => void }) {
+type PickProps = { id: number; agent: Agent; live: boolean; out: boolean; onSettle: (id: number) => void; onGone: (id: number) => void };
+
+/** Memoised on its pick, so ability picks, the feed and the other picks never re-render it. */
+const AgentLayer = memo(function AgentLayer({ id, agent, live, out, onSettle, onGone }: PickProps) {
   const portrait = useRef<HTMLImageElement>(null);
   useDepthLayer(portrait, D.agent);
   const onEnd = (e: AnimationEvent) => {
-    if (e.target === portrait.current) onSettle?.();
+    if (e.target === portrait.current && e.animationName === "vl-settle") onSettle(id);
   };
   return (
     <div
-      className="vl-agent"
-      data-phase={phase}
-      data-agent={agent.id}
-      style={v({
-        "--sx": `${agent.light.shaft}%`,
-        "--st": `${agent.light.tilt}deg`,
-        // the key's rim on the agent's edge that faces it
-        "--rim-x": `${Math.sign(agent.light.key[0] - 50) * 2}px`,
-        "--rim-y": `${agent.light.key[1] < 50 ? -1.5 : 1.5}px`,
-      })}
-      onAnimationEnd={onEnd}
+      className="vl-pick"
+      data-phase={outPhase(out)}
+      onAnimationEnd={(e) => {
+        if (e.target === e.currentTarget) onGone(id);
+      }}
     >
-      <Layer d={D.type} className="vl-type">
-        <img src={src(`${agent.id}-bg`)} alt="" width={700} height={1024} decoding="async" />
-      </Layer>
-      <SignatureLayer kind={agent.signature} />
-      <Air />
-      <img
-        ref={portrait}
-        className="vl-portrait"
-        src={src(agent.id)}
-        alt={phase === "out" ? "" : `${agent.name}, full portrait`}
-        width={2048}
-        height={1860}
-        decoding="async"
-      />
+      <div
+        className="vl-agent"
+        data-phase={live ? "in" : "rest"}
+        data-agent={agent.id}
+        style={v({
+          "--sx": `${agent.light.shaft}%`,
+          "--st": `${agent.light.tilt}deg`,
+          // the key's rim on the agent's edge that faces it
+          "--rim-x": `${Math.sign(agent.light.key[0] - 50) * 2}px`,
+          "--rim-y": `${agent.light.key[1] < 50 ? -1.5 : 1.5}px`,
+        })}
+        onAnimationEnd={onEnd}
+      >
+        <Layer d={D.type} className="vl-type">
+          <img src={src(`${agent.id}-bg`)} alt="" width={700} height={1024} decoding="async" />
+        </Layer>
+        <SignatureLayer kind={agent.signature} />
+        <Air />
+        <img
+          ref={portrait}
+          className="vl-portrait"
+          src={src(agent.id)}
+          alt={out ? "" : `${agent.name}, full portrait`}
+          width={2048}
+          height={1860}
+          decoding="async"
+        />
+      </div>
     </div>
+  );
+});
+
+/** A pick's blade: the slash with its red edge and the light it drags, the seam's flash, and one tracer low across the stage. */
+function Blade() {
+  return (
+    <>
+      <div className="vl-seam vl-seam-flare" aria-hidden="true" />
+      <div className="vl-slash-pass" aria-hidden="true" />
+      <div className="vl-slash-edge" aria-hidden="true" />
+      <div className="vl-slash" aria-hidden="true" />
+      {/* the select "shot", anchored to the stage */}
+      <div className="vl-tracer" aria-hidden="true">
+        <span />
+      </div>
+    </>
   );
 }
 
 const KEYS: Key[] = ["C", "Q", "E", "X"];
 
-/** The stage's feed, bottom right, the way the game reports a cast: newest last, three at most. */
+/**
+ * The stage's kill feed, bottom right, in the game's format: the agent's
+ * kill-feed portrait and name, the ability that did it, then who went down on
+ * the enemy's red. Newest last, three at most; every row is "your" kill, so
+ * every row gets the game's highlight border.
+ */
 type Post = { id: number; agent: Agent; ability: Ability };
 const POST_MS = 3800;
 
@@ -207,30 +254,33 @@ function Feed({ posts }: { posts: Post[] }) {
     <ol className="vl-feed" aria-hidden="true">
       {posts.map((p) => (
         <li key={p.id} className="vl-feed-row">
+          <img className="vl-feed-face" src={src(`${p.agent.id}-killfeed`)} alt="" width={128} height={64} decoding="async" />
           <span className="vl-feed-who">{p.agent.name}</span>
-          <span className="vl-feed-key">{p.ability.key}</span>
-          <img src={src(`${p.agent.id}-${p.ability.slot}`)} alt="" width={128} height={128} decoding="async" />
-          <b>{p.ability.name}</b>
+          <img className="vl-feed-gun" src={src(`${p.agent.id}-${p.ability.slot}`)} alt="" width={128} height={128} decoding="async" />
+          <b className="vl-feed-foe">{p.ability.foe}</b>
         </li>
       ))}
     </ol>
   );
 }
 
+/** What the pips under a key count: charges, or the ultimate's points. */
+const count = (a: Ability) => (a.key === "X" ? `${a.pips} points` : `${a.pips} ${a.pips === 1 ? "charge" : "charges"}`);
+
 export function Valorant() {
-  const [index, setIndex] = useState(0);
-  const [prev, setPrev] = useState<number | null>(null);
-  const [swap, setSwap] = useState(0);
-  const [live, setLive] = useState(false);
+  const [picks, setPicks] = useState<AgentPick[]>([{ id: 0, agent: 0, live: false }]);
   const [slot, setSlot] = useState(0);
   const [posts, setPosts] = useState<Post[]>([]);
   const [cast, setCast] = useState(0);
   const [flaring, setFlaring] = useState(false);
   const postId = useRef(0);
+  const pickId = useRef(0);
+  const concealed = useRef(new Set<number>());
   const timers = useRef(new Set<number>());
   const sectionRef = useRef<HTMLElement>(null);
   const tileRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const keyRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const { agent: index, id: swap } = picks[picks.length - 1];
   const agent = AGENTS[index];
   const ability = agent.abilities[slot];
 
@@ -250,6 +300,7 @@ export function Valorant() {
             img.src = src(a.id);
             void img.decode().catch(() => {});
             new Image().src = src(`${a.id}-bg`);
+            new Image().src = src(`${a.id}-killfeed`);
           }
         };
         if (window.requestIdleCallback) window.requestIdleCallback(warm, { timeout: 2000 });
@@ -284,11 +335,12 @@ export function Valorant() {
 
   const select = (i: number) => {
     if (i === index) return;
-    const motion = !reducedMotion();
-    setPrev(motion ? index : null);
-    setLive(motion);
-    setIndex(i);
-    setSwap((n) => n + 1);
+    const id = ++pickId.current;
+    const hidden = new Set(concealed.current);
+    concealed.current.clear();
+    setPicks((l) =>
+      reducedMotion() ? [{ id, agent: i, live: false }] : [...l.filter((c) => !hidden.has(c.id)).slice(1 - MAX_PICKS), { id, agent: i, live: true }],
+    );
   };
 
   /** Pick an ability: the readout changes, the agent's key light flares and the feed reports the cast. */
@@ -298,10 +350,20 @@ export function Valorant() {
     setFlaring(!reducedMotion());
     post(agent, agent.abilities[i]);
   };
-  const settle = () => {
-    setPrev(null);
-    setLive(false);
-  };
+  /** A pick has landed: once the newest one has, everything under it is hidden and goes. */
+  const settle = useCallback(
+    (id: number) =>
+      setPicks((l) => (l[l.length - 1].id === id ? [{ ...l[l.length - 1], live: false }] : l.map((c) => (c.id === id ? { ...c, live: false } : c)))),
+    [],
+  );
+  /**
+   * A pick's conceal finished, so nothing of it is left on screen. It's noted rather than
+   * removed (a re-render for nothing): the newest pick's landing clears it, or, in a chain of
+   * quick picks where the newest never lands, the next pick does.
+   */
+  const gone = useCallback((id: number) => {
+    concealed.current.add(id);
+  }, []);
 
   const onTileKey = (e: KeyboardEvent<HTMLButtonElement>, i: number) => {
     const step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key];
@@ -326,10 +388,10 @@ export function Valorant() {
     if (e.altKey || e.ctrlKey || e.metaKey || e.repeat) return;
     const k = KEYS.indexOf(e.key.toUpperCase() as Key);
     if (k < 0) return;
+    // inside the ability tabs, focus follows the pick (the roving tab stop moves with it)
+    if (keyRefs.current.includes(document.activeElement as HTMLButtonElement)) keyRefs.current[k]?.focus();
     pick(k);
   };
-
-  const current: Phase = live ? "in" : "rest";
 
   return (
     <section
@@ -368,24 +430,23 @@ export function Valorant() {
           <div className="vl-ink vl-ink-tone" aria-hidden="true" />
           <div className="vl-ink vl-ink-dark" aria-hidden="true" />
           <div className="vl-wash" aria-hidden="true" />
-          {prev !== null && <Light key={`light-out-${swap}`} agent={AGENTS[prev]} phase="out" />}
-          <Light key={`light-${swap}`} agent={agent} phase={current} />
+          {picks.map((c, n) => (
+            <Light key={`light-${c.id}`} agent={AGENTS[c.agent]} live={c.live} out={n < picks.length - 1} />
+          ))}
           {flaring && <Flare key={`cast-${cast}`} agent={agent} onDone={() => setFlaring(false)} />}
           <div className="vl-seam" aria-hidden="true" />
-          {prev !== null && <AgentLayer key={`out-${swap}`} agent={AGENTS[prev]} phase="out" />}
-          <AgentLayer key={`${agent.id}-${swap}`} agent={agent} phase={current} onSettle={settle} />
-          {live && (
-            <>
-              <div key={`flare-${swap}`} className="vl-seam vl-seam-flare" aria-hidden="true" />
-              <div key={`pass-${swap}`} className="vl-slash-pass" aria-hidden="true" />
-              <div key={`edge-${swap}`} className="vl-slash-edge" aria-hidden="true" />
-              <div key={`slash-${swap}`} className="vl-slash" aria-hidden="true" />
-              {/* one tracer across the stage with the slash: the select "shot", anchored to the stage */}
-              <div key={`tracer-${swap}`} className="vl-tracer" aria-hidden="true">
-                <span />
-              </div>
-            </>
-          )}
+          {picks.map((c, n) => (
+            <AgentLayer
+              key={`agent-${c.id}`}
+              id={c.id}
+              agent={AGENTS[c.agent]}
+              live={c.live}
+              out={n < picks.length - 1}
+              onSettle={settle}
+              onGone={gone}
+            />
+          ))}
+          {picks.map((c) => c.live && <Blade key={`blade-${c.id}`} />)}
           <Layer d={D.hud} className="vl-hud">
             <Brackets />
             <MapTag />
@@ -441,11 +502,11 @@ export function Valorant() {
                       {a.key}
                     </span>
                     <span className="vl-charge" aria-hidden="true">
-                      {Array.from({ length: a.key === "X" ? 7 : 3 }, (_, k) => (
+                      {Array.from({ length: a.pips }, (_, k) => (
                         <i key={k} style={v({ "--k": k })} />
                       ))}
                     </span>
-                    <span className="sr-only">{a.name}</span>
+                    <span className="sr-only">{`${a.name}, ${count(a)}`}</span>
                   </button>
                 ))}
               </div>
@@ -457,6 +518,8 @@ export function Valorant() {
                     </span>
                     <span className="vl-display vl-readout-name">{ability.name}</span>
                     {ability.key === "X" && <span className="vl-readout-tag">Ultimate</span>}
+                    {ability.key === "E" && <span className="vl-readout-tag vl-readout-tag-quiet">Signature</span>}
+                    <span className="vl-readout-count">{count(ability)}</span>
                   </p>
                   <p className="vl-muted vl-readout-what">{ability.what}</p>
                 </div>

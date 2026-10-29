@@ -80,11 +80,23 @@ const STAGE_ART = {
 } as const;
 const stageArt = (m: Mode) => ({ depth: art(STAGE_ART[m].depth), sky: art(STAGE_ART[m].sky) });
 
-/** Resolves once the hero's entrances (and the canvases' fade-in) have played out. */
-function settled(el: HTMLElement) {
+const frame = () => new Promise((r) => requestAnimationFrame(r));
+
+/** Resolves once the hero's entrances and the canvases' fade-in (it starts with data-ready) have played out. */
+async function settled(el: HTMLElement) {
+  while (!el.hasAttribute("data-ready")) await frame();
   const nodes = [...el.querySelectorAll(".hero-in, .hero-canvas")];
-  return Promise.all(nodes.flatMap((n) => n.getAnimations()).map((a) => a.finished.catch(() => {})));
+  await Promise.all(nodes.flatMap((n) => n.getAnimations()).map((a) => a.finished.catch(() => {})));
 }
+
+/** Runs `fn` in idle time once `ms` have passed: for work nothing is waiting on. */
+function later(ms: number, fn: () => void) {
+  const idle = window.requestIdleCallback ?? ((cb: () => void) => window.setTimeout(cb, 1));
+  window.setTimeout(() => idle(fn), ms);
+}
+
+/** After the takeover has settled in, so the two never share a frame. */
+const DAY_AFTER = 2500; // ms
 
 function plateImages(el: HTMLElement, set: Mode): PlateImages | null {
   const pick = (plate: string) => el.querySelector<HTMLImageElement>(`.hero-img[data-plate="${plate}"][data-set="${set}"]`);
@@ -104,6 +116,7 @@ export function Hero() {
   const scene = useRef<HeroScene | null>(null);
   const stage = useRef<Stage | null>(null);
   const upgrade = useRef<(mode: Mode) => void>(() => {});
+  const preloadDay = useRef(() => {});
   const mode = useMode();
   const [dayOk, setDayOk] = useState(false);
   const [ready, setReady] = useState(false);
@@ -150,24 +163,29 @@ export function Hero() {
       const s = scene.current;
       const images = plateImages(el, m);
       if (!s || !images || st.spent) return;
-      const ok = await s.load(m, images, stageArt(m));
+      // none of the plates' loading lands inside the entrance
       await settled(el);
+      const ok = await s.load(m, images, stageArt(m));
       if (!ok || disposed || modeRef.current !== m || scene.current !== s) return;
       st.relayout();
       st.swap();
-      if (m === "night" && dayOkRef.current) {
-        const day = plateImages(el, "day");
-        if (day) void s.load("day", day, stageArt("day"));
-      }
+      if (m === "night") later(DAY_AFTER, preloadDay.current);
     };
 
     const start = async () => {
       try {
         const { createHeroScene } = await import("./hero/scene");
         if (disposed) return;
-        const s = createHeroScene({ back: b, char: c, front: f }, { mode: modeRef.current, depth });
+        const m0 = modeRef.current;
+        const s = await createHeroScene({ back: b, char: c, front: f }, { mode: m0, depth });
+        if (disposed) {
+          s.dispose();
+          return;
+        }
         scene.current = s;
         st.attach(s);
+        // switched while it came up
+        if (modeRef.current !== m0) s.setMode(modeRef.current, true);
         setReady(true);
         const lost = () => {
           st.unswap();
@@ -205,13 +223,16 @@ export function Hero() {
     }
   }, [mode]);
 
-  // decode the day plates ahead of the first switch
-  useEffect(() => {
+  // decode the day plates ahead of the first switch, once the current mode's are up
+  preloadDay.current = () => {
     const s = scene.current;
     const el = root.current;
-    if (!dayOk || !s || !el || !s.has(modeRef.current)) return;
+    if (!dayOkRef.current || !s || !el || !s.has(modeRef.current)) return;
     const day = plateImages(el, "day");
     if (day) void s.load("day", day, stageArt("day"));
+  };
+  useEffect(() => {
+    if (dayOk && scene.current?.has(modeRef.current)) later(DAY_AFTER, preloadDay.current);
   }, [dayOk]);
 
   const toggle = useCallback(

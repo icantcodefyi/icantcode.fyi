@@ -122,8 +122,12 @@ function grid(cols: number, rows: number, [l, t, r, b]: readonly number[]) {
     for (let x = 0; x < cols; x++) {
       const a = y * (cols + 1) + x;
       const c = a + cols + 1;
-      idx.set([a, c, a + 1, a + 1, c, c + 1], i);
-      i += 6;
+      idx[i++] = a;
+      idx[i++] = c;
+      idx[i++] = a + 1;
+      idx[i++] = a + 1;
+      idx[i++] = c;
+      idx[i++] = c + 1;
     }
   }
   const geo = new BufferGeometry();
@@ -317,7 +321,7 @@ export function shadowSource(img: ImageBitmap) {
 /** Three box passes each way: a Gaussian of `sigma` px, as browsers blur. */
 function blur(src: Uint8Array, sigma: number) {
   const r = Math.max(0, Math.round((Math.sqrt(4 * sigma * sigma + 1) - 1) / 2));
-  let a = Float32Array.from(src);
+  let a = new Float32Array(src);
   let b = new Float32Array(a.length);
   const pass = (w: number, h: number, step: number, line: number) => {
     for (let l = 0; l < h; l++) {
@@ -335,7 +339,9 @@ function blur(src: Uint8Array, sigma: number) {
     pass(SW, SH, 1, SW);
     pass(SH, SW, SW, 1);
   }
-  return Uint8Array.from(a, (v) => Math.round(v));
+  const out = new Uint8Array(a.length);
+  for (let i = 0; i < a.length; i++) out[i] = Math.round(a[i]);
+  return out;
 }
 
 const shadowFrag = /* glsl */ `

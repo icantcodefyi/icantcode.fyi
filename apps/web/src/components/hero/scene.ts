@@ -63,28 +63,37 @@ const PLATES: PlateName[] = ["sky", "char", "hill"];
 const RELIEF_IN = 1.4; // s
 const MODE_FADE = 1.1; // s, as the <img> crossfade
 
-const frameOnce = () => new Promise<void>((r) => requestAnimationFrame(() => r()));
+/**
+ * The scene comes up and loads in small steps, one per frame (each WebGL
+ * context, each plate's geometry, her shadow, each upload), and its images
+ * decode off the main thread, so no step holds up the hero's entrance or
+ * the page on a slow phone.
+ */
+/** Resolves just after the next frame is drawn, in a task of its own, so a step never adds to a frame's own work. */
+const frameOnce = () => new Promise<void>((r) => requestAnimationFrame(() => setTimeout(r, 0)));
 
-const decoded = (img: HTMLImageElement) => img.decode().then(() => img);
+/** `url` as a Blob: a Blob decodes on the image decoder's thread, an <img> on the main one. Already cached by the <img>s. */
+const blob = (url: string) =>
+  fetch(url, { cache: "force-cache" }).then((r) => {
+    if (!r.ok) throw new Error(url);
+    return r.blob();
+  });
 
 /** Each plate's own tile of the mode's depth atlas: raw data, so no colour or alpha handling. */
-function depthTiles(url: string) {
-  const img = new Image();
-  img.src = url;
-  return decoded(img).then((a) =>
-    Promise.all(
-      PLATES.map((n) => {
-        const t = TILE[n];
-        return createImageBitmap(a, t.x, t.y, t.w, t.h, { premultiplyAlpha: "none", colorSpaceConversion: "none" });
-      }),
-    ),
+async function depthTiles(url: string) {
+  const b = await blob(url);
+  return Promise.all(
+    PLATES.map((n) => {
+      const t = TILE[n];
+      return createImageBitmap(b, t.x, t.y, t.w, t.h, { premultiplyAlpha: "none", colorSpaceConversion: "none" });
+    }),
   );
 }
 
-export function createHeroScene(
+export async function createHeroScene(
   canvases: { back: HTMLCanvasElement; char: HTMLCanvasElement; front: HTMLCanvasElement },
   opts: { mode: Mode; depth: boolean },
-): HeroScene {
+): Promise<HeroScene> {
   const make = (canvas: HTMLCanvasElement) => {
     const r = new WebGLRenderer({
       canvas,
@@ -96,10 +105,16 @@ export function createHeroScene(
     });
     r.autoClear = false;
     r.setClearColor(0x000000, 0);
+    // the shaders are fixed: skip the error checks' round trips to the GPU on each one's first draw
+    r.debug.checkShaderErrors = import.meta.env.DEV;
     return r;
   };
+  // not in the same task as the module's evaluation
+  await frameOnce();
   const back = make(canvases.back);
+  await frameOnce();
   const front = make(canvases.front);
+  await frameOnce();
   // the character canvas only exists for the plates
   let char: WebGLRenderer | null = null;
   const renderers = () => (char ? [back, char, front] : [back, front]);
@@ -108,6 +123,14 @@ export function createHeroScene(
   const petals = createPetals(opts.mode);
   const backPetals = new Scene().add(...petals.back);
   const frontPetals = new Scene().add(...petals.front);
+  // linked in parallel, off the main thread, then drawn once per canvas while the
+  // canvases are still clear (they fade in with data-ready), so their buffers and
+  // textures go up now rather than in the first frame that shows
+  await Promise.all([back.compileAsync(backPetals, camera), front.compileAsync(frontPetals, camera)]);
+  back.render(backPetals, camera);
+  await frameOnce();
+  front.render(frontPetals, camera);
+  await frameOnce();
   const scrim = createScrim();
   const scrimScene = new Scene().add(scrim.mesh);
 
@@ -233,12 +256,21 @@ export function createHeroScene(
 
   async function upload(m: Mode, images: PlateImages, depthUrl: string) {
     const [colors, depths] = await Promise.all([
-      Promise.all(PLATES.map((n) => decoded(images[n]).then((img) => createImageBitmap(img, { premultiplyAlpha: "premultiply" })))),
+      Promise.all(
+        PLATES.map((n) =>
+          blob(images[n].currentSrc || images[n].src).then((b) => createImageBitmap(b, { premultiplyAlpha: "premultiply" })),
+        ),
+      ),
       depthTiles(depthUrl),
     ]);
+    if (!char) {
+      await frameOnce();
+      if (disposed) return false;
+      char = make(canvases.char);
+      size();
+    }
+    await frameOnce();
     if (disposed) return false;
-    char ??= make(canvases.char);
-    size();
     const maps = colors.map(colorTexture);
     const depth = depths.map(depthTexture);
     const scenes = {} as Record<PlateName, Scene>;
@@ -254,10 +286,14 @@ export function createHeroScene(
       meshes.push(light);
       scenes.hill.add(light);
     }
-    // her shadow goes down first, under her plate
+    // her shadow goes down first, under her plate: its source, then its blur, a frame each
+    await frameOnce();
+    if (disposed) return false;
     const shadow = createShadow(shadowSource(colors[1]), depth[1], shared, rects.char);
     shadow.mesh.renderOrder = -1;
     scenes.char.add(shadow.mesh);
+    await frameOnce();
+    if (disposed) return false;
     if (last) shadow.set(last.shadow, last.rects.char.h);
     const target = { sky: back, char, hill: front };
     // one plate's upload per frame, so no single frame carries all of them
@@ -270,7 +306,11 @@ export function createHeroScene(
       depths[i].close();
     }
     const textures = [...maps, ...depth];
-    await Promise.all([...PLATES.map((n) => target[n].compileAsync(scenes[n], camera)), life.compile(back, front, camera)]);
+    await Promise.all([
+      ...PLATES.map((n) => target[n].compileAsync(scenes[n], camera)),
+      front.compileAsync(scrimScene, camera),
+      life.compile(back, front, camera),
+    ]);
     if (disposed) return false;
     life.attach(m, { sky: maps[0], skyDepth: depth[0], hillDepth: depth[2] });
     sets[m] = { scenes, meshes, textures, shadow };
@@ -279,9 +319,7 @@ export function createHeroScene(
 
   /** The mode's sky sprites, after its plates: the clouds and birds fade in once they're up. */
   async function sprites(m: Mode, url: string) {
-    const img = new Image();
-    img.src = url;
-    const bmp = await createImageBitmap(await decoded(img), { premultiplyAlpha: "premultiply" });
+    const bmp = await createImageBitmap(await blob(url), { premultiplyAlpha: "premultiply" });
     if (disposed) return bmp.close();
     const t = colorTexture(bmp);
     await frameOnce();

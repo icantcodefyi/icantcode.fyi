@@ -1,0 +1,86 @@
+{
+  "night": {
+    "sources": {
+      "night-back-generated.png": {
+        "sha256": "89382474266aa7837e8e47375a7dac0499f05f6357f4546ed20c18c086684165",
+        "native_size": [
+          1499,
+          1049
+        ]
+      },
+      "night-rig-fx-generated.png": {
+        "sha256": "fb2cdb05c1551075eed0379c20ed7b7ee5d2effd719ec2403323e061531e1e3a",
+        "native_size": [
+          1499,
+          1049
+        ]
+      },
+      "night-front-generated.png": {
+        "sha256": "390f0832d263974aee6045ac2d366f67f33660ab53d0c58aeaadb9675552a03f",
+        "native_size": [
+          1500,
+          1049
+        ]
+      }
+    },
+    "output_size": [
+      2000,
+      1400
+    ],
+    "beam_exposure_baked": 0.57,
+    "rig_beam_split_y": [
+      154,
+      174
+    ],
+    "front_translation_y": 140,
+    "reserved_photo_rect": [
+      500,
+      210,
+      1500,
+      1400
+    ],
+    "centre_beam_alpha_max": 0
+  },
+  "day": {
+    "sources": {
+      "day-back-generated.png": {
+        "sha256": "844a208c0dcaeb5b4bae037f3bc16977b14ee241df3079f02b4dbd3b5686b4e3",
+        "native_size": [
+          1500,
+          1049
+        ]
+      },
+      "day-rig-fx-generated.png": {
+        "sha256": "4dfbecfcf7f5e365af97dafee9de93b8f6d14d6ec4439a8c27ba59dd426719f8",
+        "native_size": [
+          1500,
+          1049
+        ]
+      },
+      "day-front-generated.png": {
+        "sha256": "434ec5f77732cd05e101750a18b5c53a20488d04351d895b077b642e93cea4d7",
+        "native_size": [
+          1500,
+          1049
+        ]
+      }
+    },
+    "output_size": [
+      2000,
+      1400
+    ],
+    "beam_exposure_baked": 0.23,
+    "rig_beam_split_y": [
+      154,
+      174
+    ],
+    "front_translation_y": 160,
+    "reserved_photo_rect": [
+      500,
+      210,
+      1500,
+      1400
+    ],
+    "centre_beam_alpha_max": 0
+  }
+}

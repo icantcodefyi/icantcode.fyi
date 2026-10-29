@@ -1,0 +1,402 @@
+[
+  {
+    "file": "night-back.avif",
+    "px": [
+      2000,
+      1400
+    ],
+    "bytes": 119907,
+    "kb": 119.91,
+    "sha256": "f47a630f68de38f7ae18ef5f2d338f153e143438caa416e227541f7ec9e85554"
+  },
+  {
+    "file": "night-back.webp",
+    "px": [
+      2000,
+      1400
+    ],
+    "bytes": 166514,
+    "kb": 166.51,
+    "sha256": "93083b8312fb542553aa114b8f621a56b43486667a7c2ca3bbd5cc50cff31c3e"
+  },
+  {
+    "file": "night-back-1000.avif",
+    "px": [
+      1000,
+      700
+    ],
+    "bytes": 41244,
+    "kb": 41.24,
+    "sha256": "abe67964f4e8a1308d364d4cb644ecbac6d3958024d19969524b4aa700beeb3f"
+  },
+  {
+    "file": "night-back-1000.webp",
+    "px": [
+      1000,
+      700
+    ],
+    "bytes": 62658,
+    "kb": 62.66,
+    "sha256": "7807245faf4b1db7edf20019f53a143b33f87de50d97efb1d0763b1eb9952b5e"
+  },
+  {
+    "file": "night-beams.avif",
+    "px": [
+      2000,
+      1400
+    ],
+    "bytes": 228071,
+    "kb": 228.07,
+    "sha256": "c70e2cd2625d59fc82a1c01239a00c6cf3f7e18c2da5d7fd578791c3e4b6a29f"
+  },
+  {
+    "file": "night-beams.webp",
+    "px": [
+      2000,
+      1400
+    ],
+    "bytes": 260890,
+    "kb": 260.89,
+    "sha256": "8024bb64b70d5ceea8dd9fcb2a33eff297795881a84b9eefed9226a4853e41c9"
+  },
+  {
+    "file": "night-beams-1000.avif",
+    "px": [
+      1000,
+      700
+    ],
+    "bytes": 81614,
+    "kb": 81.61,
+    "sha256": "fdd7ad38208ce0ad2fa6935ee4a16d1c6264bb79efb8dcd7844b748c0e1505b4"
+  },
+  {
+    "file": "night-beams-1000.webp",
+    "px": [
+      1000,
+      700
+    ],
+    "bytes": 92796,
+    "kb": 92.8,
+    "sha256": "e7faeb767cc7e239535b382d77adc4b50bfbf4be08501cf59252fd25d41bd2e9"
+  },
+  {
+    "file": "night-mid.avif",
+    "px": [
+      2000,
+      1400
+    ],
+    "bytes": 116465,
+    "kb": 116.47,
+    "sha256": "a231fb1a91cafd39f906df9291e5e71dc8622f339c9df7f972964a119771c420"
+  },
+  {
+    "file": "night-mid.webp",
+    "px": [
+      2000,
+      1400
+    ],
+    "bytes": 134492,
+    "kb": 134.49,
+    "sha256": "4311b02099a427320ddd6e5898f73092f974d166495fc5646f2fd1d622de112e"
+  },
+  {
+    "file": "night-mid-1000.avif",
+    "px": [
+      1000,
+      700
+    ],
+    "bytes": 42318,
+    "kb": 42.32,
+    "sha256": "8f4d580526fed960347ab333526880ef32ccdd0df1d12e7aaad7b1c4f869d9c3"
+  },
+  {
+    "file": "night-mid-1000.webp",
+    "px": [
+      1000,
+      700
+    ],
+    "bytes": 46216,
+    "kb": 46.22,
+    "sha256": "5575125a67348843e9447f3978b34ce9052b085d25c146e1d56b8f93e0bd0f4b"
+  },
+  {
+    "file": "night-front.avif",
+    "px": [
+      2000,
+      1400
+    ],
+    "bytes": 57815,
+    "kb": 57.81,
+    "sha256": "621425038852c6f83f19ab0f3b9d373af88a4ac38650882b91b4f01ec72ddbfe"
+  },
+  {
+    "file": "night-front.webp",
+    "px": [
+      2000,
+      1400
+    ],
+    "bytes": 67080,
+    "kb": 67.08,
+    "sha256": "b10fb5dcf75f9a084d2df3bf364f16234b6204631d2a6198bd815c8b7aea5e56"
+  },
+  {
+    "file": "night-front-1000.avif",
+    "px": [
+      1000,
+      700
+    ],
+    "bytes": 20829,
+    "kb": 20.83,
+    "sha256": "dd036868348d233bb28d4ab8a2e7bd62dc8bca3624c5df6ecbaf1b85b93652d3"
+  },
+  {
+    "file": "night-front-1000.webp",
+    "px": [
+      1000,
+      700
+    ],
+    "bytes": 24612,
+    "kb": 24.61,
+    "sha256": "a24e42cfd774afdb609698bce34ba12885d4959973ce412b3e432e6554f17a60"
+  },
+  {
+    "file": "night-depth.avif",
+    "px": [
+      2000,
+      1400
+    ],
+    "bytes": 16168,
+    "kb": 16.17,
+    "sha256": "0bb8657ee9fd2bc2fbf77e67142b16d67d941186b5c1269c4602650b33ebb017"
+  },
+  {
+    "file": "night-depth.webp",
+    "px": [
+      2000,
+      1400
+    ],
+    "bytes": 12318,
+    "kb": 12.32,
+    "sha256": "6b02a586efeb6d99f8466294876d4d34b1ea840ce07eb4923aaa12175e7f75cd"
+  },
+  {
+    "file": "night-depth-1000.avif",
+    "px": [
+      1000,
+      700
+    ],
+    "bytes": 7056,
+    "kb": 7.06,
+    "sha256": "4882fcf88330d37bc96aa1305da217a232b02fbf58515d22c67694c947f61ad5"
+  },
+  {
+    "file": "night-depth-1000.webp",
+    "px": [
+      1000,
+      700
+    ],
+    "bytes": 4802,
+    "kb": 4.8,
+    "sha256": "6adbcf258ff9d9b8d8611321c91233ebd63cdcbc3401f97af9ba5bb7eb2fa0c5"
+  },
+  {
+    "file": "day-back.avif",
+    "px": [
+      2000,
+      1400
+    ],
+    "bytes": 146626,
+    "kb": 146.63,
+    "sha256": "2cbd497ebd5683fe24b840d8b010e4839f39f7b2b9dd304a1bb9e23e97a8feed"
+  },
+  {
+    "file": "day-back.webp",
+    "px": [
+      2000,
+      1400
+    ],
+    "bytes": 209986,
+    "kb": 209.99,
+    "sha256": "9462cc7ef439b35c01d1a9db4a26967e73f1f758352b26a578711abe1e933df1"
+  },
+  {
+    "file": "day-back-1000.avif",
+    "px": [
+      1000,
+      700
+    ],
+    "bytes": 52272,
+    "kb": 52.27,
+    "sha256": "a37565b036e4f52e57182955830f46cf422f67d66832ddb795fa85c84fa9271c"
+  },
+  {
+    "file": "day-back-1000.webp",
+    "px": [
+      1000,
+      700
+    ],
+    "bytes": 83982,
+    "kb": 83.98,
+    "sha256": "9c8e58f18412b09a80cbb7e8cddc6916451f5b70f915c704f163c998cf13a321"
+  },
+  {
+    "file": "day-beams.avif",
+    "px": [
+      2000,
+      1400
+    ],
+    "bytes": 170460,
+    "kb": 170.46,
+    "sha256": "d09283e41621a33631b73751dd3b9c9bd821d64540a761ff91969cdbc8d3fdc4"
+  },
+  {
+    "file": "day-beams.webp",
+    "px": [
+      2000,
+      1400
+    ],
+    "bytes": 186280,
+    "kb": 186.28,
+    "sha256": "45e9fac12535cf325ab81264d7b5d6fa35ae474a1aa1b11c132fe8dcdc9b0216"
+  },
+  {
+    "file": "day-beams-1000.avif",
+    "px": [
+      1000,
+      700
+    ],
+    "bytes": 70841,
+    "kb": 70.84,
+    "sha256": "3e38036d7fe6bedcb5a8d07599a254cb3cc3842bdeacbdb2872ad83827c9cf50"
+  },
+  {
+    "file": "day-beams-1000.webp",
+    "px": [
+      1000,
+      700
+    ],
+    "bytes": 81514,
+    "kb": 81.51,
+    "sha256": "21ce8ad10dc16667386b98928a1757eeeed06dac3b70ed98d7640bb146923d9d"
+  },
+  {
+    "file": "day-mid.avif",
+    "px": [
+      2000,
+      1400
+    ],
+    "bytes": 119140,
+    "kb": 119.14,
+    "sha256": "d5e35e6668ef6a6ec48e657b5e594671d58c2a833dab925ec59facb5f36846ae"
+  },
+  {
+    "file": "day-mid.webp",
+    "px": [
+      2000,
+      1400
+    ],
+    "bytes": 134396,
+    "kb": 134.4,
+    "sha256": "24d61513b8b5ada67054b1ba4c7685611e2287d90bcb05806bb7f7308bbc456b"
+  },
+  {
+    "file": "day-mid-1000.avif",
+    "px": [
+      1000,
+      700
+    ],
+    "bytes": 43714,
+    "kb": 43.71,
+    "sha256": "4d994c2ec507dc377c041d823e694059fe8aa1df5f14ba3639d7fe889712323e"
+  },
+  {
+    "file": "day-mid-1000.webp",
+    "px": [
+      1000,
+      700
+    ],
+    "bytes": 47534,
+    "kb": 47.53,
+    "sha256": "dd678800973f7671bea1a74de69eb66307748e26caf28c2b11b4516262ae57d4"
+  },
+  {
+    "file": "day-front.avif",
+    "px": [
+      2000,
+      1400
+    ],
+    "bytes": 39091,
+    "kb": 39.09,
+    "sha256": "a5a086645ff50ec5b4b22efd5d3756c9d5915108e2f6c707442bb0d6a18278ab"
+  },
+  {
+    "file": "day-front.webp",
+    "px": [
+      2000,
+      1400
+    ],
+    "bytes": 51312,
+    "kb": 51.31,
+    "sha256": "1a10bc9827e8bf1074933d76444e0486b78138ec1558ce74bfd2dd8cd7c67f2d"
+  },
+  {
+    "file": "day-front-1000.avif",
+    "px": [
+      1000,
+      700
+    ],
+    "bytes": 15952,
+    "kb": 15.95,
+    "sha256": "72fbfe4a808e560aed47e34fa20982a07b39b986bb2cadec649a76fe44790090"
+  },
+  {
+    "file": "day-front-1000.webp",
+    "px": [
+      1000,
+      700
+    ],
+    "bytes": 19902,
+    "kb": 19.9,
+    "sha256": "6240b8ecc90340cf017abc7f47377ab0f0f1893e2e9dcce4382e56d9726e21df"
+  },
+  {
+    "file": "day-depth.avif",
+    "px": [
+      2000,
+      1400
+    ],
+    "bytes": 17020,
+    "kb": 17.02,
+    "sha256": "6c676758796b249f13d9f42dbe9a937fb4e07f86544727ef6f7d25edd0c7f445"
+  },
+  {
+    "file": "day-depth.webp",
+    "px": [
+      2000,
+      1400
+    ],
+    "bytes": 13426,
+    "kb": 13.43,
+    "sha256": "db30431492c2ea9a4b07d7c17a15fba869b710d75ec8763ac7c47470e69c749f"
+  },
+  {
+    "file": "day-depth-1000.avif",
+    "px": [
+      1000,
+      700
+    ],
+    "bytes": 7204,
+    "kb": 7.2,
+    "sha256": "e84931872b3679677ebfa894dfb6aac4c4dabb9f7b1b9b1ca7b792da1c0c6f98"
+  },
+  {
+    "file": "day-depth-1000.webp",
+    "px": [
+      1000,
+      700
+    ],
+    "bytes": 5502,
+    "kb": 5.5,
+    "sha256": "c7116dc8eff420066199718dc19cccf58b6978a42328e40b3b213497f882ac18"
+  }
+]

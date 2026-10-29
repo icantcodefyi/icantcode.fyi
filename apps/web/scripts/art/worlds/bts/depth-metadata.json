@@ -1,0 +1,62 @@
+{
+  "night": {
+    "model": "depth-anything/Depth-Anything-V2-Base-hf",
+    "device": "mps",
+    "model_input": [
+      1,
+      3,
+      756,
+      1078
+    ],
+    "output_px": [
+      2000,
+      1400
+    ],
+    "interpolation": "bicubic, align_corners=False, no crop",
+    "normalization": "min-max inverse relative depth; white=near",
+    "filter": "bilateral 11 / sigmaColor .035 / sigmaSpace 4",
+    "source_sha256": "1504cc2fed959ae0444a0c2a17a17fcf87624d3c00268c479bebfe24ee496650",
+    "depth_sha256": "377af3253ca401408b9619f0f4db78308bd5ad8e7ccb0e5b7496687359fe44b6",
+    "raw_range": [
+      0.33737319707870483,
+      20.07524871826172
+    ],
+    "output_range": [
+      0,
+      255
+    ],
+    "sky_mean": 5.3,
+    "near_floor_mean": 205.25,
+    "seconds": 1.05
+  },
+  "day": {
+    "model": "depth-anything/Depth-Anything-V2-Base-hf",
+    "device": "mps",
+    "model_input": [
+      1,
+      3,
+      756,
+      1078
+    ],
+    "output_px": [
+      2000,
+      1400
+    ],
+    "interpolation": "bicubic, align_corners=False, no crop",
+    "normalization": "min-max inverse relative depth; white=near",
+    "filter": "bilateral 11 / sigmaColor .035 / sigmaSpace 4",
+    "source_sha256": "7b9706dfbca352a8932f4e2563da291660de9961657189b3c1d30b1e9d26b97e",
+    "depth_sha256": "60c386a77ec6ad6902d78723abbe9b9cefd29d621c00ad8a8ae84a5689bad527",
+    "raw_range": [
+      -1.2617700099945068,
+      20.5838565826416
+    ],
+    "output_range": [
+      0,
+      255
+    ],
+    "sky_mean": 6.0,
+    "near_floor_mean": 209.96,
+    "seconds": 0.56
+  }
+}

@@ -134,6 +134,26 @@ const AVIF = new Set([
   "/lobby/gi/vista/liyue-night-near",
   "/lobby/gi/vista/liyue-night-sky-1200",
   "/lobby/gi/vista/liyue-night-sky",
+  "/bts/stage/night-back",
+  "/bts/stage/night-back-1000",
+  "/bts/stage/night-mid",
+  "/bts/stage/night-mid-1000",
+  "/bts/stage/night-beams",
+  "/bts/stage/night-beams-1000",
+  "/bts/stage/night-front",
+  "/bts/stage/night-front-1000",
+  "/bts/stage/night-depth",
+  "/bts/stage/night-depth-1000",
+  "/bts/stage/day-back",
+  "/bts/stage/day-back-1000",
+  "/bts/stage/day-mid",
+  "/bts/stage/day-mid-1000",
+  "/bts/stage/day-beams",
+  "/bts/stage/day-beams-1000",
+  "/bts/stage/day-front",
+  "/bts/stage/day-front-1000",
+  "/bts/stage/day-depth",
+  "/bts/stage/day-depth-1000",
 ]);
 
 export const avif = () => typeof window !== "undefined" && window.__avif === true;
@@ -432,4 +452,32 @@ export const TEYVAT_VISTA = {
     "hu-tao": "liyue",
     "furina": "fontaine"
   }
+} as const;
+
+/** BTS: the empty stadium stage behind the member photo, layered for depth (nothing crosses the photo). */
+export const BTS_STAGE = {
+  night: {
+    back: "/bts/stage/night-back",
+    backHalf: "/bts/stage/night-back-1000",
+    mid: "/bts/stage/night-mid",
+    midHalf: "/bts/stage/night-mid-1000",
+    beams: "/bts/stage/night-beams",
+    beamsHalf: "/bts/stage/night-beams-1000",
+    front: "/bts/stage/night-front",
+    frontHalf: "/bts/stage/night-front-1000",
+    depth: "/bts/stage/night-depth",
+    depthHalf: "/bts/stage/night-depth-1000",
+  },
+  day: {
+    back: "/bts/stage/day-back",
+    backHalf: "/bts/stage/day-back-1000",
+    mid: "/bts/stage/day-mid",
+    midHalf: "/bts/stage/day-mid-1000",
+    beams: "/bts/stage/day-beams",
+    beamsHalf: "/bts/stage/day-beams-1000",
+    front: "/bts/stage/day-front",
+    frontHalf: "/bts/stage/day-front-1000",
+    depth: "/bts/stage/day-depth",
+    depthHalf: "/bts/stage/day-depth-1000",
+  },
 } as const;

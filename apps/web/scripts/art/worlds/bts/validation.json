@@ -1,0 +1,480 @@
+{
+  "file_count": 40,
+  "all_dimensions_correct": true,
+  "reserved_rect_full": [
+    500,
+    210,
+    1500,
+    1400
+  ],
+  "all_encoded_lighting_centre_alpha_zero": true,
+  "all_avif_alpha_byte_exact": true,
+  "quality": {
+    "night": {
+      "avif": {
+        "mean_absolute_rgb_error": 1.85,
+        "psnr_db": 39.44
+      },
+      "webp": {
+        "mean_absolute_rgb_error": 1.844,
+        "psnr_db": 39.6
+      }
+    },
+    "day": {
+      "avif": {
+        "mean_absolute_rgb_error": 2.093,
+        "psnr_db": 38.49
+      },
+      "webp": {
+        "mean_absolute_rgb_error": 2.12,
+        "psnr_db": 38.55
+      }
+    }
+  },
+  "files": [
+    {
+      "file": "night-back.avif",
+      "px": [
+        2000,
+        1400
+      ],
+      "decoded_mode": "RGB"
+    },
+    {
+      "file": "night-back.webp",
+      "px": [
+        2000,
+        1400
+      ],
+      "decoded_mode": "RGB"
+    },
+    {
+      "file": "night-back-1000.avif",
+      "px": [
+        1000,
+        700
+      ],
+      "decoded_mode": "RGB"
+    },
+    {
+      "file": "night-back-1000.webp",
+      "px": [
+        1000,
+        700
+      ],
+      "decoded_mode": "RGB"
+    },
+    {
+      "file": "night-beams.avif",
+      "px": [
+        2000,
+        1400
+      ],
+      "decoded_mode": "RGBA",
+      "alpha_range": [
+        0,
+        145
+      ],
+      "photo_zone_alpha_max": 0,
+      "alpha_exact": true
+    },
+    {
+      "file": "night-beams.webp",
+      "px": [
+        2000,
+        1400
+      ],
+      "decoded_mode": "RGBA",
+      "alpha_range": [
+        0,
+        145
+      ],
+      "photo_zone_alpha_max": 0
+    },
+    {
+      "file": "night-beams-1000.avif",
+      "px": [
+        1000,
+        700
+      ],
+      "decoded_mode": "RGBA",
+      "alpha_range": [
+        0,
+        148
+      ],
+      "photo_zone_alpha_max": 0,
+      "alpha_exact": true
+    },
+    {
+      "file": "night-beams-1000.webp",
+      "px": [
+        1000,
+        700
+      ],
+      "decoded_mode": "RGBA",
+      "alpha_range": [
+        0,
+        148
+      ],
+      "photo_zone_alpha_max": 0
+    },
+    {
+      "file": "night-mid.avif",
+      "px": [
+        2000,
+        1400
+      ],
+      "decoded_mode": "RGBA",
+      "alpha_range": [
+        0,
+        255
+      ],
+      "photo_zone_alpha_max": 0,
+      "alpha_exact": true
+    },
+    {
+      "file": "night-mid.webp",
+      "px": [
+        2000,
+        1400
+      ],
+      "decoded_mode": "RGBA",
+      "alpha_range": [
+        0,
+        255
+      ],
+      "photo_zone_alpha_max": 0
+    },
+    {
+      "file": "night-mid-1000.avif",
+      "px": [
+        1000,
+        700
+      ],
+      "decoded_mode": "RGBA",
+      "alpha_range": [
+        0,
+        255
+      ],
+      "photo_zone_alpha_max": 0,
+      "alpha_exact": true
+    },
+    {
+      "file": "night-mid-1000.webp",
+      "px": [
+        1000,
+        700
+      ],
+      "decoded_mode": "RGBA",
+      "alpha_range": [
+        0,
+        255
+      ],
+      "photo_zone_alpha_max": 0
+    },
+    {
+      "file": "night-front.avif",
+      "px": [
+        2000,
+        1400
+      ],
+      "decoded_mode": "RGBA",
+      "alpha_range": [
+        0,
+        254
+      ],
+      "alpha_exact": true
+    },
+    {
+      "file": "night-front.webp",
+      "px": [
+        2000,
+        1400
+      ],
+      "decoded_mode": "RGBA",
+      "alpha_range": [
+        0,
+        254
+      ]
+    },
+    {
+      "file": "night-front-1000.avif",
+      "px": [
+        1000,
+        700
+      ],
+      "decoded_mode": "RGBA",
+      "alpha_range": [
+        0,
+        255
+      ],
+      "alpha_exact": true
+    },
+    {
+      "file": "night-front-1000.webp",
+      "px": [
+        1000,
+        700
+      ],
+      "decoded_mode": "RGBA",
+      "alpha_range": [
+        0,
+        255
+      ]
+    },
+    {
+      "file": "night-depth.avif",
+      "px": [
+        2000,
+        1400
+      ],
+      "decoded_mode": "RGB"
+    },
+    {
+      "file": "night-depth.webp",
+      "px": [
+        2000,
+        1400
+      ],
+      "decoded_mode": "RGB"
+    },
+    {
+      "file": "night-depth-1000.avif",
+      "px": [
+        1000,
+        700
+      ],
+      "decoded_mode": "RGB"
+    },
+    {
+      "file": "night-depth-1000.webp",
+      "px": [
+        1000,
+        700
+      ],
+      "decoded_mode": "RGB"
+    },
+    {
+      "file": "day-back.avif",
+      "px": [
+        2000,
+        1400
+      ],
+      "decoded_mode": "RGB"
+    },
+    {
+      "file": "day-back.webp",
+      "px": [
+        2000,
+        1400
+      ],
+      "decoded_mode": "RGB"
+    },
+    {
+      "file": "day-back-1000.avif",
+      "px": [
+        1000,
+        700
+      ],
+      "decoded_mode": "RGB"
+    },
+    {
+      "file": "day-back-1000.webp",
+      "px": [
+        1000,
+        700
+      ],
+      "decoded_mode": "RGB"
+    },
+    {
+      "file": "day-beams.avif",
+      "px": [
+        2000,
+        1400
+      ],
+      "decoded_mode": "RGBA",
+      "alpha_range": [
+        0,
+        59
+      ],
+      "photo_zone_alpha_max": 0,
+      "alpha_exact": true
+    },
+    {
+      "file": "day-beams.webp",
+      "px": [
+        2000,
+        1400
+      ],
+      "decoded_mode": "RGBA",
+      "alpha_range": [
+        0,
+        59
+      ],
+      "photo_zone_alpha_max": 0
+    },
+    {
+      "file": "day-beams-1000.avif",
+      "px": [
+        1000,
+        700
+      ],
+      "decoded_mode": "RGBA",
+      "alpha_range": [
+        0,
+        59
+      ],
+      "photo_zone_alpha_max": 0,
+      "alpha_exact": true
+    },
+    {
+      "file": "day-beams-1000.webp",
+      "px": [
+        1000,
+        700
+      ],
+      "decoded_mode": "RGBA",
+      "alpha_range": [
+        0,
+        59
+      ],
+      "photo_zone_alpha_max": 0
+    },
+    {
+      "file": "day-mid.avif",
+      "px": [
+        2000,
+        1400
+      ],
+      "decoded_mode": "RGBA",
+      "alpha_range": [
+        0,
+        255
+      ],
+      "photo_zone_alpha_max": 0,
+      "alpha_exact": true
+    },
+    {
+      "file": "day-mid.webp",
+      "px": [
+        2000,
+        1400
+      ],
+      "decoded_mode": "RGBA",
+      "alpha_range": [
+        0,
+        255
+      ],
+      "photo_zone_alpha_max": 0
+    },
+    {
+      "file": "day-mid-1000.avif",
+      "px": [
+        1000,
+        700
+      ],
+      "decoded_mode": "RGBA",
+      "alpha_range": [
+        0,
+        255
+      ],
+      "photo_zone_alpha_max": 0,
+      "alpha_exact": true
+    },
+    {
+      "file": "day-mid-1000.webp",
+      "px": [
+        1000,
+        700
+      ],
+      "decoded_mode": "RGBA",
+      "alpha_range": [
+        0,
+        255
+      ],
+      "photo_zone_alpha_max": 0
+    },
+    {
+      "file": "day-front.avif",
+      "px": [
+        2000,
+        1400
+      ],
+      "decoded_mode": "RGBA",
+      "alpha_range": [
+        0,
+        254
+      ],
+      "alpha_exact": true
+    },
+    {
+      "file": "day-front.webp",
+      "px": [
+        2000,
+        1400
+      ],
+      "decoded_mode": "RGBA",
+      "alpha_range": [
+        0,
+        254
+      ]
+    },
+    {
+      "file": "day-front-1000.avif",
+      "px": [
+        1000,
+        700
+      ],
+      "decoded_mode": "RGBA",
+      "alpha_range": [
+        0,
+        254
+      ],
+      "alpha_exact": true
+    },
+    {
+      "file": "day-front-1000.webp",
+      "px": [
+        1000,
+        700
+      ],
+      "decoded_mode": "RGBA",
+      "alpha_range": [
+        0,
+        254
+      ]
+    },
+    {
+      "file": "day-depth.avif",
+      "px": [
+        2000,
+        1400
+      ],
+      "decoded_mode": "RGB"
+    },
+    {
+      "file": "day-depth.webp",
+      "px": [
+        2000,
+        1400
+      ],
+      "decoded_mode": "RGB"
+    },
+    {
+      "file": "day-depth-1000.avif",
+      "px": [
+        1000,
+        700
+      ],
+      "decoded_mode": "RGB"
+    },
+    {
+      "file": "day-depth-1000.webp",
+      "px": [
+        1000,
+        700
+      ],
+      "decoded_mode": "RGB"
+    }
+  ]
+}

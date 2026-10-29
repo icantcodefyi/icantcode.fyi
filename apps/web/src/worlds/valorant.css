@@ -1,10 +1,16 @@
 .vl {
   --vl-red: #ff4655;
   --vl-ink: #f4f2f0;
+  --vl-light: 255 246 238;
   --vl-black: #0b0b0d;
   --vl-black-2: #111114;
+  --vl-face: #17171b;
   --vl-pad: clamp(20px, 4vw, 64px);
+  /* Valorant motion: hard in-out for the slash, expo-out for arrivals, a cut-in for exits; nothing overshoots */
   --vl-ease: cubic-bezier(0.77, 0, 0.175, 1);
+  --vl-snap: cubic-bezier(0.16, 1, 0.3, 1);
+  --vl-cut: cubic-bezier(0.7, 0, 0.84, 0);
+  --vl-wipe: 560ms;
   font-family: "Onest", system-ui, sans-serif;
 }
 
@@ -28,6 +34,70 @@
   background: repeating-linear-gradient(-60deg, var(--vl-red) 0 10px, transparent 10px 32px);
 }
 
+/* the left rail (desktop): a tick ladder with the pick's red mark, and a tag at its foot */
+.vl-rail { display: none; }
+@media (min-width: 1024px) {
+  .vl-rail {
+    display: block;
+    position: absolute;
+    left: clamp(18px, 1.6vw, 26px);
+    top: 72px;
+    bottom: 64px;
+    width: 8px;
+    pointer-events: none;
+  }
+  .vl-rail::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 1px;
+    background: rgb(244 242 240 / 0.16);
+  }
+  .vl-rail::after {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 5px;
+    background: repeating-linear-gradient(to bottom, rgb(244 242 240 / 0.28) 0 1px, rgb(244 242 240 / 0) 1px 12px);
+    -webkit-mask-image: linear-gradient(#000 70%, transparent 86%);
+    mask-image: linear-gradient(#000 70%, transparent 86%);
+  }
+  .vl-rail i {
+    position: absolute;
+    inset: 0 auto 0 -2px;
+    width: 5px;
+    transform: translateY(calc(var(--at) * 70%));
+  }
+  .vl-rail i::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: -11px;
+    width: 5px;
+    height: 22px;
+    background: var(--vl-red);
+  }
+  .vl-rail span {
+    position: absolute;
+    left: -3px;
+    bottom: 0;
+    writing-mode: vertical-rl;
+    rotate: 180deg;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    color: rgb(244 242 240 / 0.4);
+  }
+}
+@media (min-width: 1024px) and (prefers-reduced-motion: no-preference) {
+  .vl-rail i { transition: transform 420ms var(--vl-snap); }
+}
+html[data-mode="day"] .vl-rail::before { background: rgb(15 25 35 / 0.18); }
+html[data-mode="day"] .vl-rail::after { background: repeating-linear-gradient(to bottom, rgb(15 25 35 / 0.3) 0 1px, rgb(15 25 35 / 0) 1px 12px); }
+html[data-mode="day"] .vl-rail span { color: rgb(15 25 35 / 0.45); }
+
 /* layout: phones/tablet stack head, stage, tiles, info */
 .vl-grid {
   display: grid;
@@ -38,7 +108,21 @@
 .vl-stage { grid-area: stage; }
 .vl-tiles { grid-area: tiles; padding-top: 12px; }
 .vl-info { grid-area: info; padding-top: 32px; padding-bottom: 56px; }
-.vl-divider { display: block; margin-bottom: 24px; overflow: visible; }
+.vl-divider { display: block; margin-bottom: 22px; overflow: visible; }
+
+.vl-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgb(244 242 240 / 0.62);
+}
+.vl-eyebrow span { color: var(--vl-red); letter-spacing: 0.04em; }
 
 @media (min-width: 640px) {
   .vl-info .vl-swap {
@@ -47,7 +131,7 @@
     column-gap: 32px;
     align-items: end;
   }
-  .vl-info .vl-swap > ul { grid-column: 2; grid-row: 1 / span 3; margin-top: 0; }
+  .vl-info .vl-swap > .vl-kit { grid-column: 2; grid-row: 1 / span 3; margin-top: 0; }
 }
 
 /* desktop: left column is one vertically centred stack on a fixed rhythm */
@@ -60,13 +144,29 @@
   }
   .vl-stage { grid-column: 2; grid-row: 1 / -1; }
   .vl-head, .vl-info, .vl-tiles { grid-column: 1; padding-top: 0; padding-bottom: 0; }
-  .vl-head { padding-bottom: 40px; }
-  .vl-info { padding-bottom: 40px; }
+  /* the column centres in the section, never closer than 36px to either edge */
+  .vl-head { padding-top: 36px; padding-bottom: 30px; }
+  .vl-info { padding-bottom: 30px; }
+  .vl-tiles { padding-bottom: 36px; }
   .vl-info .vl-swap { display: block; }
-  .vl-info .vl-swap > ul { margin-top: 28px; }
+  .vl-info .vl-swap > .vl-kit { margin-top: 24px; }
+}
+/* laptops: the same column on a tighter rhythm, so it fits an 800px screen */
+@media (min-width: 1024px) and (max-height: 880px) {
+  .vl-head { padding-top: 30px; padding-bottom: 22px; }
+  .vl-eyebrow { margin-bottom: 10px; }
+  .vl-divider { margin-bottom: 16px; }
+  .vl-name { margin-top: 8px; font-size: clamp(64px, 6.4vw, 96px); }
+  .vl-line { margin-top: 12px; }
+  .vl-info .vl-swap > .vl-kit { margin-top: 18px; }
+  .vl-readout { margin-top: 12px; min-height: 66px; }
+  .vl-info { padding-bottom: 22px; }
+  .vl-tiles { padding-bottom: 30px; }
+  .vl-tile-img { aspect-ratio: 5 / 4; object-position: 50% 18%; }
+  .vl-tile-name { padding-top: 5px; padding-bottom: 8px; }
 }
 
-/* stage: black field, red field, split on the diagonal */
+/* ───────── The stage ───────── */
 .vl-stage {
   position: relative;
   overflow: hidden;
@@ -79,81 +179,145 @@
   .vl-stage { height: auto; min-height: 100%; }
 }
 
-.vl-layer {
-  position: absolute;
-  inset: 0;
-  background: color-mix(in srgb, var(--vl-a) 16%, var(--vl-black-2));
+/* The painting covers the stage with 6% to spare on every side, so the
+   camera's drift never shows an edge. The PlateSpec's box can't follow the
+   stage's aspect, so it's replaced here; the GL backend reads the <img>'s
+   cover rect, so the reliefs land exactly where these do. */
+.vl-stage > .depth-plate {
+  inset: -6% !important;
+  width: auto !important;
+  aspect-ratio: auto !important;
 }
-.vl-field {
-  position: absolute;
-  inset: 0;
-  background: var(--vl-red);
-  clip-path: polygon(40% 0, 100% 0, 100% 100%, 14% 100%);
-}
-/* the rooftop at dusk, through the red field under a Valorant-red wash
-   (VALORANT_STAGE.tint, set on the stage); plain red stays under it until
-   the paint lands */
-.vl-field::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: var(--vl-wash);
-}
-html[data-mode="day"] .vl-field::after { background: var(--vl-wash-day); }
-.vl-roof {
-  position: absolute;
-  inset: -56px -24px;
-}
-.vl-roof > img {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  max-width: none;
+.vl-stage > .depth-plate > img {
   object-fit: cover;
   object-position: var(--vl-roof-pos);
 }
-.vl-roof > img[data-set="day"] {
-  opacity: 0;
-  transition: opacity var(--dur-scene) var(--ease-io);
-}
-html[data-mode="day"] .vl-roof > img[data-set="day"] { opacity: 1; }
 
+/* the same box as the plates (so the camera scales it about the same point), and the painting's cover rect inside it */
+.vl-frame {
+  position: absolute;
+  inset: -6%;
+  pointer-events: none;
+}
+.vl-cover {
+  --w: max(112cqw, 99.5556cqh);
+  --h: max(112cqh, 126cqw);
+  position: absolute;
+  width: var(--w);
+  height: var(--h);
+  left: calc((112cqw - var(--w)) * var(--vl-px));
+  top: calc((112cqh - var(--h)) * var(--vl-py));
+}
+
+/* radianite: glints on the painted crystals and the vein glowing through the island, screened onto the paint */
+.vl-crystals { z-index: 1; mix-blend-mode: screen; }
+.vl-glint {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: 16px;
+  height: 16px;
+  margin: -8px 0 0 -8px;
+  background: rgb(var(--vl-light));
+  clip-path: polygon(50% 0, 58% 42%, 100% 50%, 58% 58%, 50% 100%, 42% 58%, 0 50%, 42% 42%);
+  opacity: 0;
+}
+.vl-vein {
+  position: absolute;
+  left: 30%;
+  top: 11%;
+  width: 16%;
+  height: 16%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgb(255 70 85 / 0.55), rgb(255 70 85 / 0.18) 55%, rgb(255 70 85 / 0));
+  opacity: 0.5;
+}
+
+/* Grade. Left of the slash the city goes to ink: no colour, held low.
+   Right of it, the red field: the painting under Valorant red. */
+.vl-ink,
+.vl-wash,
+.vl-key,
+.vl-shade,
 .vl-seam {
   position: absolute;
   inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+.vl-ink { clip-path: polygon(0 0, 40% 0, 14% 100%, 0 100%); }
+.vl-ink-tone { background: #808080; mix-blend-mode: color; }
+.vl-ink-dark {
+  background: linear-gradient(180deg, rgb(58 58 64), rgb(30 30 34) 70%, rgb(22 22 26));
+  mix-blend-mode: multiply;
+}
+.vl-wash {
+  clip-path: polygon(40% 0, 100% 0, 100% 100%, 14% 100%);
+  background: var(--vl-wash);
+}
+
+/* the agent's light: where it falls (screen) and where it doesn't (multiply) */
+.vl-key {
+  background: radial-gradient(
+    circle at var(--kx) var(--ky),
+    rgb(var(--vl-light) / var(--kg)) 0,
+    rgb(var(--vl-light) / calc(var(--kg) * 0.38)) calc(var(--kr) * 0.42),
+    rgb(var(--vl-light) / 0) var(--kr)
+  );
+  mix-blend-mode: screen;
+}
+.vl-flare {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: radial-gradient(circle at var(--kx) var(--ky), rgb(var(--vl-light) / 0.5) 0, rgb(var(--vl-light) / 0.16) calc(var(--kr) * 0.5), rgb(var(--vl-light) / 0) var(--kr));
+  mix-blend-mode: screen;
+  opacity: 0;
+}
+.vl-shade {
+  background:
+    linear-gradient(var(--sa), rgb(11 11 13 / var(--sd)) 0%, rgb(11 11 13 / 0) 72%),
+    radial-gradient(120% 90% at 60% 45%, rgb(11 11 13 / 0) 55%, rgb(11 11 13 / calc(var(--sd) * 0.9)) 100%);
+  mix-blend-mode: multiply;
+}
+
+.vl-seam {
+  z-index: 2;
   background: var(--vl-red);
   clip-path: polygon(36.4% 0, 37.2% 0, 11.2% 100%, 10.4% 100%);
 }
-.vl-texture {
+/* on a swap the seam flashes white as the blade leaves it */
+.vl-seam-flare {
+  z-index: 3;
+  background: var(--vl-ink);
+  clip-path: polygon(35.9% 0, 37.7% 0, 11.7% 100%, 9.9% 100%);
+  opacity: 0;
+}
+
+/* ───────── The agent ───────── */
+.vl-agent {
   position: absolute;
-  right: 4%;
-  top: 0;
-  height: 100%;
-  width: auto;
-  opacity: 0.14;
-  filter: brightness(0);
+  inset: 0;
+  z-index: 2;
   pointer-events: none;
 }
 
-.vl-bigname {
+/* Riot's own typography for the agent, behind them */
+.vl-type {
   position: absolute;
   inset: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding-bottom: 8cqh;
-  font-family: "Anton", "Impact", sans-serif;
-  text-transform: uppercase;
-  line-height: 0.8;
-  font-size: min(calc(178cqw / var(--vl-len)), 62cqh);
-  white-space: nowrap;
-  pointer-events: none;
-  user-select: none;
 }
-.vl-bigname span {
-  color: transparent;
-  -webkit-text-stroke: 2px rgb(244 242 240 / 0.42);
+.vl-type img {
+  position: absolute;
+  left: 55%;
+  top: 50%;
+  height: 104%;
+  width: auto;
+  max-width: none;
+  transform: translate(-50%, -50%);
+  opacity: 0.2;
+  user-select: none;
 }
 
 .vl-portrait {
@@ -164,6 +328,9 @@ html[data-mode="day"] .vl-roof > img[data-set="day"] { opacity: 1; }
   width: auto;
   max-width: none;
   transform: translateX(-50%);
+  transform-origin: 50% 100%;
+  /* the key light catching the agent's edge, and the red field bouncing back into the other one */
+  filter: drop-shadow(var(--rim-x) var(--rim-y) 0 rgb(var(--vl-light) / 0.5)) drop-shadow(calc(var(--rim-x) * -1) 0 0 rgb(255 70 85 / 0.45));
   pointer-events: none;
   user-select: none;
 }
@@ -171,7 +338,7 @@ html[data-mode="day"] .vl-roof > img[data-set="day"] { opacity: 1; }
   .vl-portrait { top: -4%; height: 140%; left: 54%; }
 }
 
-/* the air behind the agent: a light shaft on the seam's angle, dust turning in it, and radianite glints */
+/* the air behind the agent: a light shaft from their key, dust turning in it */
 .vl-air {
   position: absolute;
   inset: 0;
@@ -179,48 +346,207 @@ html[data-mode="day"] .vl-roof > img[data-set="day"] { opacity: 1; }
 }
 .vl-shaft {
   position: absolute;
-  left: 52%;
+  left: calc(var(--sx) - 15%);
   top: -12%;
   width: 30%;
   height: 124%;
-  rotate: 14deg;
-  background: linear-gradient(90deg, rgb(255 255 255 / 0), rgb(255 255 255 / 0.1) 38%, rgb(255 255 255 / 0.16) 50%, rgb(255 255 255 / 0.1) 62%, rgb(255 255 255 / 0));
+  rotate: var(--st);
+  background: linear-gradient(90deg, rgb(var(--vl-light) / 0), rgb(var(--vl-light) / 0.09) 38%, rgb(var(--vl-light) / 0.15) 50%, rgb(var(--vl-light) / 0.09) 62%, rgb(var(--vl-light) / 0));
   -webkit-mask-image: linear-gradient(#000 10%, transparent 92%);
   mask-image: linear-gradient(#000 10%, transparent 92%);
 }
 .vl-dust {
   position: absolute;
-  left: var(--x);
+  left: calc(var(--sx) + var(--x) * 0.4);
   top: var(--y);
   width: var(--s);
   height: var(--s);
   border-radius: 50%;
-  background: #fff;
+  background: rgb(var(--vl-light));
   opacity: 0;
 }
-.vl-glint {
+
+/* signatures (valorant/signatures.tsx) */
+.vl-sig {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.vl-wind span {
+  position: absolute;
+  left: 0;
+  top: var(--y);
+  width: var(--w);
+  height: 1.5px;
+  rotate: -5deg;
+  background: linear-gradient(90deg, rgb(var(--vl-light) / 0), rgb(var(--vl-light) / 0.75) 70%, rgb(var(--vl-light) / 0));
+  opacity: 0;
+}
+.vl-recon-wave {
+  position: absolute;
+  top: -4%;
+  bottom: -4%;
+  left: 0;
+  width: 16cqw;
+  background: linear-gradient(90deg, rgb(var(--vl-light) / 0), rgb(var(--vl-light) / 0.08) 70%, rgb(var(--vl-light) / 0.5) 97%, rgb(var(--vl-light) / 0));
+  transform: translateX(-20cqw) skewX(-14deg);
+  opacity: 0;
+}
+.vl-recon-mark {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: 10px;
+  height: 10px;
+  margin: -5px 0 0 -5px;
+  rotate: 45deg;
+  border: 1.5px solid var(--vl-red);
+  background: rgb(255 70 85 / 0.35);
+  box-shadow: 0 0 8px rgb(255 70 85 / 0.7);
+  opacity: 0;
+}
+.vl-recon-mark::after {
+  content: "";
+  position: absolute;
+  inset: -5px;
+  border: 1px solid rgb(255 70 85 / 0.8);
+  opacity: 0;
+}
+.vl-lockdown {
+  position: absolute;
+  left: 56%;
+  top: 93%;
+  width: 70cqw;
+  height: 16cqw;
+  margin: -8cqw 0 0 -35cqw;
+  border: 1.5px solid rgb(255 70 85 / 0.8);
+  border-radius: 50%;
+  box-shadow: 0 0 14px rgb(255 70 85 / 0.45), inset 0 0 14px rgb(255 70 85 / 0.3);
+  scale: 0.05;
+  opacity: 0;
+}
+.vl-nano {
   position: absolute;
   left: var(--x);
   top: var(--y);
   width: 14px;
-  height: 14px;
-  margin: -7px 0 0 -7px;
-  background: #d8fff6;
-  clip-path: polygon(50% 0, 58% 42%, 100% 50%, 58% 58%, 50% 100%, 42% 58%, 0 50%, 42% 42%);
-  filter: drop-shadow(0 0 4px #5effd8);
-  opacity: 0;
+  height: 7px;
+  margin: -4px 0 0 -7px;
+  border-radius: 50%;
+  background: #1c1c21;
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 0.18);
 }
+.vl-nano::after {
+  content: "";
+  position: absolute;
+  left: 5px;
+  top: 1px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--vl-red);
+  box-shadow: 0 0 6px 1px rgb(255 70 85 / 0.9);
+}
+.vl-wire::before {
+  /* a surveillance feed over the rooftop, under the agent */
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(0deg, rgb(0 0 0 / 0.16) 0 1px, rgb(0 0 0 / 0) 1px 4px);
+}
+.vl-wire-line {
+  position: absolute;
+  left: 15%;
+  right: 3%;
+  top: 83%;
+  height: 1px;
+  rotate: -1.4deg;
+  overflow: hidden;
+  background: rgb(var(--vl-light) / 0.45);
+  box-shadow: 0 0 5px rgb(255 70 85 / 0.7);
+}
+.vl-wire-line i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 10%;
+  background: linear-gradient(90deg, rgb(var(--vl-light) / 0), rgb(var(--vl-light)), rgb(var(--vl-light) / 0));
+  transform: translateX(-100%);
+}
+.vl-wire-post {
+  position: absolute;
+  top: calc(83% - 6px);
+  width: 6px;
+  height: 11px;
+  background: #1c1c21;
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 0.25);
+}
+.vl-wire-post::after {
+  content: "";
+  position: absolute;
+  left: 1px;
+  top: 2px;
+  width: 4px;
+  height: 2px;
+  background: var(--vl-red);
+}
+.vl-wire-a { left: calc(15% - 4px); top: calc(83% - 5px + 0.85cqw); }
+.vl-wire-b { right: calc(3% - 3px); top: calc(83% - 6px - 0.95cqw); }
 
-.vl-slash {
+/* the slash: an off-white blade with a red trailing edge, parallel to the seam */
+.vl-slash,
+.vl-slash-edge {
   position: absolute;
   inset: 0;
   z-index: 3;
-  background: var(--vl-ink);
-  clip-path: polygon(-34% 0, -30% 0, -60% 100%, -64% 100%);
   pointer-events: none;
+  background: var(--vl-ink);
+  clip-path: polygon(-4% 0, -1% 0, -27% 100%, -30% 100%);
+}
+.vl-slash-pass {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  background: rgb(var(--vl-light) / 0.2);
+  mix-blend-mode: screen;
+  clip-path: polygon(-18% 0, -4% 0, -30% 100%, -44% 100%);
+}
+.vl-slash-edge {
+  background: var(--vl-red);
+  clip-path: polygon(-5.4% 0, -4% 0, -30% 100%, -31.4% 100%);
 }
 
-/* frame geometry: the HUD is one layer on the stage glass */
+/* the select shot: a tracer crosses the stage low, under every face, with a muzzle bloom at the edge */
+.vl-tracer {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+.vl-tracer span {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 84%;
+  height: 2px;
+  rotate: -1.5deg;
+  background: linear-gradient(90deg, rgb(255 255 255 / 0), rgb(255 255 255 / 0.75) 40%, #fff 96%, rgb(255 255 255 / 0));
+  box-shadow: 0 0 6px 1px rgb(255 70 85 / 0.9), 0 0 18px 2px rgb(255 70 85 / 0.45);
+  clip-path: inset(-12px 100% -12px 0);
+}
+.vl-tracer::before {
+  content: "";
+  position: absolute;
+  left: -6px;
+  top: calc(84% - 10px);
+  width: 64px;
+  height: 22px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, #fff, rgb(255 70 85 / 0.8) 45%, rgb(255 70 85 / 0));
+  opacity: 0;
+}
+
+/* ───────── HUD: one layer on the stage glass ───────── */
 .vl-hud {
   position: absolute;
   inset: 0;
@@ -230,7 +556,6 @@ html[data-mode="day"] .vl-roof > img[data-set="day"] { opacity: 1; }
 .vl-brackets {
   position: absolute;
   inset: clamp(12px, 2.4vw, 28px);
-  z-index: 4;
   pointer-events: none;
 }
 .vl-bracket { position: absolute; }
@@ -239,20 +564,94 @@ html[data-mode="day"] .vl-roof > img[data-set="day"] { opacity: 1; }
 .vl-bracket-br { bottom: 0; right: 0; transform: scale(-1, -1); }
 .vl-bracket-bl { bottom: 0; left: 0; transform: scaleY(-1); }
 
+.vl-map {
+  position: absolute;
+  left: clamp(40px, 4.6vw, 70px);
+  top: clamp(46px, 5vw, 74px);
+}
+.vl-map-bar {
+  display: block;
+  width: 26px;
+  height: 4px;
+  margin-bottom: 10px;
+  background: var(--vl-red);
+}
+.vl-map-name {
+  font-family: "Anton", "Impact", sans-serif;
+  font-size: clamp(22px, 2vw, 30px);
+  line-height: 0.9;
+  text-transform: uppercase;
+}
+.vl-map-coords {
+  margin-top: 7px;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: 0.08em;
+  opacity: 0.62;
+}
+
 .vl-radar {
   position: absolute;
-  z-index: 4;
   top: clamp(24px, 4vw, 52px);
   right: clamp(24px, 4vw, 52px);
   width: clamp(104px, 12vw, 176px);
-  height: auto;
+  aspect-ratio: 1;
 }
-.vl-sweep { transform-origin: 100px 100px; transform-box: view-box; }
-.vl-blip { opacity: 0.85; transform-box: fill-box; transform-origin: center; }
+.vl-radar > svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.vl-sweep {
+  position: absolute;
+  inset: 11%;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, rgb(255 70 85 / 0) 0deg 290deg, rgb(255 70 85 / 0.08) 314deg, rgb(255 70 85 / 0.3) 357deg, rgb(255 70 85 / 0) 360deg);
+}
+.vl-sweep::after {
+  content: "";
+  position: absolute;
+  left: calc(50% - 1px);
+  top: 0;
+  width: 2px;
+  height: 50%;
+  background: var(--vl-red);
+}
+.vl-blip {
+  position: absolute;
+  width: 8%;
+  height: 8%;
+  margin: -4% 0 0 -4%;
+  opacity: 0.85;
+}
+.vl-blip::before {
+  content: "";
+  position: absolute;
+  inset: 22%;
+  rotate: 45deg;
+  background: var(--vl-red);
+}
+.vl-blip::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1px solid rgb(255 70 85 / 0.6);
+}
+.vl-spike-ring {
+  position: absolute;
+  inset: 44%;
+  border-radius: 50%;
+  border: 1.5px solid currentColor;
+  opacity: 0;
+}
+.vl-spike { position: absolute; inset: 0; width: 100%; height: 100%; }
 
 .vl-ladder {
   position: absolute;
-  z-index: 4;
   right: clamp(24px, 4vw, 52px);
   top: 50%;
   transform: translateY(-50%);
@@ -261,9 +660,103 @@ html[data-mode="day"] .vl-roof > img[data-set="day"] { opacity: 1; }
 
 .vl-plate {
   position: absolute;
-  z-index: 4;
   left: clamp(28px, 4.6vw, 60px);
   bottom: clamp(28px, 4.6vw, 60px);
+  display: grid;
+  justify-items: start;
+  gap: 8px;
+}
+.vl-plate-bar {
+  position: relative;
+  width: 232px;
+  height: 36px;
+}
+.vl-plate-ko,
+.vl-plate-run {
+  position: absolute;
+  inset: 0;
+  clip-path: polygon(4.31% 11.11%, 81.03% 11.11%, 76.72% 88.89%, 0 88.89%);
+}
+.vl-plate-ko { background: rgb(11 11 13 / 0.9); }
+.vl-plate-run { overflow: hidden; }
+.vl-plate-run::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 0 -32px;
+  background: repeating-linear-gradient(113.6deg, var(--vl-red) 0 6.4px, rgb(255 70 85 / 0) 6.4px 14.66px);
+}
+.vl-plate-line {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.vl-plate-chip { fill: #0b0b0d; }
+.vl-plate-text {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 24px;
+  padding: 0 18px 0 10px;
+  background: rgb(11 11 13 / 0.84);
+  clip-path: polygon(0 0, 100% 0, calc(100% - 9px) 100%, 0 100%);
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+.vl-plate-text b {
+  font-family: "Anton", "Impact", sans-serif;
+  font-size: 15px;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+}
+.vl-plate-dot { width: 6px; height: 6px; background: var(--vl-red); }
+
+/* the feed, bottom right: lock-ins and casts the way the game reports them */
+.vl-feed {
+  position: absolute;
+  right: clamp(28px, 4.6vw, 60px);
+  bottom: clamp(28px, 4.6vw, 60px);
+  display: grid;
+  justify-items: end;
+  gap: 6px;
+}
+.vl-feed-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 30px;
+  padding: 0 12px 0 10px;
+  background: rgb(11 11 13 / 0.78);
+  box-shadow: inset 3px 0 0 var(--vl-red);
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--vl-ink);
+  opacity: 0;
+}
+.vl-feed-row b {
+  font-family: "Anton", "Impact", sans-serif;
+  font-size: 15px;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+}
+.vl-feed-row img { width: 18px; height: 18px; }
+.vl-feed-who { opacity: 0.62; }
+.vl-feed-key {
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  background: var(--vl-red);
+  color: #0b0b0d;
+  letter-spacing: 0;
 }
 
 @media (min-width: 1024px) {
@@ -271,25 +764,195 @@ html[data-mode="day"] .vl-roof > img[data-set="day"] { opacity: 1; }
   /* the mode dock lives in the top-right 64px of the section: the radar starts below it */
   .vl-radar { top: clamp(54px, 4.4vw, 64px); }
 }
-/* phones: radar takes the empty black corner, plate shrinks into the bottom-left */
+/* phones: the radar drops under the dock's corner, the plate shrinks into the bottom-left */
 @media (max-width: 639px) {
   .vl-bracket-tl { display: none; }
-  .vl-radar { right: auto; left: 14px; top: 14px; width: 88px; }
-  .vl-plate { left: 14px; bottom: 16px; width: 128px; height: auto; }
+  .vl-map { left: 16px; top: 18px; }
+  .vl-map-coords { font-size: 9px; }
+  .vl-radar { top: 64px; right: 14px; width: 84px; }
+  .vl-plate { left: 14px; bottom: 16px; }
+  .vl-plate-bar { width: 128px; height: 20px; }
+  .vl-plate { gap: 6px; }
+  .vl-plate-text { font-size: 9px; }
+  .vl-plate-text b { font-size: 13px; }
+  .vl-feed { right: 14px; bottom: 16px; }
+  .vl-feed-row { height: 24px; padding: 0 8px 0 8px; font-size: 9px; }
+  .vl-feed-row b { font-size: 12px; }
+  .vl-feed-row img { width: 14px; height: 14px; }
   .vl-portrait { left: 56%; height: 140%; top: -2%; }
 }
 
-/* tiles */
+/* ───────── Info: role, name, line and the ability bar ───────── */
+.vl-role {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgb(244 242 240 / 0.72);
+}
+.vl-role-icon {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  background: var(--vl-red);
+}
+.vl-role-icon img { width: 20px; height: 20px; filter: brightness(0); }
+.vl-role-num {
+  margin-left: auto;
+  font-family: "Anton", "Impact", sans-serif;
+  font-size: 18px;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  color: var(--vl-ink);
+}
+.vl-role-num i { font-style: normal; opacity: 0.42; }
+
+.vl-name {
+  position: relative;
+  margin-top: 12px;
+  width: fit-content;
+}
+.vl-name::after {
+  content: "";
+  position: absolute;
+  inset: 2% -3% 0 -2%;
+  background: var(--vl-red);
+  clip-path: inset(0 100% 0 0);
+  pointer-events: none;
+}
+
+.vl-kit { margin-top: 28px; }
+.vl-keys {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 72px));
+  gap: 10px;
+}
+.vl-keycap {
+  position: relative;
+  display: grid;
+  gap: 6px;
+  color: var(--vl-ink);
+  cursor: pointer;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.vl-keycap-face {
+  position: relative;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  overflow: hidden;
+  background: var(--vl-face);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.12);
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%);
+}
+.vl-keycap-face img { width: 54%; height: auto; }
+/* the sheen that crosses the face once as it's armed */
+.vl-keycap-face::after {
+  content: "";
+  position: absolute;
+  inset: -20% auto -20% 0;
+  width: 46%;
+  background: linear-gradient(90deg, rgb(var(--vl-light) / 0), rgb(var(--vl-light) / 0.28), rgb(var(--vl-light) / 0));
+  transform: translateX(-120%) skewX(-14deg);
+}
+.vl-keycap-key {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  background: rgb(244 242 240 / 0.1);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+}
+.vl-keycap[data-ult] .vl-keycap-face { box-shadow: inset 0 0 0 1px rgb(255 70 85 / 0.5); }
+/* charges: pips under the face, filling one by one when the key is armed */
+.vl-charge {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 3px;
+  height: 3px;
+}
+.vl-charge i {
+  background: rgb(244 242 240 / 0.16);
+  transform-origin: left;
+}
+.vl-charge i::after {
+  content: "";
+  display: block;
+  height: 100%;
+  background: var(--vl-red);
+  transform: scaleX(0);
+  transform-origin: left;
+}
+
+.vl-keycap[aria-selected="true"] .vl-keycap-face { background: var(--vl-red); box-shadow: none; }
+.vl-keycap[aria-selected="true"] .vl-keycap-face img { filter: brightness(0); }
+.vl-keycap[aria-selected="true"] .vl-keycap-key { background: var(--vl-black); color: var(--vl-ink); }
+.vl-keycap[aria-selected="true"] .vl-charge i::after { transform: none; }
+.vl-keycap:focus-visible .vl-keycap-face {
+  box-shadow: inset 0 0 0 2px var(--vl-ink), inset 0 0 0 4px var(--vl-black);
+}
+
+.vl-readout {
+  margin-top: 16px;
+  min-height: 84px;
+  max-width: 44ch;
+}
+.vl-readout-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.vl-readout-key {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  box-shadow: inset 0 0 0 1px rgb(244 242 240 / 0.5);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+}
+.vl-readout-name { font-size: 26px; line-height: 1; }
+.vl-readout-tag {
+  padding: 4px 6px 3px;
+  box-shadow: inset 0 0 0 1px var(--vl-red);
+  color: var(--vl-red);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+.vl-readout-what {
+  margin-top: 8px;
+  font-size: 16px;
+  line-height: 1.45;
+  color: rgb(244 242 240 / 0.7);
+}
+
+/* ───────── Tiles ───────── */
 .vl-tile {
   position: relative;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: #17171b;
+  background: var(--vl-face);
   color: var(--vl-ink);
   clip-path: polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%);
   cursor: pointer;
   outline: none;
+  -webkit-tap-highlight-color: transparent;
 }
 .vl-tile::before {
   content: "";
@@ -355,57 +1018,71 @@ html[data-mode="day"] .vl-roof > img[data-set="day"] { opacity: 1; }
   .vl-tile:hover + .vl-marks { opacity: 1; transform: none; }
 }
 
-/* the select shot: a tracer crosses the stage low, under every face, with a muzzle bloom at the edge */
-.vl-tracer {
-  position: absolute;
-  inset: 0;
-  z-index: 3;
-  pointer-events: none;
-}
-.vl-tracer span {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 84%;
-  height: 2px;
-  rotate: -1.5deg;
-  background: linear-gradient(90deg, rgb(255 255 255 / 0), rgb(255 255 255 / 0.75) 40%, #fff 96%, rgb(255 255 255 / 0));
-  box-shadow: 0 0 6px 1px rgb(255 70 85 / 0.9), 0 0 18px 2px rgb(255 70 85 / 0.45);
-  clip-path: inset(-12px 100% -12px 0);
-}
-.vl-tracer::before {
-  content: "";
-  position: absolute;
-  left: -6px;
-  top: calc(84% - 10px);
-  width: 64px;
-  height: 22px;
-  border-radius: 50%;
-  background: radial-gradient(closest-side, #fff, rgb(255 70 85 / 0.8) 45%, rgb(255 70 85 / 0));
-  opacity: 0;
+@media (min-width: 640px) and (max-width: 1023px) {
+  .vl-tile-img { aspect-ratio: 16 / 11; object-position: 50% 20%; }
 }
 
+/* ───────── Motion ───────── */
 @media (prefers-reduced-motion: no-preference) {
   .vl-hazard > div { animation: vl-tape 1.6s linear infinite; }
-  .vl-plate-stripes { animation: vl-plate 1.2s linear infinite; }
+  .vl-plate-run::before { animation: vl-plate 1.2s linear infinite; }
   .vl-sweep { animation: vl-spin 4s linear infinite; }
-  .vl-blip { animation: vl-ping 4s linear infinite; animation-delay: var(--vl-delay); }
-  .vl-spike-ring { transform-box: fill-box; transform-origin: center; animation: vl-spike 1.4s var(--vl-ease) infinite; }
+  .vl-blip { animation: vl-ping 4s linear var(--vl-delay) infinite both; }
+  .vl-spike-ring { animation: vl-spike 1.4s var(--vl-ease) infinite; }
 
-  .vl-wipe { animation: vl-wipe 720ms var(--vl-ease) both; z-index: 2; }
-  .vl-wipe .vl-portrait { animation: vl-settle 900ms cubic-bezier(0.16, 1, 0.3, 1) both; }
-  .vl-wipe .vl-bigname { animation: vl-drift 900ms cubic-bezier(0.16, 1, 0.3, 1) both; }
-  .vl-slash { animation: vl-slash 720ms var(--vl-ease) both; }
-  .vl-swap { animation: vl-rise 520ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+  /* the swap: one blade, everything behind it new, everything ahead of it the old pick */
+  .vl-stage [data-phase="in"] { animation: vl-reveal var(--vl-wipe) var(--vl-ease) both; }
+  .vl-stage [data-phase="out"] { animation: vl-conceal var(--vl-wipe) var(--vl-ease) both; }
+  .vl-slash { animation: vl-blade var(--vl-wipe) var(--vl-ease) both; }
+  .vl-slash-edge { animation: vl-blade-edge var(--vl-wipe) var(--vl-ease) both; }
+  .vl-slash-pass { animation: vl-blade-pass var(--vl-wipe) var(--vl-ease) both; }
+  .vl-agent[data-phase="in"] .vl-portrait { animation: vl-settle 820ms var(--vl-snap) both; }
+  .vl-agent[data-phase="out"] .vl-portrait { animation: vl-leave var(--vl-wipe) var(--vl-cut) both; }
+  .vl-agent[data-phase="in"] .vl-type img { animation: vl-type 820ms var(--vl-snap) both; }
+  .vl-seam-flare { animation: vl-flare 460ms ease-out both; }
 
-  .vl-tile::before { transition: transform 320ms var(--vl-ease); }
-  .vl-tile-img { transition: transform 320ms cubic-bezier(0.16, 1, 0.3, 1); }
+  .vl[data-swapped] .vl-swap > * { animation: vl-rise 420ms var(--vl-snap) both; animation-delay: calc(var(--d, 0) * 1ms); }
+  .vl[data-swapped] .vl-swap > .vl-role { --d: 30; }
+  .vl[data-swapped] .vl-swap > .vl-name { animation: none; }
+  .vl[data-swapped] .vl-name > span { animation: vl-name-text 440ms steps(1, end) both; }
+  .vl[data-swapped] .vl-name::after { animation: vl-block 440ms var(--vl-ease) both; }
+  .vl[data-swapped] .vl-swap > .vl-line { --d: 90; }
+  .vl[data-swapped] .vl-swap > .vl-kit { --d: 130; }
+  /* the plate reads the new name as the blade crosses it, not before */
+  .vl[data-swapped] .vl-plate-text { animation: vl-hud-in 360ms steps(4, end) 200ms both; }
+  .vl-readout-in { animation: vl-rise 320ms var(--vl-snap) both; }
+  .vl-flare { animation: vl-cast 620ms var(--vl-snap) both; }
+  .vl-feed-row { animation: vl-post 3800ms linear both; }
+
+  .vl-tile::before { transition: transform 260ms var(--vl-ease); }
+  .vl-tile-img { transition: transform 320ms var(--vl-snap); }
   .vl-tile:hover .vl-tile-img { transform: scale(1.06); }
+  .vl-tile:active { scale: 0.97; }
+  .vl-tile { transition: scale 90ms ease-out, background-color var(--dur-micro) var(--ease); }
   .vl-marks { transition: opacity var(--dur-micro) var(--ease), transform var(--dur-micro) var(--ease); }
+
+  .vl-keycap-face { transition: background-color 160ms ease-out, translate 200ms var(--vl-snap); }
+  .vl-keycap-face img { transition: scale 200ms var(--vl-snap), filter 160ms ease-out; }
+  .vl-keycap-key { transition: background-color 160ms ease-out, color 160ms ease-out; }
+  .vl-charge i::after { transition: transform 140ms var(--vl-snap) calc(var(--k) * 34ms); }
+  .vl-keycap:active .vl-keycap-face { translate: 0 1px; }
+  .vl-keycap[aria-selected="true"] .vl-keycap-face::after { animation: vl-sheen 520ms var(--vl-ease) both; }
+  .vl-keycap[aria-selected="true"][data-ult] .vl-keycap-face { animation: vl-ult 900ms var(--vl-snap) both; }
+
   .vl-tracer span { animation: vl-tracer 520ms cubic-bezier(0.3, 0, 0.2, 1) 60ms both; }
+  .vl-tracer::before { animation: vl-muzzle 220ms ease-out 40ms both; }
   .vl-dust { animation: vl-dust var(--dur) ease-in-out var(--delay) infinite; }
   .vl-glint { animation: vl-glint var(--dur) ease-out var(--delay) infinite; }
-  .vl-tracer::before { animation: vl-muzzle 220ms ease-out 40ms both; }
+  .vl-vein { animation: vl-vein 5.9s ease-in-out infinite; }
+  .vl-wind span { animation: vl-gust var(--dur) cubic-bezier(0.45, 0, 0.2, 1) var(--delay) infinite; }
+  .vl-recon-wave { animation: vl-wave var(--dur) linear infinite; }
+  .vl-recon-mark { animation: vl-mark var(--dur) ease-out var(--delay) infinite; }
+  .vl-recon-mark::after { animation: vl-mark-ring var(--dur) var(--vl-snap) var(--delay) infinite; }
+  /* the agent at rest breathes, the way they idle in the client: half a percent, from the feet */
+  .vl-agent[data-phase="rest"] .vl-portrait { animation: vl-idle 6.8s ease-in-out infinite alternate; }
+  .vl-lockdown { animation: vl-lockdown 6.4s cubic-bezier(0.2, 0.7, 0.3, 1) infinite; }
+  .vl-nano::after { animation: vl-blink 1.6s steps(1, end) var(--delay) infinite; }
+  .vl-wire-line i { animation: vl-wire 5.2s cubic-bezier(0.6, 0, 0.3, 1) infinite; }
 
   .vl-js:not(.vl-in) .vl-enter,
   .vl-js:not(.vl-in) .vl-info,
@@ -415,50 +1092,142 @@ html[data-mode="day"] .vl-roof > img[data-set="day"] { opacity: 1; }
   .vl-js:not(.vl-in) .vl-bracket-br { transform: scale(-1, -1) translate(-24px, -24px); opacity: 0; }
   .vl-js:not(.vl-in) .vl-bracket-bl { transform: scaleY(-1) translate(-24px, -24px); opacity: 0; }
   .vl-js:not(.vl-in) .vl-plate { transform: translateX(-120%); }
+  .vl-js:not(.vl-in) .vl-map { opacity: 0; transform: translateX(-16px); }
   .vl-js:not(.vl-in) .vl-hazard > div { transform: translateX(-100%); }
-  .vl-js:not(.vl-in) .vl-stage { clip-path: polygon(0 0, 0 0, 0 100%, 0 100%); }
-  .vl-js .vl-enter, .vl-js .vl-info, .vl-js .vl-tiles, .vl-js .vl-bracket, .vl-js .vl-plate {
-    transition: transform 700ms cubic-bezier(0.16, 1, 0.3, 1) 180ms, opacity 400ms ease 180ms;
+  .vl-js:not(.vl-in) .vl-stage { clip-path: polygon(-30% 0, -4% 0, -30% 100%, -30% 100%); }
+  .vl-js .vl-enter, .vl-js .vl-info, .vl-js .vl-tiles, .vl-js .vl-bracket, .vl-js .vl-plate, .vl-js .vl-map {
+    transition: transform 700ms var(--vl-snap) 180ms, opacity 400ms ease 180ms;
   }
-  .vl-js .vl-stage { transition: clip-path 760ms var(--vl-ease); clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); }
+  /* the stage arrives the way an agent does: behind the blade */
+  .vl-js .vl-stage { transition: clip-path 760ms var(--vl-ease); clip-path: polygon(-30% 0, 126% 0, 100% 100%, -30% 100%); }
+  .vl-js .vl-stage::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    pointer-events: none;
+    background: var(--vl-ink);
+    clip-path: polygon(-7% 0, -4% 0, -30% 100%, -33% 100%);
+  }
+  /* the stage's own clip would cut a blade ahead of its edge: this one rides just inside it */
+  .vl-js.vl-in .vl-stage::after { animation: vl-blade-lead 760ms var(--vl-ease) both; }
 }
+@media (prefers-reduced-motion: reduce) {
+  .vl-feed-row { opacity: 1; }
+}
+/* armed: hover on a fine pointer, or keyboard focus */
+@media (prefers-reduced-motion: no-preference) and (hover: hover) {
+  .vl-keycap:hover .vl-keycap-face { translate: 0 -2px; }
+  .vl-keycap:hover .vl-keycap-face::after { animation: vl-sheen 520ms var(--vl-ease) both; }
+}
+@media (hover: hover) {
+  .vl-keycap:hover:not([aria-selected="true"]) .vl-keycap-face { background: #222228; }
+  .vl-keycap:hover .vl-keycap-face img { scale: 1.08; }
+  .vl-keycap:hover .vl-keycap-key { background: var(--vl-red); color: var(--vl-black); }
+  .vl-keycap:hover .vl-charge i::after { transform: none; }
+}
+.vl-keycap:focus-visible .vl-charge i::after { transform: none; }
 
 @keyframes vl-tape { to { transform: translateX(37px); } }
 @keyframes vl-plate { to { transform: translateX(16px); } }
 @keyframes vl-spin { to { transform: rotate(360deg); } }
 @keyframes vl-ping {
-  0% { opacity: 1; transform: scale(1.15); }
-  40% { opacity: 0.55; transform: scale(1); }
-  100% { opacity: 0.2; transform: scale(1); }
+  0% { opacity: 1; transform: scale(1.3); }
+  12% { opacity: 0.9; transform: scale(1); }
+  100% { opacity: 0.15; transform: scale(1); }
 }
 @keyframes vl-spike {
   0% { transform: scale(1); opacity: 0.9; }
   100% { transform: scale(2.4); opacity: 0; }
 }
-@keyframes vl-wipe {
-  from { clip-path: polygon(-30% 0, 0% 0, -30% 100%, -30% 100%); }
-  to { clip-path: polygon(-30% 0, 130% 0, 100% 100%, -30% 100%); }
+/* the blade's line runs from (p + 26%, 0) to (p, 100%), parallel to the seam, p from -30% to 100% */
+@keyframes vl-reveal {
+  from { clip-path: polygon(-30% 0, -4% 0, -30% 100%, -30% 100%); }
+  to { clip-path: polygon(-30% 0, 126% 0, 100% 100%, -30% 100%); }
 }
-@keyframes vl-slash {
-  from { clip-path: polygon(-4% 0, 0% 0, -30% 100%, -34% 100%); }
-  to { clip-path: polygon(130% 0, 134% 0, 104% 100%, 100% 100%); }
+@keyframes vl-conceal {
+  from { clip-path: polygon(-4% 0, 130% 0, 130% 100%, -30% 100%); }
+  to { clip-path: polygon(126% 0, 130% 0, 130% 100%, 100% 100%); }
+}
+@keyframes vl-blade {
+  from { clip-path: polygon(-4% 0, -1% 0, -27% 100%, -30% 100%); }
+  to { clip-path: polygon(126% 0, 129% 0, 103% 100%, 100% 100%); }
+}
+@keyframes vl-blade-lead {
+  from { clip-path: polygon(-7% 0, -4% 0, -30% 100%, -33% 100%); }
+  to { clip-path: polygon(123% 0, 126% 0, 100% 100%, 97% 100%); }
+}
+@keyframes vl-blade-edge {
+  from { clip-path: polygon(-5.4% 0, -4% 0, -30% 100%, -31.4% 100%); }
+  to { clip-path: polygon(124.6% 0, 126% 0, 100% 100%, 98.6% 100%); }
+}
+@keyframes vl-cast {
+  0% { opacity: 0; }
+  12% { opacity: 1; }
+  100% { opacity: 0; }
+}
+@keyframes vl-post {
+  0% { opacity: 0; transform: translateX(24px); }
+  6% { opacity: 1; transform: none; }
+  90% { opacity: 1; transform: none; }
+  100% { opacity: 0; transform: none; }
+}
+@keyframes vl-flare {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+@keyframes vl-blade-pass {
+  from { clip-path: polygon(-18% 0, -4% 0, -30% 100%, -44% 100%); opacity: 1; }
+  70% { opacity: 1; }
+  to { clip-path: polygon(112% 0, 126% 0, 100% 100%, 86% 100%); opacity: 0; }
 }
 @keyframes vl-settle {
-  from { transform: translateX(-44%); }
+  from { transform: translateX(-43%); }
   to { transform: translateX(-50%); }
 }
-@keyframes vl-drift {
-  from { transform: translateX(-5%); }
-  to { transform: translateX(0); }
+@keyframes vl-leave {
+  to { transform: translateX(-53%); }
+}
+@keyframes vl-type {
+  from { transform: translate(-46%, -50%); opacity: 0; }
+  to { transform: translate(-50%, -50%); }
 }
 @keyframes vl-rise {
-  from { opacity: 0; transform: translateY(16px); }
+  from { opacity: 0; transform: translateY(12px); }
   to { opacity: 1; transform: translateY(0); }
+}
+@keyframes vl-block {
+  0% { clip-path: inset(0 100% 0 0); }
+  46%, 54% { clip-path: inset(0 0 0 0); }
+  100% { clip-path: inset(0 0 0 100%); }
+}
+@keyframes vl-name-text {
+  0% { opacity: 0; }
+  50%, 100% { opacity: 1; }
+}
+@keyframes vl-hud-in {
+  0% { opacity: 0; }
+  25% { opacity: 1; }
+  50% { opacity: 0.2; }
+  100% { opacity: 1; }
+}
+@keyframes vl-sheen {
+  from { transform: translateX(-120%) skewX(-14deg); }
+  to { transform: translateX(260%) skewX(-14deg); }
+}
+@keyframes vl-ult {
+  0% { box-shadow: 0 0 0 0 rgb(255 70 85 / 0.9); }
+  100% { box-shadow: 0 0 0 0 rgb(255 70 85 / 0); }
 }
 @keyframes vl-tracer {
   0% { clip-path: inset(-12px 100% -12px 0); }
   45% { clip-path: inset(-12px 0 -12px 0); }
   100% { clip-path: inset(-12px 0 -12px 100%); }
+}
+@keyframes vl-muzzle {
+  0% { opacity: 0; transform: scale(0.4); }
+  25% { opacity: 1; transform: scale(1.1); }
+  100% { opacity: 0; transform: scale(0.8); }
 }
 @keyframes vl-dust {
   0% { opacity: 0; transform: translate(0, 0); }
@@ -466,29 +1235,64 @@ html[data-mode="day"] .vl-roof > img[data-set="day"] { opacity: 1; }
   100% { opacity: 0; transform: translate(var(--dx), var(--dy)); }
 }
 @keyframes vl-glint {
-  0%, 90%, 100% { opacity: 0; transform: scale(0.3) rotate(0deg); }
-  93% { opacity: 1; transform: scale(1) rotate(45deg); }
+  0%, 88%, 100% { opacity: 0; transform: scale(0.2) rotate(0deg); }
+  92% { opacity: 1; transform: scale(1) rotate(45deg); }
 }
-@keyframes vl-muzzle {
-  0% { opacity: 0; transform: scale(0.4); }
-  25% { opacity: 1; transform: scale(1.1); }
-  100% { opacity: 0; transform: scale(0.8); }
+@keyframes vl-vein {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 0.85; }
 }
-
-@media (min-width: 640px) and (max-width: 1023px) {
-  .vl-tile-img { aspect-ratio: 16 / 11; object-position: 50% 20%; }
+@keyframes vl-gust {
+  0% { transform: translateX(-40cqw); opacity: 0; }
+  2% { opacity: 1; }
+  14% { opacity: 0.8; }
+  18%, 100% { transform: translateX(110cqw); opacity: 0; }
+}
+@keyframes vl-wave {
+  0% { transform: translateX(-20cqw) skewX(-14deg); opacity: 1; }
+  30% { transform: translateX(112cqw) skewX(-14deg); opacity: 1; }
+  30.01%, 100% { transform: translateX(112cqw) skewX(-14deg); opacity: 0; }
+}
+@keyframes vl-mark {
+  0% { opacity: 0; scale: 1.8; }
+  3% { opacity: 1; scale: 1; }
+  28% { opacity: 0.85; scale: 1; }
+  40%, 100% { opacity: 0; scale: 1; }
+}
+@keyframes vl-mark-ring {
+  0% { opacity: 0.9; scale: 1; }
+  12%, 100% { opacity: 0; scale: 2.4; }
+}
+@keyframes vl-idle {
+  from { transform: translateX(-50%); }
+  to { transform: translateX(-50%) translateY(-0.35%) scale(1.005); }
+}
+@keyframes vl-lockdown {
+  0% { scale: 0.05; opacity: 0; }
+  6% { opacity: 0.9; }
+  55% { scale: 1; opacity: 0; }
+  100% { scale: 1; opacity: 0; }
+}
+@keyframes vl-blink {
+  0% { opacity: 1; }
+  12% { opacity: 0.15; }
+}
+@keyframes vl-wire {
+  0%, 40% { transform: translateX(-100%); }
+  100% { transform: translateX(1000%); }
 }
 
 /* ───────── Day: Riot's bright agent screens ─────────
-   Bone ground, Valorant red, deep navy ink. Every SVG mark draws in
-   currentColor, so flipping the section colour redraws the radar, brackets,
-   ladder, tracer and plate in navy; `.vl-ko` parts are the knockouts. */
+   Bone ground, Valorant red, Valorant's near-black ink. Every SVG mark
+   draws in currentColor, so flipping the section colour redraws the radar,
+   brackets, ladder and plate; `.vl-ko` parts are the knockouts. */
 html[data-mode="day"] .vl {
   --vl-ink: #0f1923;
   --vl-black: #0f1923;
   --vl-black-2: #e3ded5;
   --vl-bone: #ece8e1;
   --vl-paper: #f7f5f1;
+  --vl-face: var(--vl-paper);
   --vl-red-text: #b81d2f;
   background: var(--vl-bone);
   color: var(--vl-ink);
@@ -498,25 +1302,41 @@ html[data-mode="day"] .vl .vl-ko { fill: var(--vl-paper); }
 html[data-mode="day"] .vl-title { color: var(--vl-red-text); }
 html[data-mode="day"] .vl-muted { color: #3b4653; }
 html[data-mode="day"] .vl-strong { color: var(--vl-ink); }
+html[data-mode="day"] .vl-eyebrow { color: #3b4653; }
+html[data-mode="day"] .vl-eyebrow span { color: var(--vl-red-text); }
+html[data-mode="day"] .vl-role { color: #3b4653; }
+html[data-mode="day"] .vl-readout-what { color: #3b4653; }
+html[data-mode="day"] .vl-readout-key { box-shadow: inset 0 0 0 1px rgb(15 25 35 / 0.5); }
+html[data-mode="day"] .vl-readout-tag { color: var(--vl-red-text); box-shadow: inset 0 0 0 1px var(--vl-red-text); }
 
-/* hazard tape: red bars on bone, navy kerb line */
+/* hazard tape: red bars on bone, ink kerb line */
 html[data-mode="day"] .vl-hazard {
   background: var(--vl-bone);
   border-bottom-color: var(--vl-ink);
 }
 
-/* stage: bone slice and red field on the same diagonal */
-html[data-mode="day"] .vl-layer {
-  background: color-mix(in srgb, var(--vl-a) 9%, var(--vl-paper));
+/* the stage by day: left of the slash the city is a pale print, right of it the coral field */
+html[data-mode="day"] .vl-ink-dark {
+  background: linear-gradient(180deg, rgb(236 232 225 / 0.78), rgb(236 232 225 / 0.86));
+  mix-blend-mode: screen;
 }
-html[data-mode="day"] .vl-bigname span {
-  -webkit-text-stroke: 2px rgb(15 25 35 / 0.32);
-}
+html[data-mode="day"] .vl-wash { background: var(--vl-wash-day); }
+html[data-mode="day"] .vl-key { opacity: 0.55; }
+html[data-mode="day"] .vl-shade { opacity: 0.6; }
+html[data-mode="day"] .vl-type img { opacity: 0.3; }
 html[data-mode="day"] .vl-slash { background: var(--vl-ink); }
+html[data-mode="day"] .vl-slash-pass { background: rgb(15 25 35 / 0.12); mix-blend-mode: multiply; }
+html[data-mode="day"] .vl-wire::before { opacity: 0.5; }
 
-/* radar and plate panels go paper-light; their lines are navy */
+/* radar and plate panels go paper-light; their lines are ink */
 html[data-mode="day"] .vl-radar .vl-ko { fill-opacity: 0.94; }
-html[data-mode="day"] .vl-plate .vl-plate-chip { fill: var(--vl-ink); }
+html[data-mode="day"] .vl-plate-ko { background: rgb(247 245 241 / 0.94); }
+html[data-mode="day"] .vl-plate-text { background: rgb(247 245 241 / 0.92); }
+html[data-mode="day"] .vl-plate-chip { fill: var(--vl-ink); }
+html[data-mode="day"] .vl-feed-row { background: rgb(247 245 241 / 0.92); }
+html[data-mode="day"] .vl-feed-row img { filter: brightness(0); }
+html[data-mode="day"] .vl-feed-key { color: var(--vl-ink); }
+html[data-mode="day"] .vl-flare { mix-blend-mode: soft-light; }
 
 /* agent tiles */
 html[data-mode="day"] .vl-tile {
@@ -529,14 +1349,21 @@ html[data-mode="day"] .vl-tile:focus-visible {
   box-shadow: inset 0 0 0 3px var(--vl-ink), inset 0 0 0 6px var(--vl-paper);
 }
 
-/* ability chips: navy glyphs on paper */
-html[data-mode="day"] .vl-ability {
-  background: var(--vl-paper);
-  border-color: rgb(15 25 35 / 0.16);
+/* ability keys: ink glyphs on paper */
+html[data-mode="day"] .vl-keycap-face { box-shadow: inset 0 0 0 1px rgb(15 25 35 / 0.16); }
+html[data-mode="day"] .vl-keycap-face img { filter: brightness(0); opacity: 0.85; }
+html[data-mode="day"] .vl-keycap-key { background: rgb(15 25 35 / 0.08); }
+html[data-mode="day"] .vl-keycap[aria-selected="true"] .vl-keycap-face img { opacity: 1; }
+html[data-mode="day"] .vl-keycap[aria-selected="true"] .vl-keycap-key { background: var(--vl-ink); color: var(--vl-paper); }
+html[data-mode="day"] .vl-charge i { background: rgb(15 25 35 / 0.14); }
+@media (hover: hover) {
+  html[data-mode="day"] .vl-keycap:hover:not([aria-selected="true"]) .vl-keycap-face { background: #ddd7cd; }
 }
-html[data-mode="day"] .vl-ability-icon { filter: brightness(0); opacity: 0.85; }
+html[data-mode="day"] .vl-keycap:focus-visible .vl-keycap-face {
+  box-shadow: inset 0 0 0 2px var(--vl-ink), inset 0 0 0 4px var(--vl-paper);
+}
 
-/* the tracer by day: a navy core through the red, so the shot reads on bone */
+/* the tracer by day: an ink core through the red, so the shot reads on bone */
 html[data-mode="day"] .vl-tracer span {
   background: linear-gradient(90deg, rgb(15 25 35 / 0), rgb(15 25 35 / 0.6) 40%, var(--vl-ink) 96%, rgb(15 25 35 / 0));
   box-shadow: 0 0 6px 1px rgb(255 70 85 / 0.7), 0 0 16px 2px rgb(255 70 85 / 0.3);

@@ -1,124 +1,98 @@
-import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
+import { useEffect, useRef, useState, type AnimationEvent, type CSSProperties, type KeyboardEvent } from "react";
 
 import { DepthStage, useDepthLayer } from "@/components/depth-stage";
-import { art, halfSet, VALORANT_STAGE } from "@/lib/art";
-import { useDayArt } from "@/lib/day-art";
+import { VALORANT_STAGE } from "@/lib/art";
 import { STRENGTH } from "@/lib/depth/camera";
-import type { StageSpec } from "@/lib/depth/types";
-import type { Mode } from "@/lib/mode";
+import type { PlateSpec, StageSpec } from "@/lib/depth/types";
+import { reducedMotion } from "@/lib/motion";
 import { kick } from "@/lib/scroll-loop";
-
-type Agent = {
-  id: string;
-  name: string;
-  role: "Duelist" | "Initiator" | "Sentinel";
-  line: string;
-  colors: [string, string];
-  abilities: { slot: string; name: string }[];
-};
-
-const AGENTS: Agent[] = [
-  {
-    id: "jett",
-    name: "Jett",
-    role: "Duelist",
-    line: "Dash in, ship the thing, gone before the design review.",
-    colors: ["#25607a", "#0b0b0d"],
-    abilities: [
-      { slot: "grenade", name: "Cloudburst" },
-      { slot: "ability1", name: "Updraft" },
-      { slot: "ability2", name: "Tailwind" },
-      { slot: "ultimate", name: "Blade Storm" },
-    ],
-  },
-  {
-    id: "sova",
-    name: "Sova",
-    role: "Initiator",
-    line: "Recon dart first. Reading the docs, basically.",
-    colors: ["#355285", "#101c47"],
-    abilities: [
-      { slot: "grenade", name: "Owl Drone" },
-      { slot: "ability1", name: "Shock Bolt" },
-      { slot: "ability2", name: "Recon Bolt" },
-      { slot: "ultimate", name: "Hunter's Fury" },
-    ],
-  },
-  {
-    id: "killjoy",
-    name: "Killjoy",
-    role: "Sentinel",
-    line: "Why hold the site yourself when the turret can? Automate everything.",
-    colors: ["#522162", "#2a1f38"],
-    abilities: [
-      { slot: "grenade", name: "Nanoswarm" },
-      { slot: "ability1", name: "Alarmbot" },
-      { slot: "ability2", name: "Turret" },
-      { slot: "ultimate", name: "Lockdown" },
-    ],
-  },
-  {
-    id: "cypher",
-    name: "Cypher",
-    role: "Sentinel",
-    line: "Knows where every edge case hides. Tripwire on all of them.",
-    colors: ["#2f5078", "#24244a"],
-    abilities: [
-      { slot: "grenade", name: "Trapwire" },
-      { slot: "ability1", name: "Cyber Cage" },
-      { slot: "ability2", name: "Spycam" },
-      { slot: "ultimate", name: "Neural Theft" },
-    ],
-  },
-];
+import { AGENTS, type Ability, type Agent, type Key } from "./valorant/agents";
+import { Brackets, Divider, HazardPlate, Ladder, MapTag, Radar } from "./valorant/hud";
+import { Layer, SignatureLayer } from "./valorant/signatures";
 
 const src = (file: string) => `/lobby/val/${file}.webp`;
 
 /**
- * The stage on the site camera (worlds strength). Through the red field, a
- * rooftop over the city at dusk under a red wash: the sky far off at 36, the
- * city at 26 and the near parapet at 19 (the art's planes). The outline name
- * hangs in front at 16, the HUD sits on the glass at 12.5 and the agent
- * stands forward at 11.5, all shifting against the pointer by 1/d.
+ * The stage on the site camera (worlds strength): the painted rooftop over
+ * Ascent fills it, sky, city and parapet as their own plates. Where WebGL
+ * is allowed the city and the parapet become reliefs on the composite depth
+ * map (one range for both, so they assemble as one scene); elsewhere
+ * they're flat cards at their planes.
+ * In front of the painting: the agent's typography at 16, their trace on
+ * the rooftop, the dust at 14, the HUD on the glass at 12.5 and the agent
+ * forward at 11.5, all shifting against the camera by 1/d.
  */
-const STAGE: StageSpec = { id: "valorant", plates: [], camera: { strength: STRENGTH.world } };
-const D = { sky: 36, far: 26, near: 19, name: 16, air: 14, hud: 12.5, agent: 11.5 } as const;
+const D = { sky: 40, far: 26, near: 17, crystals: 30, type: 16, air: 14, hud: 12.5, agent: 11.5 } as const;
+const RANGE = { far: 40, near: 15 };
+
+const [PW, PH] = VALORANT_STAGE.size;
+const [HW, HH] = VALORANT_STAGE.halfSize;
+type Roof = "sky" | "far" | "near";
+
+function roof(id: Roof, extra: Pick<PlateSpec, "kind" | "range"> & Partial<PlateSpec>): PlateSpec {
+  return {
+    id,
+    art: { night: VALORANT_STAGE.night[id], day: VALORANT_STAGE.day[id] },
+    half: { night: VALORANT_STAGE.night[`${id}Half`], day: VALORANT_STAGE.day[`${id}Half`] },
+    size: [PW, PH],
+    // a placeholder: valorant.css sizes every plate to cover the stage with overscan (the <img> is object-fit: cover)
+    box: { x: -6, y: -6, w: 112 },
+    z: 0,
+    ...extra,
+  };
+}
+
+const RELIEF: PlateSpec["depth"] = {
+  atlas: { night: VALORANT_STAGE.night.depthHalf, day: VALORANT_STAGE.day.depthHalf },
+  tile: [0, 0, HW, HH],
+};
+
+const STAGE: StageSpec = {
+  id: "valorant",
+  plates: [
+    roof("sky", { kind: "opaque", range: { far: D.sky, near: D.sky, flat: D.sky } }),
+    roof("far", { kind: "cutout", range: { ...RANGE, flat: D.far }, depth: RELIEF }),
+    roof("near", { kind: "cutout", range: { ...RANGE, flat: D.near }, depth: RELIEF }),
+  ],
+  // No idle breath and no GL sprites: either would keep the reliefs drawing every frame while nothing
+  // moves (at worlds strength the breath shifts the city a pixel or two). Scroll, the pointer and the
+  // arrival carry the depth; the dust, glints and signatures live on the compositor.
+  camera: { strength: STRENGTH.world, breath: 0 },
+};
 
 /** The painting's crop and red wash, from the art job, as CSS variables on the stage. */
 const { tint } = VALORANT_STAGE;
+const [PX, PY] = VALORANT_STAGE.objectPosition.split(" ").map((s) => Number.parseFloat(s) / 100);
 const ROOF_VARS = {
   "--vl-roof-pos": VALORANT_STAGE.objectPosition,
+  "--vl-px": PX,
+  "--vl-py": PY,
   "--vl-wash": `color-mix(in srgb, ${tint.color} ${tint.night * 100}%, transparent)`,
   "--vl-wash-day": `color-mix(in srgb, ${tint.color} ${tint.day * 100}%, transparent)`,
 } as CSSProperties;
 
-function RoofPlate({ plate, d, day }: { plate: "sky" | "far" | "near"; d: number; day: boolean }) {
-  const ref = useRef<HTMLDivElement>(null);
-  useDepthLayer(ref, d);
-  const [w, h] = VALORANT_STAGE.size;
-  const img = (m: Mode) => {
-    const set = VALORANT_STAGE[m];
-    const full = art(set[plate]);
-    return (
-      <img
-        src={full}
-        // the painting covers a box a little smaller than itself: 1.15 keeps the half file honest
-        srcSet={halfSet(full, w, art(set[`${plate}Half`]), VALORANT_STAGE.halfSize[0], 1.15)}
-        sizes="auto, 100vw"
-        data-set={m}
-        alt=""
-        width={w}
-        height={h}
-        loading="lazy"
-        decoding="async"
-      />
-    );
-  };
+const v = (o: Record<string, string | number>) => o as CSSProperties;
+
+/** Radianite on the painting's own crystals (% of the painting), and the vein that glows through the island. */
+const CRYSTALS = [
+  { x: 14.4, y: 15.6, dur: 9.7, delay: -2.1 },
+  { x: 24.8, y: 9.2, dur: 12.3, delay: -7.4 },
+  { x: 25.6, y: 27.4, dur: 15.1, delay: -11.8 },
+  { x: 65, y: 16.8, dur: 11.2, delay: -4.6 },
+  { x: 66.6, y: 24, dur: 13.9, delay: -9.3 },
+  { x: 48, y: 35, dur: 10.6, delay: -0.8 },
+];
+
+function Crystals() {
   return (
-    <div ref={ref} className={`vl-roof vl-roof-${plate}`} aria-hidden="true">
-      {img("night")}
-      {day ? img("day") : null}
-    </div>
+    <Layer d={D.crystals} className="vl-frame vl-crystals">
+      <div className="vl-cover">
+        <span className="vl-vein" />
+        {CRYSTALS.map((c) => (
+          <span key={c.x} className="vl-glint" style={v({ "--x": `${c.x}%`, "--y": `${c.y}%`, "--dur": `${c.dur}s`, "--delay": `${c.delay}s` })} />
+        ))}
+      </div>
+    </Layer>
   );
 }
 
@@ -128,11 +102,11 @@ const seeded = (seed: number) => () => {
 };
 const PERIODS = [13.7, 17.9, 23.1];
 
-/** Dust turning in the light shaft behind the agent; never in front of her, so never over a face. */
+/** Dust turning in the agent's light shaft, behind them; never in front, so never over a face. */
 const DUST = (() => {
   const r = seeded(29);
-  return Array.from({ length: 18 }, (_, i) => ({
-    x: +(46 + r() * 44).toFixed(1),
+  return Array.from({ length: 16 }, (_, i) => ({
+    x: +(-40 + r() * 80).toFixed(1),
     y: +(6 + r() * 86).toFixed(1),
     s: +(1.4 + r() * 1.8).toFixed(1),
     dx: Math.round(-18 + r() * 36),
@@ -142,13 +116,6 @@ const DUST = (() => {
   }));
 })();
 
-/** Radianite: three glints that catch now and then, away from the agent's face. */
-const GLINTS = [
-  { x: 90, y: 70, dur: 9.7, delay: -2.1 },
-  { x: 47, y: 88, dur: 12.3, delay: -7.4 },
-  { x: 95, y: 27, dur: 15.1, delay: -11.8 },
-];
-
 function Air() {
   return (
     <Layer d={D.air} className="vl-air">
@@ -157,49 +124,70 @@ function Air() {
         <span
           key={i}
           className="vl-dust"
-          style={{ "--x": `${p.x}%`, "--y": `${p.y}%`, "--s": `${p.s}px`, "--dx": `${p.dx}px`, "--dy": `${p.dy}px`, "--dur": `${p.dur}s`, "--delay": `${p.delay}s` } as CSSProperties}
+          style={v({ "--x": `${p.x}%`, "--y": `${p.y}%`, "--s": `${p.s}px`, "--dx": `${p.dx}px`, "--dy": `${p.dy}px`, "--dur": `${p.dur}s`, "--delay": `${p.delay}s` })}
         />
-      ))}
-      {GLINTS.map((g) => (
-        <span key={g.x} className="vl-glint" style={{ "--x": `${g.x}%`, "--y": `${g.y}%`, "--dur": `${g.dur}s`, "--delay": `${g.delay}s` } as CSSProperties} />
       ))}
     </Layer>
   );
 }
 
-function Layer({ d, className, style, children }: { d: number; className: string; style?: CSSProperties; children?: ReactNode }) {
-  const ref = useRef<HTMLDivElement>(null);
-  useDepthLayer(ref, d);
+type Phase = "rest" | "in" | "out";
+
+/** An agent's light on the painting: a screened key glow and a multiplied shade, straight on the stage so they blend with it. */
+function Light({ agent, phase }: { agent: Agent; phase: Phase }) {
+  const l = agent.light;
+  const style = v({ "--kx": `${l.key[0]}%`, "--ky": `${l.key[1]}%`, "--kr": `${l.r}%`, "--kg": l.glow, "--sa": `${l.from}deg`, "--sd": l.shade });
   return (
-    <div ref={ref} className={className} style={style} aria-hidden="true">
-      {children}
-    </div>
+    <>
+      <div className="vl-key" data-phase={phase} style={style} aria-hidden="true" />
+      <div className="vl-shade" data-phase={phase} style={style} aria-hidden="true" />
+    </>
   );
 }
 
-function StageLayer({ agent, wipe, day }: { agent: Agent; wipe?: boolean; day: boolean }) {
+/** A cast: the agent's key light flares once where it falls. */
+function Flare({ agent, onDone }: { agent: Agent; onDone: () => void }) {
+  const l = agent.light;
+  return (
+    <div
+      className="vl-flare"
+      style={v({ "--kx": `${l.key[0]}%`, "--ky": `${l.key[1]}%`, "--kr": `${l.r}%` })}
+      onAnimationEnd={onDone}
+      aria-hidden="true"
+    />
+  );
+}
+
+function AgentLayer({ agent, phase, onSettle }: { agent: Agent; phase: Phase; onSettle?: () => void }) {
   const portrait = useRef<HTMLImageElement>(null);
   useDepthLayer(portrait, D.agent);
-  const style = { "--vl-a": agent.colors[0], "--vl-b": agent.colors[1] } as CSSProperties;
-  const word = agent.name.toUpperCase();
+  const onEnd = (e: AnimationEvent) => {
+    if (e.target === portrait.current) onSettle?.();
+  };
   return (
-    <div className={`vl-layer ${wipe ? "vl-wipe" : ""}`} style={style} aria-hidden={wipe ? undefined : true}>
-      <div className="vl-field">
-        <RoofPlate plate="sky" d={D.sky} day={day} />
-        <RoofPlate plate="far" d={D.far} day={day} />
-        <RoofPlate plate="near" d={D.near} day={day} />
-      </div>
-      <div className="vl-seam" />
-      <img className="vl-texture" src={src(`${agent.id}-bg`)} alt="" width={700} height={1024} decoding="async" />
-      <Layer d={D.name} className="vl-bigname" style={{ "--vl-len": word.length } as CSSProperties}>
-        <span>{word}</span>
+    <div
+      className="vl-agent"
+      data-phase={phase}
+      data-agent={agent.id}
+      style={v({
+        "--sx": `${agent.light.shaft}%`,
+        "--st": `${agent.light.tilt}deg`,
+        // the key's rim on the agent's edge that faces it
+        "--rim-x": `${Math.sign(agent.light.key[0] - 50) * 2}px`,
+        "--rim-y": `${agent.light.key[1] < 50 ? -1.5 : 1.5}px`,
+      })}
+      onAnimationEnd={onEnd}
+    >
+      <Layer d={D.type} className="vl-type">
+        <img src={src(`${agent.id}-bg`)} alt="" width={700} height={1024} decoding="async" />
       </Layer>
+      <SignatureLayer kind={agent.signature} />
       <Air />
       <img
         ref={portrait}
         className="vl-portrait"
         src={src(agent.id)}
-        alt={wipe ? `${agent.name}, full portrait` : ""}
+        alt={phase === "out" ? "" : `${agent.name}, full portrait`}
         width={2048}
         height={1860}
         decoding="async"
@@ -208,146 +196,24 @@ function StageLayer({ agent, wipe, day }: { agent: Agent; wipe?: boolean; day: b
   );
 }
 
-const BRACKETS = ["tl", "tr", "br", "bl"] as const;
+const KEYS: Key[] = ["C", "Q", "E", "X"];
 
-function Brackets() {
+/** The stage's feed, bottom right, the way the game reports a cast: newest last, three at most. */
+type Post = { id: number; agent: Agent; ability: Ability };
+const POST_MS = 3800;
+
+function Feed({ posts }: { posts: Post[] }) {
   return (
-    <div className="vl-brackets">
-      {BRACKETS.map((c) => (
-        <svg key={c} className={`vl-bracket vl-bracket-${c}`} width="96" height="96" viewBox="0 0 96 96" shapeRendering="crispEdges">
-          <path d="M1 56V13L13 1h43" fill="none" stroke="currentColor" strokeWidth="2" shapeRendering="geometricPrecision" />
-          <path d="M8 40V16L16 8h24" fill="none" stroke="currentColor" strokeOpacity="0.45" strokeWidth="1" shapeRendering="geometricPrecision" />
-          {[64, 70, 76, 82, 88].map((x, i) => (
-            <rect key={x} x={x} y="0" width="1" height={i === 0 ? 6 : 3} fill="currentColor" fillOpacity={i === 0 ? 0.9 : 0.5} />
-          ))}
-          {[64, 70, 76, 82, 88].map((y, i) => (
-            <rect key={y} x="0" y={y} width={i === 0 ? 6 : 3} height="1" fill="currentColor" fillOpacity={i === 0 ? 0.9 : 0.5} />
-          ))}
-          <rect x="20" y="20" width="4" height="4" fill="#ff4655" />
-          <path d="M30 26h7M33.5 22.5v7" stroke="currentColor" strokeOpacity="0.7" strokeWidth="1" />
-        </svg>
+    <ol className="vl-feed" aria-hidden="true">
+      {posts.map((p) => (
+        <li key={p.id} className="vl-feed-row">
+          <span className="vl-feed-who">{p.agent.name}</span>
+          <span className="vl-feed-key">{p.ability.key}</span>
+          <img src={src(`${p.agent.id}-${p.ability.slot}`)} alt="" width={128} height={128} decoding="async" />
+          <b>{p.ability.name}</b>
+        </li>
       ))}
-    </div>
-  );
-}
-
-function Divider() {
-  return (
-    <svg className="vl-divider" width="100%" height="14" aria-hidden="true" shapeRendering="crispEdges">
-      <rect x="0" y="6" width="100%" height="1" fill="currentColor" fillOpacity="0.18" />
-      <rect x="0" y="4" width="56" height="5" fill="#ff4655" />
-      <rect x="62" y="4" width="5" height="5" fill="currentColor" />
-      <svg x="100%" width="1" height="14" overflow="visible">
-        {[0, 8, 16, 24, 32].map((x) => (
-          <rect key={x} x={-x - 1} y={x === 0 ? 0 : 3} width="1" height={x === 0 ? 14 : 8} fill="currentColor" fillOpacity={x === 0 ? 0.7 : 0.35} />
-        ))}
-      </svg>
-    </svg>
-  );
-}
-
-function Ladder() {
-  const ticks = Array.from({ length: 41 }, (_, i) => i);
-  return (
-    <svg className="vl-ladder" width="24" height="324" viewBox="0 0 24 324" aria-hidden="true" shapeRendering="crispEdges">
-      <rect x="23" y="2" width="1" height="320" fill="currentColor" fillOpacity="0.35" />
-      {ticks.map((i) => (
-        <rect
-          key={i}
-          x={i % 10 === 0 ? 10 : i % 5 === 0 ? 15 : 19}
-          y={2 + i * 8}
-          width={i % 10 === 0 ? 13 : i % 5 === 0 ? 8 : 4}
-          height="1"
-          fill={i === 20 ? "#ff4655" : "currentColor"}
-          fillOpacity={i % 10 === 0 ? 0.85 : 0.4}
-        />
-      ))}
-      <path d="M2 162l6-4v8z" fill="#ff4655" shapeRendering="geometricPrecision" />
-    </svg>
-  );
-}
-
-function HazardPlate() {
-  return (
-    <svg className="vl-plate" width="232" height="36" viewBox="0 0 232 36" aria-hidden="true">
-      <defs>
-        <clipPath id="vl-plate-clip">
-          <path d="M10 4h178l-10 28H0z" />
-        </clipPath>
-      </defs>
-      <path d="M10 4h178l-10 28H0z" fill="#0b0b0d" className="vl-ko" fillOpacity="0.9" />
-      <g clipPath="url(#vl-plate-clip)">
-        <g className="vl-plate-stripes">
-          {Array.from({ length: 22 }, (_, i) => (
-            <path key={i} d={`M${i * 16 - 32} 36l14-32h7l-14 32z`} fill="#ff4655" />
-          ))}
-        </g>
-      </g>
-      <path d="M10 4h178l-10 28H0z" fill="none" stroke="currentColor" strokeWidth="1" />
-      <path d="M196 4h8l-10 28h-8zM210 4h4l-10 28h-4z" fill="#0b0b0d" className="vl-ko vl-plate-chip" />
-      <path d="M222 4v6M222 26v6M219 4h6M219 32h6" stroke="currentColor" strokeOpacity="0.6" shapeRendering="crispEdges" />
-    </svg>
-  );
-}
-
-const polar = (r: number, deg: number) => {
-  const a = ((deg - 90) * Math.PI) / 180;
-  return [100 + r * Math.cos(a), 100 + r * Math.sin(a)].map((n) => +n.toFixed(2));
-};
-const wedge = (from: number, to: number, r = 78) => {
-  const [x1, y1] = polar(r, from);
-  const [x2, y2] = polar(r, to);
-  return `M100 100L${x1} ${y1}A${r} ${r} 0 0 1 ${x2} ${y2}Z`;
-};
-const BLIPS = [
-  { deg: 52, r: 56 },
-  { deg: 148, r: 34 },
-  { deg: 236, r: 64 },
-];
-
-function Radar() {
-  const [lx, ly] = polar(78, 0);
-  return (
-    <svg className="vl-radar" viewBox="0 0 200 200" aria-hidden="true">
-      <path d="M12 0h176l12 12v176l-12 12H12L0 188V12z" fill="#0b0b0d" className="vl-ko" fillOpacity="0.88" />
-      <path d="M12.5 .5h175l12 12v175l-12 12h-175l-12-12v-175z" fill="none" stroke="currentColor" strokeOpacity="0.4" />
-      <path d="M4 26V12l8-8h14M196 174v14l-8 8h-14" fill="none" stroke="#ff4655" strokeWidth="2" />
-      <g fill="none" stroke="currentColor">
-        <circle cx="100" cy="100" r="86" strokeOpacity="0.5" />
-        <circle cx="100" cy="100" r="78" strokeOpacity="0.2" />
-        <circle cx="100" cy="100" r="52" strokeOpacity="0.2" strokeDasharray="2 4" />
-        <circle cx="100" cy="100" r="26" strokeOpacity="0.2" />
-        <path d="M100 22v156M22 100h156" strokeOpacity="0.12" shapeRendering="crispEdges" />
-      </g>
-      <g stroke="currentColor">
-        {Array.from({ length: 72 }, (_, i) => {
-          const major = i % 6 === 0;
-          const [x1, y1] = polar(86, i * 5);
-          const [x2, y2] = polar(major ? 79 : 83, i * 5);
-          return <path key={i} d={`M${x1} ${y1}L${x2} ${y2}`} strokeOpacity={major ? 0.8 : 0.35} strokeWidth={major ? 1.5 : 1} />;
-        })}
-      </g>
-      <path d="M96 6h8l-4 7z" fill="#ff4655" />
-      <g className="vl-sweep">
-        {[0.06, 0.1, 0.15, 0.22].map((o, i) => (
-          <path key={o} d={wedge(-56 + i * 12, -44 + i * 12)} fill="#ff4655" fillOpacity={o} />
-        ))}
-        <path d={wedge(-8, 0)} fill="#ff4655" fillOpacity="0.32" />
-        <path d={`M100 100L${lx} ${ly}`} stroke="#ff4655" strokeWidth="2" />
-      </g>
-      {BLIPS.map((b) => {
-        const [x, y] = polar(b.r, b.deg);
-        return (
-          <g key={b.deg} className="vl-blip" style={{ "--vl-delay": `${(b.deg / 360) * 4}s` } as CSSProperties}>
-            <rect x={x - 3.5} y={y - 3.5} width="7" height="7" transform={`rotate(45 ${x} ${y})`} fill="#ff4655" />
-            <circle cx={x} cy={y} r="8" fill="none" stroke="#ff4655" strokeOpacity="0.6" />
-          </g>
-        );
-      })}
-      <circle className="vl-spike-ring" cx="100" cy="100" r="12" fill="none" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M100 89l7 11-7 11-7-11z" fill="currentColor" />
-      <path d="M100 94l3.5 6-3.5 6-3.5-6z" fill="#ff4655" />
-    </svg>
+    </ol>
   );
 }
 
@@ -355,14 +221,18 @@ export function Valorant() {
   const [index, setIndex] = useState(0);
   const [prev, setPrev] = useState<number | null>(null);
   const [swap, setSwap] = useState(0);
+  const [live, setLive] = useState(false);
+  const [slot, setSlot] = useState(0);
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [cast, setCast] = useState(0);
+  const [flaring, setFlaring] = useState(false);
+  const postId = useRef(0);
+  const timers = useRef(new Set<number>());
   const sectionRef = useRef<HTMLElement>(null);
   const tileRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const keyRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const agent = AGENTS[index];
-  // probed once here, not per agent layer, so a swap never shows a frame of the other mode
-  const daySky = useDayArt(art(VALORANT_STAGE.day.sky), sectionRef);
-  const dayFar = useDayArt(art(VALORANT_STAGE.day.far), sectionRef);
-  const dayNear = useDayArt(art(VALORANT_STAGE.day.near), sectionRef);
-  const day = daySky && dayFar && dayNear;
+  const ability = agent.abilities[slot];
 
   useEffect(() => {
     const el = sectionRef.current;
@@ -372,8 +242,18 @@ export function Valorant() {
       ([entry]) => {
         if (!entry.isIntersecting) return;
         el.classList.add("vl-in");
-        for (const a of AGENTS) new Image().src = src(a.id);
         io.disconnect();
+        // the other agents, decoded ahead in idle time so the first swap never waits on a portrait
+        const warm = () => {
+          for (const a of AGENTS) {
+            const img = new Image();
+            img.src = src(a.id);
+            void img.decode().catch(() => {});
+            new Image().src = src(`${a.id}-bg`);
+          }
+        };
+        if (window.requestIdleCallback) window.requestIdleCallback(warm, { timeout: 2000 });
+        else window.setTimeout(warm, 200);
       },
       { threshold: 0.12 },
     );
@@ -385,11 +265,42 @@ export function Valorant() {
     if (swap) kick();
   }, [swap]);
 
+  useEffect(() => {
+    const t = timers.current;
+    return () => {
+      for (const id of t) window.clearTimeout(id);
+    };
+  }, []);
+
+  const post = (agent: Agent, ability: Ability) => {
+    const id = ++postId.current;
+    setPosts((l) => [...l.slice(-2), { id, agent, ability }]);
+    const t = window.setTimeout(() => {
+      timers.current.delete(t);
+      setPosts((l) => l.filter((p) => p.id !== id));
+    }, POST_MS);
+    timers.current.add(t);
+  };
+
   const select = (i: number) => {
     if (i === index) return;
-    setPrev(index);
+    const motion = !reducedMotion();
+    setPrev(motion ? index : null);
+    setLive(motion);
     setIndex(i);
     setSwap((n) => n + 1);
+  };
+
+  /** Pick an ability: the readout changes, the agent's key light flares and the feed reports the cast. */
+  const pick = (i: number) => {
+    setSlot(i);
+    setCast((n) => n + 1);
+    setFlaring(!reducedMotion());
+    post(agent, agent.abilities[i]);
+  };
+  const settle = () => {
+    setPrev(null);
+    setLive(false);
   };
 
   const onTileKey = (e: KeyboardEvent<HTMLButtonElement>, i: number) => {
@@ -401,34 +312,74 @@ export function Valorant() {
     select(next);
   };
 
+  const onKeyTab = (e: KeyboardEvent<HTMLButtonElement>, i: number) => {
+    const to = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: KEYS.length - 1 }[e.key];
+    if (to === undefined) return;
+    e.preventDefault();
+    const next = (to + KEYS.length) % KEYS.length;
+    keyRefs.current[next]?.focus();
+    pick(next);
+  };
+
+  // the game's binds: with focus anywhere in the section, C Q E X pick that ability
+  const onSectionKey = (e: KeyboardEvent<HTMLElement>) => {
+    if (e.altKey || e.ctrlKey || e.metaKey || e.repeat) return;
+    const k = KEYS.indexOf(e.key.toUpperCase() as Key);
+    if (k < 0) return;
+    pick(k);
+  };
+
+  const current: Phase = live ? "in" : "rest";
+
   return (
     <section
       id="valorant"
       ref={sectionRef}
       aria-labelledby="vl-title"
       data-world="valorant"
+      data-swapped={swap > 0 ? "" : undefined}
       className="vl relative isolate overflow-hidden bg-[#0b0b0d] text-[#f4f2f0]"
+      onKeyDown={onSectionKey}
     >
       <div className="vl-hazard" aria-hidden="true">
         <div />
       </div>
+      {/* the left rail: a tick ladder down the column, its red mark on the pick */}
+      <div className="vl-rail" aria-hidden="true" style={v({ "--at": (index + 0.5) / AGENTS.length })}>
+        <i />
+        <span>{`Val // Pool ${String(AGENTS.length).padStart(2, "0")}`}</span>
+      </div>
 
       <div className="vl-grid">
         <header className="vl-head vl-enter px-[var(--vl-pad)] pt-10 lg:pt-0">
-          <h2 id="vl-title" className="vl-display vl-title text-[clamp(52px,4.8vw,80px)] leading-[0.9] text-[#ff4655]">
+          <p className="vl-eyebrow">
+            <span aria-hidden="true">{"//"}</span> Agent select
+          </p>
+          <h2 id="vl-title" className="vl-display vl-title text-[clamp(52px,4.6vw,76px)] leading-[0.9] text-[#ff4655]">
             My agent pool
           </h2>
-          <p className="vl-muted mt-5 max-w-[34ch] text-[18px] leading-[1.5] text-white/70">
+          <p className="vl-muted mt-4 max-w-[34ch] text-[18px] leading-[1.5] text-white/70">
             The four I pick when I want to be useful to the team without having to aim very well.
           </p>
         </header>
 
-        <DepthStage spec={STAGE} className="vl-stage" style={ROOF_VARS} aria-live="polite">
-          {prev !== null && <StageLayer agent={AGENTS[prev]} day={day} />}
-          <StageLayer key={`${agent.id}-${swap}`} agent={agent} wipe={swap > 0} day={day} />
-          {swap > 0 && (
+        <DepthStage spec={STAGE} className="vl-stage" style={ROOF_VARS}>
+          <Crystals />
+          <div className="vl-ink vl-ink-tone" aria-hidden="true" />
+          <div className="vl-ink vl-ink-dark" aria-hidden="true" />
+          <div className="vl-wash" aria-hidden="true" />
+          {prev !== null && <Light key={`light-out-${swap}`} agent={AGENTS[prev]} phase="out" />}
+          <Light key={`light-${swap}`} agent={agent} phase={current} />
+          {flaring && <Flare key={`cast-${cast}`} agent={agent} onDone={() => setFlaring(false)} />}
+          <div className="vl-seam" aria-hidden="true" />
+          {prev !== null && <AgentLayer key={`out-${swap}`} agent={AGENTS[prev]} phase="out" />}
+          <AgentLayer key={`${agent.id}-${swap}`} agent={agent} phase={current} onSettle={settle} />
+          {live && (
             <>
-              <div key={`slash-${swap}`} className="vl-slash" aria-hidden="true" onAnimationEnd={() => setPrev(null)} />
+              <div key={`flare-${swap}`} className="vl-seam vl-seam-flare" aria-hidden="true" />
+              <div key={`pass-${swap}`} className="vl-slash-pass" aria-hidden="true" />
+              <div key={`edge-${swap}`} className="vl-slash-edge" aria-hidden="true" />
+              <div key={`slash-${swap}`} className="vl-slash" aria-hidden="true" />
               {/* one tracer across the stage with the slash: the select "shot", anchored to the stage */}
               <div key={`tracer-${swap}`} className="vl-tracer" aria-hidden="true">
                 <span />
@@ -437,33 +388,80 @@ export function Valorant() {
           )}
           <Layer d={D.hud} className="vl-hud">
             <Brackets />
-            <Radar />
+            <MapTag />
+            <Radar key={index} seed={index} />
             <Ladder />
-            <HazardPlate />
+            <HazardPlate name={agent.name} />
+            <Feed posts={posts} />
           </Layer>
         </DepthStage>
 
         <div className="vl-info px-[var(--vl-pad)]">
           <Divider />
           <div key={agent.id} className="vl-swap">
-            <p className="vl-muted flex items-center gap-3 text-[16px] font-semibold text-white/70">
-              <span className="grid size-8 place-items-center bg-[#ff4655]">
-                <img src={src(`role-${agent.role.toLowerCase()}`)} alt="" width={128} height={128} decoding="async" className="size-5 brightness-0" />
+            <p className="vl-role vl-muted">
+              <span className="vl-role-icon">
+                <img src={src(`role-${agent.role.toLowerCase()}`)} alt="" width={128} height={128} decoding="async" />
               </span>
-              {agent.role}
+              <span className="vl-role-name">{agent.role}</span>
+              <span className="vl-role-num" aria-hidden="true">
+                {String(index + 1).padStart(2, "0")}
+                <i> / {String(AGENTS.length).padStart(2, "0")}</i>
+              </span>
             </p>
-            <h3 className="vl-display mt-3 text-[clamp(72px,7vw,120px)] leading-[0.84]">{agent.name}</h3>
-            <p className="vl-strong mt-4 max-w-[30ch] text-[20px] leading-[1.4] font-medium text-white">{agent.line}</p>
-            <ul className="mt-7 grid max-w-[520px] grid-cols-2 gap-x-4 gap-y-3 min-[480px]:grid-cols-4 min-[480px]:gap-3" aria-label={`${agent.name} abilities`}>
-              {agent.abilities.map((a) => (
-                <li key={a.slot} className="flex items-center gap-3 min-[480px]:flex-col min-[480px]:items-start min-[480px]:gap-2">
-                  <span className="vl-ability grid aspect-square w-12 shrink-0 place-items-center min-[480px]:w-full min-[480px]:max-w-16 border border-white/12 bg-[#17171b]">
-                    <img src={src(`${agent.id}-${a.slot}`)} alt="" width={128} height={128} decoding="async" className="vl-ability-icon w-[58%]" />
-                  </span>
-                  <span className="vl-muted text-[16px] leading-[1.2] font-medium text-white/70">{a.name}</span>
-                </li>
-              ))}
-            </ul>
+            <h3 className="vl-display vl-name text-[clamp(72px,7vw,116px)] leading-[0.84]">
+              <span>{agent.name}</span>
+            </h3>
+            <p className="vl-strong vl-line mt-4 max-w-[30ch] text-[20px] leading-[1.4] font-medium text-white">{agent.line}</p>
+
+            <div className="vl-kit">
+              <div className="vl-keys" role="tablist" aria-label={`${agent.name}'s abilities`}>
+                {agent.abilities.map((a, i) => (
+                  <button
+                    key={a.slot}
+                    ref={(el) => {
+                      keyRefs.current[i] = el;
+                    }}
+                    type="button"
+                    role="tab"
+                    id={`vl-key-${a.key}`}
+                    aria-selected={i === slot}
+                    aria-controls="vl-readout"
+                    tabIndex={i === slot ? 0 : -1}
+                    className="vl-keycap"
+                    data-ult={a.key === "X" ? "" : undefined}
+                    onClick={() => pick(i)}
+                    onKeyDown={(e) => onKeyTab(e, i)}
+                    style={v({ "--i": i })}
+                  >
+                    <span className="vl-keycap-face">
+                      <img src={src(`${agent.id}-${a.slot}`)} alt="" width={128} height={128} decoding="async" />
+                    </span>
+                    <span className="vl-keycap-key" aria-hidden="true">
+                      {a.key}
+                    </span>
+                    <span className="vl-charge" aria-hidden="true">
+                      {Array.from({ length: a.key === "X" ? 7 : 3 }, (_, k) => (
+                        <i key={k} style={v({ "--k": k })} />
+                      ))}
+                    </span>
+                    <span className="sr-only">{a.name}</span>
+                  </button>
+                ))}
+              </div>
+              <div id="vl-readout" role="tabpanel" aria-labelledby={`vl-key-${ability.key}`} className="vl-readout">
+                <div key={`${agent.id}-${slot}`} className="vl-readout-in">
+                  <p className="vl-readout-head">
+                    <span className="vl-readout-key" aria-hidden="true">
+                      {ability.key}
+                    </span>
+                    <span className="vl-display vl-readout-name">{ability.name}</span>
+                    {ability.key === "X" && <span className="vl-readout-tag">Ultimate</span>}
+                  </p>
+                  <p className="vl-muted vl-readout-what">{ability.what}</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -491,6 +489,9 @@ export function Valorant() {
           </div>
         </div>
       </div>
+      <p className="sr-only" aria-live="polite">
+        {swap > 0 ? `${agent.name}, ${agent.role}, locked in.` : ""}
+      </p>
     </section>
   );
 }

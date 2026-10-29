@@ -32,7 +32,7 @@ function probe(src: string) {
 
 let scrolled: Promise<void> | null = null;
 /** Resolves on the visitor's first scroll (at once for a restored or deep-linked position). */
-function firstScroll() {
+export function firstScroll() {
   scrolled ??= new Promise<void>((resolve) => {
     if (window.scrollY > 0) resolve();
     else window.addEventListener("scroll", () => resolve(), { once: true, passive: true });

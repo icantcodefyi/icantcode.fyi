@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 
 import { DepthStage, useDepthLayer } from "@/components/depth-stage";
+import { avif } from "@/lib/art";
 import type { StageSpec } from "@/lib/depth/types";
 import { damp, reducedMotion, smooth } from "@/lib/motion";
 import { useScrollFrame } from "@/lib/scroll-loop";
@@ -17,8 +18,8 @@ import {
   trailLines,
 } from "./anime/ink";
 import { layout, quadClip, type Layout, type PageBox, type PanelBox, type PanelId } from "./anime/layout";
-import { fit, sfxBox, solveAll, type Rect, type Solved } from "./anime/place";
-import { SHOWS, type Corner, type Show } from "./anime/shows";
+import { fit, sfxBox, solveAll, textWidth, type Rect, type Solved } from "./anime/place";
+import { SHOWS, type Corner, type Place, type Show } from "./anime/shows";
 
 /**
  * The Anime world: the watchlist as a two-colour riso manga spread. The
@@ -189,18 +190,32 @@ const STAGES: Record<string, StageSpec> = Object.fromEntries(
 /** How far a poster that fills only part of its panel dissolves into the screentone beyond it, px (anime.css .an-art-part). */
 const ART_FADE = 80;
 
-function Art({ show, box, part }: { show: Show; box: PanelBox; part?: Show["page"]["art"] }) {
+/** Each poster ships at its full size and at this width, as AVIF, or WebP where the browser can't decode AVIF. */
+const POSTER_SMALL = 600;
+/** a strip this narrow is a phone's */
+const PHONE_W = 540;
+const poster = (show: Show, w: number) => `/lobby/anime/${show.img}-${w}.${avif() ? "avif" : "webp"}`;
+
+function Art({ show, box, place, phone }: { show: Show; box: PanelBox; place: Place; phone: boolean }) {
+  const part = place.art;
   const ref = useRef<HTMLDivElement>(null);
   useDepthLayer(ref, ART_D);
   const h = box.h + 2 * OVERSCAN;
   const w = box.w * (part?.span ?? 1);
-  const { ox, oy, dw, dh } = fit(show.size, show.focus, w, h, part?.zoom);
+  const { ox, oy, dw, dh } = fit(show.size, place.focus ?? show.focus, w, h, part?.zoom);
   // cropped in past a cover fit, the poster is sized and placed outright
   const at: CSSProperties = part ? { inset: "auto", left: f(ox), top: f(oy), width: f(dw), height: f(dh), maxWidth: "none" } : { objectPosition: `${f(ox)}px ${f(oy)}px` };
+  const full = poster(show, show.size[0]);
+  // the file is picked by the width the poster is drawn at, with room for the focus zoom (anime.css .an-art-in);
+  // a phone keeps to the small one: at 3× the full one would cost its first pass down the strip ~5 frames (4× CPU)
+  const srcSet = phone ? undefined : `${poster(show, POSTER_SMALL)} ${POSTER_SMALL}w, ${full} ${show.size[0]}w`;
+  const sizes = phone ? undefined : `${Math.ceil(dw * 1.06)}px`;
   const img = (cls: string, alt: string) => (
     <img
       className={`an-plate ${cls}`}
-      src={`/lobby/anime/${show.img}.webp`}
+      src={phone ? poster(show, POSTER_SMALL) : full}
+      srcSet={srcSet}
+      sizes={sizes}
       alt={alt}
       aria-hidden={alt ? undefined : true}
       width={show.size[0]}
@@ -288,8 +303,23 @@ function boxStyle(b: PanelBox, i: number, lay: Layout): CSSProperties {
 /** a tuning aid for the dev server only */
 const showFaces = import.meta.env.DEV && typeof location !== "undefined" && location.search.includes("an-faces");
 
-/** The narration box's size for the solver (anime.css .an-caption): its width cap and its three lines. */
-const CAPTION = { w: 206, h: 78 };
+/**
+ * The narration box's size for the solver (anime.css .an-caption): as wide as
+ * its longest line plus its padding and rule, and three lines tall. On a phone
+ * the meta says "eps", as MyAnimeList does, so the box fits a strip's crowded tiers.
+ */
+const CAPTION_H = 78;
+const epsWord = (lay: Layout) => (lay.kind === "strip" ? "eps" : "episodes");
+const metaLine = (show: Show, lay: Layout) => `${show.year} · ${show.eps} ${epsWord(lay)} · ${show.score}%`;
+function captionSize(show: Show, lay: Layout) {
+  const w = Math.max(
+    textWidth(show.title, '400 16px "Dela Gothic One"', 16),
+    textWidth(show.native, '500 12.5px "Zen Kaku Gothic New"', 12.5),
+    textWidth(metaLine(show, lay), "500 13.5px Onest", 13.5),
+  );
+  // its padding and rule, and a breath more so the longest line never runs into the rule
+  return { w: Math.ceil(w + 2 * 10 + 2 * 2.5 + 8), h: CAPTION_H };
+}
 
 function Panel({ show, box, lay, index, at }: { show: Show; box: PanelBox; lay: Layout; index: number; at: Solved }) {
   const hint = lay.kind === "strip" ? show.strip : show.page;
@@ -306,7 +336,7 @@ function Panel({ show, box, lay, index, at }: { show: Show; box: PanelBox; lay: 
       <DepthStage spec={STAGES[show.id]} className="an-stage">
         <div className={hint.art ? "an-cell an-cell-part" : "an-cell"} style={{ clipPath: clip }}>
           {hint.art ? <ToneField box={box} span={hint.art.span} /> : null}
-          <Art show={show} box={box} part={hint.art} />
+          <Art show={show} box={box} place={hint} phone={lay.kind === "strip" && lay.w < PHONE_W} />
           {showFaces ? <Faces faces={at.faces} /> : null}
         </div>
         <Frame box={box} stroke={lay.stroke} seed={index * 11 + 3} />
@@ -318,7 +348,10 @@ function Panel({ show, box, lay, index, at }: { show: Show; box: PanelBox; lay: 
             {show.native}
           </p>
           <p className="an-caption-meta">
-            {show.year} · {show.eps} episodes · {show.score}%
+            {show.year} · {show.eps} <span aria-hidden={lay.kind === "strip" || undefined}>{epsWord(lay)}</span>
+            {lay.kind === "strip" ? <span className="sr-only">episodes</span> : null} ·{" "}
+            <span className="sr-only">AniList score </span>
+            {show.score}%
           </p>
         </div>
         <Bubble show={show} at={at.bubble} />
@@ -349,7 +382,8 @@ function donAt(box: PanelBox, lay: Layout) {
   const strip = lay.kind === "strip";
   const size = strip ? 44 : 56;
   const { w, h } = sfxBox({ sfx: "ドン！" }, size);
-  return { x: box.w - w * (strip ? 0.92 : 0.86), y: -h * (strip ? 0.42 : 0.5), w, h, size };
+  // on a phone it rides higher, clear of the kicker that runs nearly the width of the strip
+  return { x: box.w - w * (strip ? 0.92 : 0.86), y: -h * (strip ? 0.56 : 0.5), w, h, size };
 }
 
 function TitlePanel({ box, lay }: { box: PanelBox; lay: Layout }) {
@@ -424,6 +458,55 @@ const tsuzukuAt = (page: PageBox, lay: Layout) => ({
 function tsuzukuRect(page: PageBox, lay: Layout): Rect {
   const { right, bottom } = tsuzukuAt(page, lay);
   return { x: page.x + page.w - right - 76, y: page.y + page.h - bottom - 22, w: 76, h: 22 };
+}
+
+/**
+ * Where the captions' numbers come from, set as a footnote (※) in a page
+ * margin: each show's first season, scored by AniList's average
+ * (anime/shows.ts). It takes the first stretch of margin the lettering
+ * leaves free, from the spine side: the last page's foot, then the foot of a
+ * page before it (a phone's narration boxes hang into the feet), then the
+ * last page's head, then under the page. It is set in the last leaf either
+ * way, so it is read last.
+ */
+const COLOPHON = { mark: "※", text: "First seasons. Scores: AniList, Oct 2026", w: 218, h: 16 };
+type Spot = { left: number; top: number };
+function colophonSpot(lay: Layout, placed: Record<string, Solved>, boxes: Record<string, PanelBox>): Spot {
+  const pages = lay.pages;
+  const last = pages[pages.length - 1];
+  const taken: Rect[] = [...pages.map((p) => folioRect(p, lay)), tsuzukuRect(last, lay)];
+  for (const [id, s] of Object.entries(placed)) {
+    const b = boxes[id as PanelId];
+    for (const r of [s.cap.rect, s.bubble, s.sfx]) taken.push({ x: b.x + r.x - 10, y: b.y + r.y - 6, w: r.w + 20, h: r.h + 12 });
+  }
+  const strip = lay.kind === "strip";
+  const foot = (p: PageBox) => p.y + p.h - ((p.h - p.live.y - p.live.h) / 2 - 8) - COLOPHON.h;
+  const head = (p: PageBox) => p.y + (p.live.y - COLOPHON.h) / 2;
+  // (a spread's right-hand leaf turns, so there it keeps to its own page)
+  const before = lay.kind === "spread" ? [] : pages.slice(0, -1).reverse();
+  const rows: [PageBox, number][] = [[last, foot(last)], ...before.map((p): [PageBox, number] => [p, foot(p)]), [last, head(last)]];
+  const hit = (a: Rect, b: Rect) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
+  for (const [p, y] of rows) {
+    const x0 = p.x + (strip ? 0 : p.live.x);
+    const x1 = p.x + (strip ? p.w : p.live.x + p.live.w) - COLOPHON.w;
+    // the spine is on a left-hand page's right
+    const xs = Array.from({ length: Math.max(0, Math.floor((x1 - x0) / 4) + 1) }, (_, i) => (p.side === "l" ? x1 - i * 4 : x0 + i * 4));
+    for (const x of xs) {
+      if (!taken.some((t) => hit({ x, y, w: COLOPHON.w, h: COLOPHON.h }, t))) return { left: x - last.x, top: y - last.y };
+    }
+  }
+  // a very narrow phone has no stretch free: under the page, in the sheet's own margin
+  return { left: strip ? 0 : last.live.x, top: last.h + 6 };
+}
+function Colophon({ at }: { at: Spot }) {
+  return (
+    <p className="an-colophon" style={at}>
+      <span lang="ja" aria-hidden="true">
+        {COLOPHON.mark}
+      </span>{" "}
+      {COLOPHON.text}
+    </p>
+  );
 }
 
 function Furniture({ page, lay, last }: { page: PageBox; lay: Layout; last: boolean }) {
@@ -694,6 +777,10 @@ function guessWidth() {
   return Math.min(1280, vw - 2 * pad);
 }
 
+/** the balloons' and narration boxes' faces, which their sizes are measured in */
+const LETTERING_FACES = ["600 15px Onest", "500 13.5px Onest", '400 16px "Dela Gothic One"', '500 12.5px "Zen Kaku Gothic New"'];
+const SOLVED = new Map<string, Record<string, Solved>>();
+
 export function AnimeWorld() {
   const ref = useRef<HTMLElement>(null);
   const sheet = useRef<HTMLDivElement>(null);
@@ -715,17 +802,20 @@ export function AnimeWorld() {
 
   const boxes = Object.fromEntries(lay.panels.map((p) => [p.id, p])) as Record<PanelId, PanelBox>;
   if (showFaces) (window as unknown as { __an: unknown }).__an = { lay, placed: null };
-  // the balloons are fitted to their text as Onest sets it: solve again once the face has loaded
-  const [fonts, setFonts] = useState(0);
+  // the balloons are fitted to their text as Onest sets it: solve again once the face has loaded (unless it already has)
+  const [fonts, setFonts] = useState(() => (typeof document !== "undefined" && LETTERING_FACES.every((f) => document.fonts?.check(f)) ? 1 : 0));
   useEffect(() => {
     let alive = true;
-    document.fonts?.load("600 15px Onest").then(() => alive && setFonts(1), () => {});
+    Promise.all(LETTERING_FACES.map((f) => document.fonts?.load(f))).then(() => alive && setFonts(1), () => {});
     return () => {
       alive = false;
     };
   }, []);
   const placed = useMemo(() => {
-    void fonts; // only says the text measures have changed
+    // a width solved before (the window resized back, the world mounted again) is not solved twice
+    const key = `${lay.w}:${fonts}`;
+    const hit = SOLVED.get(key);
+    if (hit) return hit;
     const b = Object.fromEntries(lay.panels.map((p) => [p.id, p]));
     // the splash is all lettering already, and the margins carry the page's own: nothing leans into them
     const t = b.title;
@@ -737,13 +827,16 @@ export function AnimeWorld() {
     const strip = lay.kind === "strip";
     // on a phone the lettering may lean into the sheet's 14px edge, never off the screen; on a page, never over the fold
     const bounds = (n: number): [number, number] => {
-      if (strip) return [-8, lay.w + 8];
+      if (strip) return [-10, lay.w + 10];
       const p = lay.pages.find((g) => g.n === n) ?? lay.pages[0];
       return [p.x + 6, p.x + p.w - 6];
     };
     const don = donAt(t, lay);
     fixed.push({ x: t.x + don.x, y: t.y + don.y, w: don.w, h: don.h });
-    return solveAll(SHOWS, b, strip, { overscan: OVERSCAN, small: strip, capW: CAPTION.w, capH: CAPTION.h, bounds }, fixed);
+    const res = solveAll(SHOWS, b, strip, { overscan: OVERSCAN, small: strip, cap: (s) => captionSize(s, lay), bounds }, fixed);
+    if (SOLVED.size > 48) SOLVED.clear(); // a window dragged through every width
+    SOLVED.set(key, res);
+    return res;
   }, [lay, fonts]);
   if (showFaces) (window as unknown as { __an: { placed: unknown } }).__an.placed = placed;
 
@@ -776,6 +869,7 @@ export function AnimeWorld() {
                   <Panel key={show.id} show={show} box={boxes[show.id]} lay={lay} index={i + 1} at={placed[show.id]} />
                 ) : null,
               )}
+              {pi === lay.pages.length - 1 ? <Colophon at={colophonSpot(lay, placed, boxes)} /> : null}
             </div>
           ))}
         </div>

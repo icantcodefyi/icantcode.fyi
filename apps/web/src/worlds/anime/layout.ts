@@ -64,6 +64,9 @@ function strip(tiers: [PanelId, number][], slopes: number[]): Template {
   };
 }
 
+/** The widest strip whose tiers keep their phone proportions, px. */
+const STRIP_DEEP = 440;
+
 const STRIP_TEMPLATES: Template[] = [
   strip([["title", 0.98], ["hxh", 1.24], ["mob", 1.18]], [-0.07, 0.06]),
   strip([["bebop", 0.9], ["sg", 1.0], ["frieren", 0.96], ["jjk", 1.1]], [0.06, -0.08, 0.05]),
@@ -143,6 +146,8 @@ interface Metrics {
   stroke: number;
   /** sheet beyond the page edge (the phone strip's side padding), px: top, right, bottom, left */
   bleed?: [number, number, number, number];
+  /** px per template unit down the page, if not the live area's width (a wide strip's tiers) */
+  uy?: number;
 }
 
 function placePage(
@@ -153,6 +158,7 @@ function placePage(
 ) {
   const { live } = page;
   const u = live.w;
+  const uy = met.uy ?? u;
   const eps = 1e-6;
   for (const { id, quad } of t.panels) {
     const outer = quad.map((p, i) => {
@@ -164,7 +170,7 @@ function placePage(
         (Math.abs(p[1] - t.h) < eps && Math.abs(q[1] - t.h) < eps)
       );
     });
-    const px = quad.map(([x, y]) => [x * u, y * u] as Pt) as Quad;
+    const px = quad.map(([x, y]) => [x * u, y * uy] as Pt) as Quad;
     const cut = inset(px, (i) => {
       if (outer[i]) return 0;
       const a = px[i];
@@ -195,10 +201,14 @@ function placePage(
 /**
  * Lettering is set at one size (as a letterer would), so the layout steps
  * rather than shrinks: a spread once each page's panels can hold their
- * balloons beside the faces (a 560 px live area), stacked pages below that.
+ * balloons beside the faces (a 530 px live area, so a 1280 laptop gets the
+ * spread), stacked pages below that, and a strip on phones. The pages start
+ * past the widest sheet a window under 640 px has (anime.css: its margins
+ * are 14 px there, 32 px from 640), so narrowing a window never switches the
+ * kind back and forth.
  */
 export function kindFor(w: number): Kind {
-  return w >= 1260 ? "spread" : w >= 600 ? "pages" : "strip";
+  return w >= 1200 ? "spread" : w >= 612 ? "pages" : "strip";
 }
 
 export function layout(width: number): Layout {
@@ -256,11 +266,14 @@ export function layout(width: number): Layout {
     return { kind, w, h: 2 * ph + gap, pages, panels, stroke: met.stroke };
   }
 
-  const met: Metrics = { m: [30, 50, 0, 0], gh: 16, gv: 10, stroke: 2.8, bleed: [0, 8, 0, 8] };
+  // past a phone's width the tiers stop growing taller and only get wider, so a
+  // small tablet or a phone on its side reads wide panels, not a strip twice its height
+  const uy = Math.min(w, STRIP_DEEP);
+  const met: Metrics = { m: [30, 50, 0, 0], gh: 16, gv: 10, stroke: 2.8, bleed: [0, 8, 0, 8], uy };
   const lw = w;
   let y = 0;
   STRIP_TEMPLATES.forEach((t, i) => {
-    const lh = Math.round(lw * t.h);
+    const lh = Math.round(uy * t.h);
     const ph = lh + met.m[0] + met.m[1];
     const page: PageBox = {
       n: FIRST_FOLIO + i,

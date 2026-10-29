@@ -135,6 +135,20 @@ html .an-world[data-kind="strip"] { --an-stock: var(--an-page); }
   color: var(--an-rule);
 }
 .an-tsuzuku svg { fill: var(--an-spot); }
+/* the footnote on the captions' numbers: small print, like a magazine's */
+.an-colophon {
+  position: absolute;
+  margin: 0;
+  font-size: 10.5px;
+  font-weight: 500;
+  line-height: 16px;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  color: var(--an-rule);
+  opacity: 0.72;
+  pointer-events: none;
+}
+.an-colophon [lang="ja"] { font-family: "Zen Kaku Gothic New", sans-serif; }
 
 .an-trim {
   position: absolute;
@@ -314,6 +328,8 @@ html[data-mode="day"] .an-plate-b { filter: url(#an-sep-b-day); mix-blend-mode: 
   color: var(--an-ink);
   border: 2.5px solid var(--an-ink);
 }
+/* sized to its longest line by the solver (anime.tsx captionSize): never let a line wrap past it */
+.an-caption > * { white-space: nowrap; }
 .an-caption-title {
   font-family: "Dela Gothic One", sans-serif;
   font-size: 16px;
@@ -332,7 +348,6 @@ html[data-mode="day"] .an-plate-b { filter: url(#an-sep-b-day); mix-blend-mode: 
   font-size: 13.5px;
   font-weight: 500;
   line-height: 1.3;
-  font-variant-numeric: tabular-nums;
 }
 
 /* ── balloon ── */
@@ -454,6 +469,7 @@ html[data-mode="day"] .an-kicker { color: #fff; background: var(--an-spot); }
   padding: 8px 11px 9px;
   font-size: 15px;
   line-height: 1.42;
+  text-wrap: pretty;
   background: var(--an-paper);
   color: var(--an-ink);
   border: 2.5px solid var(--an-ink);
@@ -541,8 +557,9 @@ html[data-mode="day"] .an-title .an-tone + .an-tone { display: none; }
     mask: none;
   }
   /* the page's furniture and marks come up with the first panel */
-  [data-phase="armed"] :is(.an-page > *, .an-register, .an-trim) { opacity: 0; transition: opacity 0.9s var(--ease) 0.2s; }
+  [data-phase="armed"] :is(.an-page > *, .an-register, .an-trim, .an-colophon) { opacity: 0; transition: opacity 0.9s var(--ease) 0.2s; }
   [data-phase="armed"]:has(.an-title[data-in]) :is(.an-page > *, .an-register, .an-trim) { opacity: 1; }
+  [data-phase="armed"]:has(.an-title[data-in]) .an-colophon { opacity: 0.72; }
   [data-phase="armed"]:has(.an-title[data-in]) .an-spine { opacity: 0.34; }
   html[data-mode="day"] [data-phase="armed"]:has(.an-title[data-in]) .an-spine { opacity: 0.4; }
   [data-phase="armed"]:has(.an-title[data-in]) .an-trim { opacity: 0.55; }

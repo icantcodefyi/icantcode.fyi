@@ -1,0 +1,104 @@
+/* ── Seams (components/seam.tsx) ──
+ * The box takes the art's aspect (at least 200px tall) and reaches
+ * --seam-overlap over its neighbour. It is clipped only along the weld
+ * edge, so the clouds never spill into the section they weld into but may
+ * drift freely over the one they overlap. */
+.seam {
+  --seam-ar: 2400 / 720;
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  aspect-ratio: var(--seam-ar);
+  min-height: 200px;
+  pointer-events: none;
+}
+.seam[data-kind="cloud-rise"] {
+  margin-top: calc(-1 * var(--seam-overlap));
+  clip-path: inset(-100vh 0 0 0);
+}
+.seam[data-kind="cloud-fall"] {
+  margin-bottom: calc(-1 * var(--seam-overlap));
+  clip-path: inset(0 0 -100vh 0);
+}
+.seam[data-kind="fade"] {
+  aspect-ratio: auto;
+  min-height: 0;
+  height: var(--seam-overlap);
+  background: linear-gradient(var(--seam-from), var(--seam-to));
+}
+
+/* overscan for the pointer's sideways drift */
+.seam-layer {
+  position: absolute;
+  inset: 0 -4%;
+}
+.seam-layer > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.seam[data-kind="cloud-rise"] .seam-layer > img { object-position: 50% 100%; }
+.seam[data-kind="cloud-fall"] .seam-layer > img { object-position: 50% 0%; }
+.seam-layer > img[data-set="day"] {
+  opacity: 0;
+  transition: opacity var(--dur-scene) var(--ease-io);
+}
+html[data-mode="day"] .seam-layer > img[data-set="day"] {
+  opacity: 1;
+}
+
+/* the front layer's solid ground runs on past the weld, so its drift never opens a gap there */
+.seam-layer[data-layer="front"]::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 170px;
+}
+.seam[data-kind="cloud-rise"] .seam-layer[data-layer="front"]::after {
+  top: calc(100% - 1px);
+  background: var(--seam-to);
+}
+.seam[data-kind="cloud-fall"] .seam-layer[data-layer="front"]::after {
+  bottom: calc(100% - 1px);
+  background: var(--seam-from);
+}
+
+/* ── Stand-ins until the paintings land: scalloped cloud silhouettes in the two grounds ── */
+.seam-layer[data-ph]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+.seam[data-kind="cloud-rise"] .seam-layer[data-ph][data-layer="back"]::before {
+  background: linear-gradient(color-mix(in oklab, var(--seam-to) 55%, var(--seam-from)) 25%, var(--seam-to) 70%);
+  mask:
+    radial-gradient(closest-side, #000 90%, transparent) 0 30% / 340px 210px repeat-x,
+    radial-gradient(closest-side, #000 90%, transparent) 170px 44% / 260px 170px repeat-x,
+    linear-gradient(transparent 46%, #000 50%);
+  opacity: 0.55;
+}
+.seam[data-kind="cloud-rise"] .seam-layer[data-ph][data-layer="front"]::before {
+  background: linear-gradient(color-mix(in oklab, var(--seam-to) 70%, #fff) 45%, var(--seam-to) 75%);
+  mask:
+    radial-gradient(closest-side, #000 90%, transparent) 60px 56% / 240px 150px repeat-x,
+    radial-gradient(closest-side, #000 90%, transparent) 180px 66% / 180px 120px repeat-x,
+    linear-gradient(transparent 66%, #000 70%);
+}
+.seam[data-kind="cloud-fall"] .seam-layer[data-ph][data-layer="back"]::before {
+  background: linear-gradient(var(--seam-from) 30%, color-mix(in oklab, var(--seam-from) 55%, var(--seam-to)) 75%);
+  mask:
+    radial-gradient(closest-side, #000 90%, transparent) 0 70% / 340px 210px repeat-x,
+    radial-gradient(closest-side, #000 90%, transparent) 170px 56% / 260px 170px repeat-x,
+    linear-gradient(#000 50%, transparent 54%);
+  opacity: 0.55;
+}
+.seam[data-kind="cloud-fall"] .seam-layer[data-ph][data-layer="front"]::before {
+  background: linear-gradient(var(--seam-from) 30%, color-mix(in oklab, var(--seam-from) 70%, var(--seam-to)) 60%);
+  mask:
+    radial-gradient(closest-side, #000 90%, transparent) 60px 44% / 240px 150px repeat-x,
+    radial-gradient(closest-side, #000 90%, transparent) 180px 34% / 180px 120px repeat-x,
+    linear-gradient(#000 30%, transparent 34%);
+}

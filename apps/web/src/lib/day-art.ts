@@ -7,9 +7,11 @@ import { useMode } from "@/lib/mode";
  * day plate only once the file is known to exist, so a missing painting
  * falls back to the night one instead of a broken image.
  *
- * Probing starts once the section is within a screen and a half of the
- * viewport: straight away in day mode and after a short idle in night mode,
- * so the plate is decoded and ready before the first switch.
+ * In day mode the probe starts as soon as the section is within `margin` of
+ * the viewport. In night mode the day plate is only there to make a first
+ * switch seamless, so it waits for the visitor's first scroll and then for
+ * idle time (`idle`) as well: nothing of the other mode is fetched while
+ * the page is still loading.
  */
 const known = new Map<string, Promise<boolean>>();
 
@@ -28,7 +30,26 @@ function probe(src: string) {
   return p;
 }
 
-export function useDayArt(src: string, near?: RefObject<HTMLElement | null>) {
+let scrolled: Promise<void> | null = null;
+/** Resolves on the visitor's first scroll (at once for a restored or deep-linked position). */
+function firstScroll() {
+  scrolled ??= new Promise<void>((resolve) => {
+    if (window.scrollY > 0) resolve();
+    else window.addEventListener("scroll", () => resolve(), { once: true, passive: true });
+  });
+  return scrolled;
+}
+
+const onIdle = (fn: () => void) =>
+  window.requestIdleCallback ? window.requestIdleCallback(fn, { timeout: 3000 }) : window.setTimeout(fn, 200);
+const offIdle = (id: number) => (window.cancelIdleCallback ? window.cancelIdleCallback(id) : window.clearTimeout(id));
+
+/** `src` null: nothing to probe (a plate with one set for both modes). */
+export function useDayArt(
+  src: string | null,
+  near?: RefObject<HTMLElement | null>,
+  { margin = "100% 0px", idle = true }: { margin?: string; idle?: boolean } = {},
+) {
   const mode = useMode();
   const [ok, setOk] = useState(false);
   const [close, setClose] = useState(!near);
@@ -42,22 +63,27 @@ export function useDayArt(src: string, near?: RefObject<HTMLElement | null>) {
           setClose(true);
         }
       },
-      { rootMargin: "150% 0px" },
+      { rootMargin: margin },
     );
     io.observe(el);
     return () => io.disconnect();
-  }, [near, close]);
+  }, [near, close, margin]);
   useEffect(() => {
-    if (ok || !close) return;
+    if (!src || ok || !close) return;
     let alive = true;
-    const t = window.setTimeout(
-      () => probe(src).then((v) => alive && v && setOk(true)),
-      mode === "day" ? 0 : 1500,
-    );
+    let task = 0;
+    const go = () => probe(src).then((v) => alive && v && setOk(true));
+    if (mode === "day") void go();
+    else
+      void firstScroll().then(() => {
+        if (!alive) return;
+        if (idle) task = onIdle(go);
+        else void go();
+      });
     return () => {
       alive = false;
-      window.clearTimeout(t);
+      if (task) offIdle(task);
     };
-  }, [src, mode, ok, close]);
+  }, [src, mode, ok, close, idle]);
   return ok;
 }

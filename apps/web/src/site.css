@@ -34,7 +34,23 @@ html[data-theme] {
   --step-display: clamp(3.25rem, 1.2rem + 6.6vw, 7.5rem);
 
   --margin: clamp(16px, 2vw, 28px);
-  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* Motion tokens, mirrored in lib/motion.ts: change both together */
+  --ease: cubic-bezier(0.22, 1, 0.36, 1); /* settle: entrances, hovers, camera arrivals */
+  --ease-io: cubic-bezier(0.65, 0, 0.35, 1); /* crossfades: mode, swaps, portal wash */
+  --ease-in: cubic-bezier(0.55, 0, 1, 0.45); /* exits only */
+  --ease-pop: cubic-bezier(0.34, 1.32, 0.5, 1); /* tiny pops only */
+  --dur-micro: 160ms;
+  --dur-short: 320ms;
+  --dur-in: 700ms;
+  --dur-scene: 1100ms;
+  --dur-arrive: 1400ms;
+  --dur-portal-in: 520ms;
+  --dur-portal-out: 420ms;
+  --stagger: 70ms;
+  --rise: 24px;
+  /* main-stage vertical rhythm (the worlds keep their own) */
+  --section-pad: clamp(96px, 10vw, 160px);
 
   --background: var(--bg);
   --foreground: var(--ink);
@@ -58,6 +74,15 @@ html[data-theme] {
 
   color-scheme: dark;
   background: var(--bg);
+}
+/* how far a seam reaches over its neighbour */
+:root {
+  --seam-overlap: clamp(140px, 16vw, 300px);
+}
+@media (max-width: 639px) {
+  :root {
+    --seam-overlap: 28vw;
+  }
 }
 
 /* Day mode: same roles, light ground. Sections and worlds add their own
@@ -123,7 +148,11 @@ body {
   pointer-events: none;
   /* hidden for real once it has faded out, so its blur isn't recomposited behind every scroll frame */
   visibility: hidden;
-  transition: opacity 0.3s var(--ease), translate 0.3s var(--ease), visibility 0s linear 0.3s;
+  transition:
+    opacity 0.3s var(--ease),
+    translate 0.3s var(--ease),
+    background-color var(--dur-short) var(--ease-io),
+    visibility 0s linear 0.3s;
 }
 .mode-dock[data-shown] {
   opacity: 1;
@@ -131,6 +160,13 @@ body {
   pointer-events: auto;
   visibility: visible;
   transition-delay: 0s;
+}
+/* over a fandom world: neutral glass, none of the main stage's colours */
+.mode-dock[data-world] {
+  background: rgb(255 255 255 / 0.1);
+}
+html[data-mode="day"] .mode-dock[data-world] {
+  background: rgb(0 0 0 / 0.06);
 }
 .mode-dock:not([data-shown]) * {
   animation-play-state: paused !important;
@@ -259,18 +295,36 @@ body {
 .pick-frame img { transition: transform 700ms var(--ease); }
 .pick:hover .pick-frame img { transform: scale(1.04) translateY(-6px); }
 
-/* ── Entrances: hidden only when motion is welcome and script has run ── */
+/* ── Entrances: hidden only once script has run ──
+   data-reveal (rise, text) · data-reveal="settle" (art) · data-reveal="draw" (lines and dividers, from the centre).
+   Stagger with --d: headline, lede +80ms, actions +140ms, list +70ms each (max 5). */
 @media (prefers-reduced-motion: no-preference) {
   .js [data-reveal] {
     opacity: 0;
-    transform: translateY(24px);
+    transform: translateY(var(--rise));
     transition:
-      opacity 700ms var(--ease) var(--d, 0ms),
-      transform 700ms var(--ease) var(--d, 0ms);
+      opacity var(--dur-in) var(--ease) var(--d, 0ms),
+      transform var(--dur-in) var(--ease) var(--d, 0ms);
+  }
+  .js [data-reveal="settle"] {
+    transform: scale(1.04);
+    transition-duration: var(--dur-scene);
+  }
+  .js [data-reveal="draw"] {
+    transform: scaleX(0);
   }
   .js [data-reveal].in {
     opacity: 1;
     transform: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .js [data-reveal] {
+    opacity: 0;
+    transition: opacity 300ms var(--ease) var(--d, 0ms);
+  }
+  .js [data-reveal].in {
+    opacity: 1;
   }
 }
 

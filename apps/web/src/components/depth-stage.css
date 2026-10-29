@@ -1,0 +1,25 @@
+/* ── Depth stages (components/depth-stage.tsx) ──
+   :where() keeps these at zero specificity, so a section's own class wins
+   (a sticky stage, a different box). */
+:where([data-depth-stage]) {
+  position: relative;
+}
+:where(.depth-plate) {
+  position: absolute;
+  pointer-events: none;
+}
+:where(.depth-plate) > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+/* the day painting is pixel-aligned with the night one: it sits on top and crossfades */
+:where(.depth-plate) > img[data-set="day"] {
+  opacity: 0;
+  transition: opacity var(--dur-scene) var(--ease-io);
+}
+html[data-mode="day"] :where(.depth-plate) > img[data-set="day"] {
+  opacity: 1;
+}

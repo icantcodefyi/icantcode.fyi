@@ -90,11 +90,12 @@ if (typeof window !== "undefined") {
   if (location.hash || nav?.type === "reload" || nav?.type === "back_forward") mountEverything = true;
 
   // same-page anchors: mount what's above the target, then follow the link
+  // (gates marked data-portal run their own transition, and call mountBefore themselves)
   document.addEventListener(
     "click",
     (e) => {
       if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-      const a = (e.target as Element | null)?.closest?.("a[href^='#']");
+      const a = (e.target as Element | null)?.closest?.("a[href^='#']:not([data-portal])");
       if (!a) return;
       const hash = a.getAttribute("href")!;
       const target = hash.length > 1 ? document.getElementById(decodeURIComponent(hash.slice(1))) : null;

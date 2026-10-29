@@ -1,54 +1,52 @@
-/* ───────── BTS: a night concert in purple and black ─────────
-   Every colour is a variable so day mode can repaint the room and the
-   canvas equaliser from one place; the stage itself is painted, per mode. */
+/* ───────── BTS: one night at the stadium, in purple and black ─────────
+   Three parts: the overture (house lights, the title), the show (a painted
+   stage pinned while two acts play on it: the line-up, then the music) and
+   the shelf (a crate of records). Every colour is a variable so day mode
+   repaints the room, the canvas meter and the LED wall from one place; the
+   stage itself is painted, per mode. */
 .bt {
   --bt-ground: #0d0718;
-  --bt-ground-2: #140a24;
-  --bt-panel: #1a0e2e;
   --bt-ink: #f3ecff;
   --bt-soft: #c9a7ff;
   --bt-muted: #bba8db;
   --bt-accent: #a77bff;
   --bt-on-accent: #160a29;
   --bt-line: rgb(201 167 255 / 0.2);
-  --bt-line-strong: rgb(201 167 255 / 0.4);
-  --bt-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --bt-line-strong: rgb(201 167 255 / 0.42);
+
+  /* on the stage: type sits on paint, so it keeps its own light ink and a shade under it */
+  --bt-stage-ink: #f6f0ff;
+  --bt-stage-soft: #d6bfff;
+  --bt-stage-muted: #cbbbe6;
+  --bt-stage-line: rgb(214 191 255 / 0.26);
+  --bt-shade: 13 7 24;
 
   /* house lights: the doorway's dark, the truss hairline, the beams */
   --bt-house: #0b0a0d;
   --bt-house-line: rgb(201 167 255 / 0.3);
   --bt-house-beam: rgb(206 178 255 / 0.3);
-
-  /* the riser the record stands on */
-  --bt-riser-0: #2c1656;
-  --bt-riser-1: #120822;
-  --bt-face-0: #110824;
-  --bt-face-1: #07030d;
-  --bt-pool: rgb(124 62 226 / 0.3);
-  --bt-haze: rgb(176 140 255 / 0.2);
-  --bt-confetti-light: #f3ecff;
-
-  /* stage: the ground under the painting while it loads, the floor the member
-     fades into, the name on the LED wall, the house fixtures */
-  --bt-stage: #170a2e;
-  --bt-led-text: #1a0b38;
-  --bt-floor-1: #08030f;
   --bt-fix: #1f1338;
   --bt-fix-ring: #6c51a6;
 
-  /* equaliser (read by canvas) */
-  --bt-eq-top: #f3ecff;
-  --bt-eq-bottom: #8f5cff;
-  --bt-eq-idle: rgb(201 167 255 / 0.28);
+  --bt-stage: #170a2e;
+  --bt-haze: rgb(176 140 255 / 0.18);
+  --bt-confetti-light: #f3ecff;
 
-  background:
-    radial-gradient(90% 50% at 50% 0%, rgb(124 62 226 / 0.22), transparent 70%),
-    linear-gradient(var(--bt-ground), var(--bt-ground-2) 40%, var(--bt-ground));
+  /* the LED wall's lit pixels, and the meter (read by canvas) */
+  --bt-led: #fbf6ff;
+  --bt-led-bloom: rgb(186 140 255 / 0.85);
+  --bt-eq-top: #f6efff;
+  --bt-eq-bottom: #9a6bff;
+  --bt-eq-idle: rgb(214 191 255 / 0.32);
+
+  position: relative;
+  overflow-x: clip;
+  background: var(--bt-ground);
   color: var(--bt-ink);
   font-family: "Onest", system-ui, sans-serif;
   font-size: 17px;
   line-height: 1.55;
-  padding-block: clamp(80px, 9vw, 128px) 56px;
+  padding-bottom: clamp(72px, 9vw, 120px);
 }
 
 .bt-display {
@@ -56,815 +54,94 @@
   font-weight: 800;
   letter-spacing: -0.02em;
 }
-
 .bt-wrap {
   max-width: 1360px;
   margin-inline: auto;
   padding-inline: clamp(16px, 4vw, 56px);
 }
-
-/* ───────── header ───────── */
-.bt-head {
-  display: grid;
-  gap: 20px;
-  align-items: end;
-  margin-bottom: clamp(32px, 4vw, 56px);
-}
-@media (min-width: 1024px) {
-  .bt-head { grid-template-columns: minmax(0, 7fr) minmax(0, 4fr); gap: 48px; }
-}
-.bt-title {
+.bt-eyebrow {
   margin: 0;
-  font-size: clamp(30px, 5.2vw, 76px);
-  line-height: 0.98;
-  color: var(--bt-ink);
-  text-wrap: balance;
-}
-.bt-title-soft { display: block; color: var(--bt-soft); }
-.bt-lede {
-  margin: 0;
-  max-width: 40ch;
-  font-size: 18px;
-  color: var(--bt-muted);
-}
-
-/* ───────── show: stage, info, line-up ───────── */
-.bt-show {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  grid-template-areas: "stage" "lineup" "info";
-  gap: 20px;
-}
-.bt-stage { grid-area: stage; }
-.bt-info { grid-area: info; }
-.bt-lineup { grid-area: lineup; }
-
-@media (min-width: 1024px) {
-  .bt-show {
-    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
-    grid-template-areas: "stage info" "lineup lineup";
-    column-gap: clamp(32px, 4vw, 64px);
-    row-gap: 20px;
-  }
-  .bt-info { align-self: center; }
-}
-
-.bt-stage {
-  position: relative;
-  isolation: isolate;
-  overflow: hidden;
-  height: clamp(520px, 62vw, 720px);
-  border-radius: 28px;
-  background: var(--bt-stage);
-  container-type: size;
-  box-shadow: 0 0 0 1px var(--bt-line), 0 40px 80px -40px rgb(124 62 226 / 0.55);
-}
-@media (min-width: 1024px) {
-  .bt-stage { height: clamp(620px, 50vw, 720px); }
-}
-@media (max-width: 639px) {
-  .bt-stage { height: 540px; border-radius: 22px; }
-}
-
-.bt-stage > div {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-}
-/* the painted stage: each plate cover-fits the stage in the painting's own
-   10:7 (so a point of the painting is a fixed % of .bt-art), overscanned so
-   the camera's drift never shows an edge. Everything stays under the member. */
-.bt-plate, .bt-confetti { z-index: 1; }
-.bt-figures { z-index: 2; }
-.bt-confetti { overflow: hidden; }
-.bt-art {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: max(calc(100cqw + 32px), calc((100cqh + 48px) * 10 / 7));
-  aspect-ratio: 10 / 7;
-  transform: translate(-50%, -50%);
-}
-.bt-art img,
-.bt-sweep {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-}
-.bt-art img { display: block; max-width: none; }
-.bt-art img[data-set="day"] {
-  opacity: 0;
-  transition: opacity var(--dur-scene) var(--ease-io);
-}
-html[data-mode="day"] .bt-art img[data-set="day"] { opacity: 1; }
-/* the beams in two halves, each turning about its pair of heads (the painting's lenses sit at 20% / 80%, 10% down) */
-.bt-sweep[data-side="l"] { clip-path: inset(0 50% 0 0); transform-origin: 20.1% 10%; }
-.bt-sweep[data-side="r"] { clip-path: inset(0 0 0 50%); transform-origin: 79.9% 10%; }
-
-/* haze hanging in the beams, behind the member */
-.bt-haze { position: absolute; inset: 0; }
-.bt-haze span {
-  position: absolute;
-  left: -20%;
-  width: 140%;
-  height: 34%;
-  border-radius: 50%;
-  background: radial-gradient(closest-side, var(--bt-haze), transparent);
-}
-.bt-haze span:first-child { top: 44%; }
-.bt-haze span:last-child { top: 62%; height: 28%; opacity: 0.8; }
-
-/* confetti: each piece falls the stage's height (cqh) with a slow drift, flipping as it goes */
-.bt-confetti span {
-  position: absolute;
-  left: var(--x);
-  top: -4%;
-  opacity: 0;
-}
-.bt-confetti i {
-  display: block;
-  width: 7px;
-  height: 11px;
-  border-radius: 1px;
-  background: var(--c);
-}
-.bt-stage > div { pointer-events: none; }
-/* no deck: the member runs to the bottom of the stage and fades into it,
-   like a poster, so the photo is never cut by a floor line */
-.bt-stage > .bt-floor-fade {
-  z-index: 3;
-  inset: auto 0 0 0;
-  height: 26%;
-  pointer-events: none;
-  background: linear-gradient(to top, var(--bt-floor-1) 0%, color-mix(in srgb, var(--bt-floor-1) 60%, transparent) 40%, transparent);
-}
-
-/* member name on the LED wall, as pixels switched off (the painting's wall spans about 29-67% down) */
-.bt-screen-name {
-  position: absolute;
-  inset: 31% 0 auto;
-  display: flex;
-  justify-content: center;
-  pointer-events: none;
-  user-select: none;
-  opacity: 0.5;
-}
-.bt-screen-name span {
-  font: 800 min(calc(84cqw / var(--bt-len)), 26cqh) / 0.9 "Unbounded", system-ui, sans-serif;
-  letter-spacing: -0.02em;
-  text-transform: uppercase;
-  white-space: nowrap;
-  color: var(--bt-led-text);
-}
-
-/* the cutouts: one rule for all. Sized to the photo's own box, anchored to
-   the floor, side edges feathered so no shoulder ends in a straight cut,
-   and the base melts into the deck. Per-member nudges live in FRAMING. */
-.bt-stage {
-  --bt-headroom: 0.1;
-  --bt-sink: 0;
-}
-@media (max-width: 639px) {
-  .bt-stage { --bt-headroom: 0.16; --bt-sink: 0; }
-}
-.bt-figures > .bt-figure {
-  position: absolute;
-  left: 50%;
-  bottom: calc(var(--bt-sink) * -100%);
-  height: calc((1 - var(--bt-headroom) + var(--bt-sink)) * 100%);
-  width: auto;
-  max-width: none;
-  transform: translateX(-50%);
-  transform-origin: 50% 100%;
-  opacity: 0;
-  translate: 0 14px;
-  pointer-events: none;
-  user-select: none;
-  -webkit-mask-image: linear-gradient(to right, transparent, #000 9%, #000 91%, transparent), linear-gradient(to bottom, #000 74%, transparent 100%);
-  -webkit-mask-composite: source-in;
-  mask-image: linear-gradient(to right, transparent, #000 9%, #000 91%, transparent), linear-gradient(to bottom, #000 74%, transparent 100%);
-  mask-composite: intersect;
-}
-.bt-figures > .bt-figure[data-on] { opacity: 1; translate: 0 0; }
-
-
-/* ───────── info ───────── */
-.bt-info { container-type: inline-size; }
-.bt-panel { min-height: 0; }
-.bt-position {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  margin: 0;
-  padding: 8px 16px 8px 12px;
-  border-radius: 999px;
-  border: 1px solid var(--bt-line);
-  background: rgb(201 167 255 / 0.08);
-  color: var(--bt-soft);
-  font-size: 16px;
-  font-weight: 600;
-}
-.bt-position svg { fill: currentColor; }
-.bt-name {
-  margin: 18px 0 0;
-  font-size: min(clamp(56px, 7.2vw, 116px), calc(128cqw / var(--bt-len)));
-  line-height: 0.92;
-  color: var(--bt-ink);
-  overflow-wrap: anywhere;
-}
-.bt-line {
-  margin: 20px 0 0;
-  max-width: 34ch;
-  font-size: clamp(18px, 1.4vw, 21px);
-  line-height: 1.5;
-  color: var(--bt-ink);
-}
-.bt-line::before {
-  content: "";
-  display: block;
-  width: 56px;
-  height: 3px;
-  border-radius: 3px;
-  margin-bottom: 18px;
-  background: linear-gradient(90deg, var(--bt-accent), transparent);
-}
-@media (max-width: 1023px) {
-  .bt-info { padding-inline: 4px; }
-}
-
-/* ───────── line-up tabs ───────── */
-.bt-lineup {
-  display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 6px;
-}
-.bt-tab {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  padding: 0;
-  border: 0;
-  background: none;
-  color: var(--bt-muted);
-  cursor: pointer;
-  border-radius: 20px;
-  -webkit-tap-highlight-color: transparent;
-}
-.bt-tab-avatar {
-  position: relative;
-  display: block;
-  width: 100%;
-  max-width: 64px;
-  aspect-ratio: 1;
-}
-.bt-tab-face {
-  position: relative;
-  display: block;
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  overflow: hidden;
-  background: radial-gradient(circle at 50% 30%, #3a2168, #170c2b);
-  box-shadow: 0 0 0 1.5px var(--bt-line);
-  transition: box-shadow 260ms var(--bt-ease), transform 260ms var(--bt-ease);
-}
-.bt-tab-face img {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: 50% 50%;
-}
-/* fallback only: the full cutout, zoomed to the head */
-.bt-tab-face img[data-fallback] {
-  object-position: 50% 0%;
-  scale: 1.3;
-  transform-origin: 50% 8%;
-}
-.bt-tab-name {
-  font: 600 15px/1.1 "Unbounded", system-ui, sans-serif;
-  letter-spacing: -0.01em;
-  white-space: nowrap;
-}
-.bt-tab[aria-selected="true"] { color: var(--bt-ink); }
-.bt-tab[aria-selected="true"] .bt-tab-face {
-  box-shadow: 0 0 0 3px var(--bt-ground-2), 0 0 0 5px var(--bt-soft);
-}
-/* rotation progress: a ring that fills around the active face */
-.bt-tab-ring {
-  position: absolute;
-  inset: -5px;
-  z-index: 1;
-  pointer-events: none;
-  opacity: 0;
-}
-.bt-tab-ring svg { display: block; width: 100%; height: 100%; rotate: -90deg; overflow: visible; }
-.bt-tab-ring circle {
-  fill: none;
-  stroke: var(--bt-ink);
-  stroke-width: 1.3;
-  stroke-linecap: round;
-  stroke-dasharray: 1;
-  stroke-dashoffset: calc(1 - var(--bt-p, 0));
-}
-.bt-lineup[data-auto] .bt-tab[aria-selected="true"] .bt-tab-ring { opacity: 1; }
-.bt-lineup[data-auto] .bt-tab[aria-selected="true"] .bt-tab-face { box-shadow: 0 0 0 3px var(--bt-ground-2), 0 0 0 5px rgb(201 167 255 / 0.35); }
-.bt-tab:hover .bt-tab-avatar { transform: translateY(-2px); }
-.bt-tab-avatar { transition: transform 260ms var(--bt-ease); }
-.bt-tab:focus-visible { outline: none; }
-.bt-tab:focus-visible .bt-tab-face {
-  box-shadow: 0 0 0 2.5px var(--bt-ground-2), 0 0 0 5px var(--bt-ink);
-}
-.bt-tab:focus-visible .bt-tab-name { text-decoration: underline; text-underline-offset: 4px; }
-
-@media (max-width: 639px) {
-  .bt-lineup { gap: 6px; }
-  .bt-tab-name {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-  }
-}
-@media (min-width: 1024px) {
-  .bt-lineup {
-    margin-top: 8px;
-    padding: 12px;
-    gap: 8px;
-    border-radius: 999px;
-    grid-template-columns: repeat(7, auto);
-    justify-content: space-between;
-    background: rgb(201 167 255 / 0.06);
-    box-shadow: inset 0 0 0 1px var(--bt-line);
-  }
-  .bt-tab {
-    flex-direction: row;
-    justify-content: flex-start;
-    gap: 12px;
-    padding: 6px 14px 6px 6px;
-    border-radius: 999px;
-    transition: background-color 260ms var(--bt-ease), color 260ms var(--bt-ease);
-  }
-  .bt-tab-avatar { width: 52px; flex: none; }
-  .bt-tab-name { font-size: 16px; }
-  .bt-tab:hover { background: rgb(201 167 255 / 0.08); }
-  .bt-tab[aria-selected="true"] { background: var(--bt-soft); color: var(--bt-on-accent); }
-  .bt-tab[aria-selected="true"] .bt-tab-face,
-  .bt-lineup[data-auto] .bt-tab[aria-selected="true"] .bt-tab-face { box-shadow: 0 0 0 3px var(--bt-soft), 0 0 0 5px rgb(22 10 41 / 0.25); }
-  .bt-tab-ring circle { stroke: var(--bt-on-accent); }
-  .bt-tab:hover .bt-tab-avatar { transform: none; }
-  .bt-tab:focus-visible { box-shadow: 0 0 0 3px var(--bt-ground), 0 0 0 5px var(--bt-ink); }
-}
-
-/* ───────── player ─────────
-   No widget chrome: the record stands on a low riser at the side of the
-   stage, its lip a strip of light that fills as the preview plays, and the
-   songs are tonight's setlist, numbered and ruled like the sheet taped to
-   the floor. */
-.bt-player-wrap { margin-top: clamp(72px, 9vw, 128px); }
-.bt-player {
-  --disc: min(76vw, 340px);
-  /* riser geometry: the top surface's depth, the front face, and where the record stands on it */
-  --top: clamp(44px, 4.6vw, 62px);
-  --face: 22px;
-  --contact: calc(var(--top) * 0.45);
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  grid-template-areas: "deck" "np" "list";
-  gap: 40px;
-}
-@media (min-width: 900px) {
-  .bt-player {
-    grid-template-columns: minmax(300px, 5fr) minmax(0, 7fr);
-    grid-template-areas: "deck np" "deck list";
-    column-gap: clamp(40px, 6vw, 96px);
-    row-gap: 36px;
-  }
-  .bt-deck { align-self: center; }
-}
-
-.bt-deck {
-  grid-area: deck;
-  position: relative;
-  display: grid;
-  justify-items: center;
-}
-/* a pool of floor light behind the riser */
-.bt-deck::before {
-  content: "";
-  position: absolute;
-  left: 50%;
-  bottom: 0;
-  width: min(140%, 560px);
-  height: 62%;
-  translate: -50% 0;
-  background: radial-gradient(50% 50% at 50% 70%, var(--bt-pool), transparent);
-  pointer-events: none;
-}
-.bt-disc {
-  position: relative;
-  z-index: 1;
-  width: var(--disc);
-  aspect-ratio: 1;
-}
-/* contact shadow where the record meets the riser */
-.bt-disc::after {
-  content: "";
-  position: absolute;
-  left: 22%;
-  right: 22%;
-  bottom: -7px;
-  height: 14px;
-  z-index: -1;
-  border-radius: 50%;
-  background: radial-gradient(closest-side, rgb(0 0 0 / 0.6), transparent);
-}
-/* the house light catching the record's top edge, kept off the label */
-.bt-disc::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  border-radius: 50%;
-  pointer-events: none;
-  box-shadow: inset 0 0 0 1px var(--bt-line), inset 0 22px 30px -24px rgb(214 190 255 / 0.5);
-}
-.bt-disc-spin { position: absolute; inset: 0; }
-.bt-disc-spin .bt-record { width: 100%; height: 100%; display: block; }
-
-.bt-riser {
-  position: relative;
-  width: min(100%, calc(var(--disc) * 1.24));
-  height: calc(var(--top) + var(--face));
-  margin-top: calc(-1 * var(--contact));
-}
-/* the top surface in perspective, and the front face below the lip */
-.bt-riser::before,
-.bt-reflect {
-  content: "";
-  position: absolute;
-  inset: 0 0 var(--face);
-  clip-path: polygon(6% 0, 94% 0, 100% 100%, 0 100%);
-}
-.bt-riser::before { background: linear-gradient(var(--bt-riser-0), var(--bt-riser-1)); }
-.bt-riser::after {
-  content: "";
-  position: absolute;
-  inset: auto 0 0;
-  height: var(--face);
-  background: linear-gradient(var(--bt-face-0), var(--bt-face-1));
-}
-/* the record mirrored in the riser's gloss from where it stands, 12% and gone by the lip */
-.bt-reflect {
-  overflow: hidden;
-  opacity: 0.12;
-  -webkit-mask-image: linear-gradient(transparent var(--contact), #000 var(--contact), transparent);
-  mask-image: linear-gradient(transparent var(--contact), #000 var(--contact), transparent);
-}
-.bt-reflect .bt-disc-spin {
-  inset: var(--contact) auto auto 50%;
-  width: var(--disc);
-  aspect-ratio: 1;
-  translate: -50% 0;
-  transform: scaleY(-1);
-}
-.bt-lip {
-  position: absolute;
-  z-index: 1;
-  left: 0;
-  right: 0;
-  bottom: calc(var(--face) - 1px);
-  height: 2px;
-  background: var(--bt-line);
-}
-.bt-lip-fill {
-  position: absolute;
-  inset: 0;
-  background: var(--bt-soft);
-  box-shadow: 0 0 10px var(--bt-accent);
-  transform-origin: left;
-  transform: scaleX(0);
-}
-
-.bt-play {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  translate: -50% -50%;
-  display: grid;
-  place-items: center;
-  width: 76px;
-  height: 76px;
-  border: 0;
-  border-radius: 50%;
-  background: var(--bt-soft);
-  color: var(--bt-on-accent);
-  cursor: pointer;
-  box-shadow: 0 0 0 5px rgb(11 8 18 / 0.85);
-  transition: transform 200ms var(--bt-ease);
-}
-.bt-play svg { fill: currentColor; }
-.bt-play:hover { transform: scale(1.05); }
-.bt-play:active { transform: scale(0.96); }
-.bt-play:focus-visible { outline: 3px solid var(--bt-ink); outline-offset: 6px; }
-
-.bt-np { grid-area: np; }
-.bt-h3 {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  margin: 0;
-  font: 600 14px/1 "Unbounded", system-ui, sans-serif;
-  letter-spacing: 0.08em;
+  font: 600 12px/1 "Unbounded", system-ui, sans-serif;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--bt-soft);
 }
-/* the tally light: dim on standby, lit while a preview plays */
-.bt-live {
-  width: 8px;
-  height: 8px;
+.bt-dot {
+  display: inline-block;
+  width: 4px;
+  height: 4px;
   border-radius: 50%;
-  background: var(--bt-line-strong);
-}
-.bt-player[data-playing] .bt-live {
-  background: var(--bt-soft);
-  box-shadow: 0 0 0 3px rgb(167 123 255 / 0.22), 0 0 12px var(--bt-accent);
-}
-.bt-np-title {
-  margin: 16px 0 0;
-  font: 800 clamp(34px, 4.4vw, 64px) / 0.98 "Unbounded", system-ui, sans-serif;
-  letter-spacing: -0.02em;
-  color: var(--bt-ink);
-}
-.bt-np-meta { margin: 10px 0 0; color: var(--bt-muted); font-size: 17px; }
-.bt-eq { display: block; width: 100%; height: 120px; margin-top: 20px; }
-@media (max-width: 639px) { .bt-eq { height: 92px; } }
-.bt-np-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px 20px;
-}
-.bt-time {
-  font: 600 15px/1 "Unbounded", system-ui, sans-serif;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 0.02em;
-  color: var(--bt-muted);
-}
-.bt-apple {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  min-height: 44px;
-  color: var(--bt-ink);
-  font-weight: 600;
-  font-size: 16px;
-  text-decoration: underline;
-  text-decoration-thickness: 1px;
-  text-decoration-color: var(--bt-line-strong);
-  text-underline-offset: 6px;
-  transition: text-decoration-color var(--dur-micro) var(--bt-ease), color var(--dur-micro) var(--bt-ease);
-}
-.bt-apple svg { color: var(--bt-soft); }
-.bt-apple-arrow { display: inline-block; color: var(--bt-soft); transition: transform var(--dur-short) var(--bt-ease); }
-.bt-apple:hover { text-decoration-color: var(--bt-soft); }
-.bt-apple:hover .bt-apple-arrow { transform: translate(2px, -2px); }
-.bt-apple:focus-visible { outline: 3px solid var(--bt-ink); outline-offset: 3px; border-radius: 4px; }
-.bt-fail { margin: 12px 0 0; color: var(--bt-soft); font-size: 16px; }
-
-/* setlist */
-.bt-setlist { grid-area: list; }
-.bt-setlist-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  margin: 0;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--bt-line-strong);
-  font: 600 14px/1 "Unbounded", system-ui, sans-serif;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--bt-soft);
-}
-.bt-setlist-head span + span {
-  font: 500 15px/1 "Onest", system-ui, sans-serif;
-  letter-spacing: 0;
-  text-transform: none;
-  color: var(--bt-muted);
-}
-.bt-tracks {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-}
-@media (min-width: 560px) {
-  .bt-tracks {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    grid-template-rows: repeat(4, auto);
-    grid-auto-flow: column;
-    column-gap: 32px;
-  }
-}
-.bt-track {
-  position: relative;
-  display: flex;
-  align-items: baseline;
-  gap: 14px;
-  width: 100%;
-  min-height: 52px;
-  padding: 16px 2px 14px;
-  border: 0;
-  border-bottom: 1px solid var(--bt-line);
-  background: none;
-  color: var(--bt-ink);
-  text-align: left;
-  cursor: pointer;
-}
-.bt-track-no {
-  flex: none;
-  width: 2.2em;
-  font: 700 15px/1 "Unbounded", system-ui, sans-serif;
-  font-variant-numeric: tabular-nums;
-  color: var(--bt-muted);
-  transition: color var(--dur-micro) var(--bt-ease);
-}
-.bt-track-title { flex: 1; min-width: 0; font-weight: 600; font-size: 17px; line-height: 1.25; }
-.bt-track-year { font-size: 15px; line-height: 1.25; color: var(--bt-muted); font-variant-numeric: tabular-nums; }
-.bt-track-eq { flex: none; align-self: center; fill: var(--bt-soft); opacity: 0; }
-.bt-track-eq rect { transform-box: fill-box; transform-origin: bottom; }
-/* the current song: its number in the light colour and its rule lit like the riser's lip */
-.bt-track::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: -1px;
-  height: 2px;
-  background: var(--bt-soft);
-  box-shadow: 0 0 10px var(--bt-accent);
-  transform: scaleX(0);
-  transform-origin: left;
-}
-.bt-track[aria-pressed="true"]::after { transform: none; }
-.bt-track[aria-pressed="true"] .bt-track-no,
-.bt-track:hover .bt-track-no { color: var(--bt-soft); }
-.bt-player[data-playing] .bt-track[aria-pressed="true"] .bt-track-eq { opacity: 1; }
-.bt-track:focus-visible { outline: 2px solid var(--bt-ink); outline-offset: 2px; border-radius: 4px; }
-
-/* ───────── discography ───────── */
-.bt-disco { margin-top: clamp(80px, 10vw, 140px); }
-.bt-disco-head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: end;
-  justify-content: space-between;
-  gap: 12px 32px;
-}
-.bt-h3-lg {
-  margin: 0;
-  font-size: clamp(30px, 3.6vw, 52px);
-  line-height: 1;
-  color: var(--bt-ink);
+  background: currentColor;
+  opacity: 0.6;
 }
 .bt-touch-copy { display: none; }
 @media (hover: none) {
   .bt-hover-copy { display: none; }
   .bt-touch-copy { display: inline; }
 }
-.bt-disco-sub { margin: 0; color: var(--bt-muted); font-size: 17px; max-width: 40ch; }
 
-.bt-shelf {
-  list-style: none;
-  margin: 0;
-  padding: 88px 0 8px;
-  display: grid;
-  grid-template-columns: repeat(8, minmax(0, 1fr));
-  gap: 0 clamp(14px, 1.6vw, 24px);
-}
-@media (max-width: 1023px) {
-  .bt-shelf { grid-template-columns: repeat(4, minmax(0, 1fr)); row-gap: 96px; }
-}
-@media (max-width: 639px) {
-  .bt-shelf {
-    grid-template-columns: none;
-    grid-auto-flow: column;
-    grid-auto-columns: 62%;
-    gap: 18px;
-    overflow-x: auto;
-    scroll-snap-type: x mandatory;
-    scroll-padding-inline: clamp(16px, 4vw, 56px);
-    margin-inline: calc(clamp(16px, 4vw, 56px) * -1);
-    padding-inline: clamp(16px, 4vw, 56px);
-    padding-top: 112px;
-    scrollbar-width: thin;
-    scrollbar-color: var(--bt-soft) transparent;
-  }
-  .bt-era { scroll-snap-align: start; }
-}
-
-.bt-era { position: relative; }
-.bt-sleeve-wrap { position: relative; aspect-ratio: 1; }
-/* the record slot and the sleeve are depth layers (they own `translate`), so their pull-out rides on transform */
-.bt-record-slot {
-  position: absolute;
-  inset: 4%;
-  z-index: 0;
-  transform: translateY(-18%);
-  transition: transform 620ms var(--bt-ease), rotate 900ms var(--bt-ease);
-}
-.bt-record-slot .bt-record { width: 100%; height: 100%; display: block; filter: drop-shadow(0 6px 14px rgb(0 0 0 / 0.45)); }
-.bt-sleeve {
+/* ───────── overture ───────── */
+.bt-overture {
   position: relative;
   z-index: 1;
-  height: 100%;
-  border-radius: 4px;
-  overflow: hidden;
-  box-shadow: 0 1px 0 rgb(255 255 255 / 0.12) inset, 0 18px 34px -12px rgb(0 0 0 / 0.7), 0 0 0 1px rgb(0 0 0 / 0.3);
-  transition: transform 620ms var(--bt-ease);
+  max-width: 1120px;
+  margin-inline: auto;
+  padding: clamp(112px, 13vw, 184px) clamp(16px, 4vw, 56px) clamp(48px, 6vw, 88px);
+  text-align: center;
 }
-.bt-sleeve img { display: block; width: 100%; height: 100%; object-fit: cover; }
-/* sleeve opening, ring wear and a cardboard sheen */
-.bt-sleeve::before {
+/* the hall's glow behind the title, sized to the overture so it is spent before the stage's top */
+.bt-overture::before {
   content: "";
   position: absolute;
-  inset: 0 0 auto;
-  height: 7%;
-  background: linear-gradient(rgb(0 0 0 / 0.45), transparent);
-  z-index: 1;
-}
-.bt-sleeve::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(circle at 50% 50%, transparent 41%, rgb(255 255 255 / 0.07) 42%, transparent 44%),
-    linear-gradient(125deg, rgb(255 255 255 / 0.18), transparent 34%, transparent 70%, rgb(0 0 0 / 0.2));
+  inset: 0 -32%;
+  z-index: -1;
   pointer-events: none;
+  /* a tint, not a fill: the house beams behind it still read through */
+  background: radial-gradient(closest-side at 50% 46%, color-mix(in srgb, var(--bt-accent) 14%, transparent), transparent);
 }
-@media (hover: hover) {
-  .bt-era:hover .bt-record-slot { transform: translateY(-52%); rotate: 120deg; }
-  .bt-era:hover .bt-sleeve { transform: translateY(6px); }
-}
-@media (hover: none) {
-  .bt-record-slot { transform: translateY(-34%); }
-}
-
-/* timeline rail and nodes */
-.bt-node {
-  position: relative;
-  display: block;
-  height: 2px;
-  margin: 22px calc(clamp(14px, 1.6vw, 24px) / -2) 0;
-  background: var(--bt-line);
-}
-.bt-node::after {
-  content: "";
-  position: absolute;
-  left: calc(clamp(14px, 1.6vw, 24px) / 2);
-  top: 50%;
-  width: 12px;
-  height: 12px;
-  translate: 0 -50%;
-  border-radius: 50%;
-  background: var(--bt-soft);
-  box-shadow: 0 0 0 4px var(--bt-ground-2), 0 0 14px var(--bt-accent);
-}
-.bt-era:first-child .bt-node { margin-left: 0; }
-.bt-era:first-child .bt-node::after { left: 0; }
-.bt-era-year {
-  margin: 16px 0 0;
-  font: 700 20px/1 "Unbounded", system-ui, sans-serif;
+.bt-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 clamp(20px, 2.4vw, 32px);
+  font: 600 13px/1 "Unbounded", system-ui, sans-serif;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
   color: var(--bt-soft);
 }
-.bt-era-title { margin: 8px 0 0; font-size: 16px; line-height: 1.35; color: var(--bt-ink); }
+.bt-kicker [lang="ko"] { letter-spacing: 0.12em; font-family: system-ui, sans-serif; font-weight: 700; }
+.bt-title {
+  margin: 0;
+  font-size: clamp(56px, 11.5vw, 176px);
+  line-height: 0.86;
+  letter-spacing: -0.035em;
+  color: var(--bt-ink);
+}
+.bt-title-soft {
+  display: block;
+  margin-top: 0.22em;
+  font-size: 0.34em;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  color: var(--bt-soft);
+}
+.bt-lede {
+  margin: clamp(24px, 3vw, 36px) auto 0;
+  max-width: 44ch;
+  font-size: clamp(17px, 1.3vw, 19px);
+  color: var(--bt-muted);
+  text-wrap: pretty;
+}
 
-/* records: grooves, sheen, label */
-.bt-vinyl { fill: #0b0812; }
-.bt-groove { fill: none; stroke: #3a3150; stroke-width: 0.6; }
-.bt-sheen { fill: rgb(255 255 255 / 0.07); }
-.bt-label-ring { fill: none; stroke: rgb(0 0 0 / 0.5); stroke-width: 1.2; }
-.bt-spindle { fill: #d8d0e6; stroke: #0b0812; stroke-width: 1; }
-
-/* ───────── house lights and the way out ─────────
-   In: the dark of the doorway, one hairline truss and three beams that come
-   up on the title as you enter. Out: the last 120px settle into the main
-   stage's ground for the finale. Both sit behind the content. */
+/* house lights: behind the overture, gone before the stage */
 .bt-house {
   position: absolute;
   inset: 0 0 auto;
-  height: 520px;
+  height: 640px;
   z-index: -1;
   overflow: hidden;
   pointer-events: none;
-  background: linear-gradient(var(--bt-house), transparent 140px);
+  background: linear-gradient(var(--bt-house), transparent 160px);
 }
 .bt-house-truss {
   position: absolute;
@@ -879,7 +156,6 @@ html[data-mode="day"] .bt-art img[data-set="day"] { opacity: 1; }
   top: 34px;
   left: var(--x);
 }
-/* the fixture on the truss */
 .bt-house-beam::before {
   content: "";
   position: absolute;
@@ -893,19 +169,913 @@ html[data-mode="day"] .bt-art img[data-set="day"] { opacity: 1; }
 }
 .bt-house-beam > span {
   position: absolute;
-  left: calc(clamp(160px, 24vw, 360px) / -2);
+  left: calc(clamp(180px, 26vw, 400px) / -2);
   top: 4px;
-  width: clamp(160px, 24vw, 360px);
-  height: clamp(220px, 24vw, 340px);
+  width: clamp(180px, 26vw, 400px);
+  height: clamp(300px, 32vw, 460px);
   transform-origin: 50% 0;
   rotate: var(--a);
   /* a cone from the lens, brightest on its axis, soft at its edges, gone before the stage */
   background: conic-gradient(from 180deg at 50% 0, var(--bt-house-beam), color-mix(in srgb, var(--bt-house-beam) 45%, transparent) 9deg, transparent 20deg 340deg, color-mix(in srgb, var(--bt-house-beam) 45%, transparent) 351deg, var(--bt-house-beam));
-  -webkit-mask-image: linear-gradient(#000, transparent 86%);
-  mask-image: linear-gradient(#000, transparent 86%);
+  -webkit-mask-image: linear-gradient(#000, transparent 88%);
+  mask-image: linear-gradient(#000, transparent 88%);
   opacity: 0;
 }
 .bt-house[data-lit] .bt-house-beam > span { opacity: 1; }
+
+/* ───────── the run: a pinned stage, two acts ───────── */
+.bt-run {
+  position: relative;
+  height: 230vh;
+  height: 230svh;
+}
+.bt-pin {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100svh;
+  min-height: 560px;
+  overflow: hidden;
+  container-type: size;
+}
+.bt-stage {
+  position: absolute;
+  inset: 0;
+  isolation: isolate;
+  background: var(--bt-stage);
+  /* the painting's box: it covers the stage in its own 10:7, hung from just above the top edge so the
+     truss and its heads stay in frame (the floor runs off the bottom instead), overscanned for the camera's drift */
+  --bt-art-top: -40px;
+  --bt-art-w: max(calc(100cqw + 64px), calc((100cqh + 84px) * 10 / 7));
+  /* the lift's framing: the figure's foot on the stage (from the bottom), its height, where it has faded out */
+  --bt-fig-bottom: 0%;
+  --bt-fig-h: 90%;
+  --bt-fade-to: 97%;
+  --bt-fade-len: 26%;
+  /* the record on the lift */
+  --bt-disc: min(56cqh, 38cqw);
+  --bt-disc-y: 52%;
+}
+.bt-stage > .depth-plate[data-plate="arena"] {
+  left: calc(50% - var(--bt-art-w) / 2) !important;
+  top: var(--bt-art-top) !important;
+  width: var(--bt-art-w) !important;
+}
+.bt-plate,
+.bt-confetti,
+.bt-fade,
+.bt-dip,
+.bt-curtain,
+.bt-lift {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.bt-plate,
+.bt-confetti,
+.bt-fade,
+.bt-dip,
+.bt-curtain { z-index: 1; }
+.bt-lift { z-index: 2; }
+.bt-confetti { overflow: hidden; }
+
+.bt-art {
+  position: absolute;
+  left: 50%;
+  top: var(--bt-art-top);
+  width: var(--bt-art-w);
+  aspect-ratio: 10 / 7;
+  transform: translateX(-50%);
+}
+.bt-art img,
+.bt-aim,
+.bt-sweep {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.bt-art img { display: block; max-width: none; }
+.bt-art img[data-set="day"] {
+  opacity: 0;
+  transition: opacity var(--dur-scene) var(--ease-io);
+}
+html[data-mode="day"] .bt-art img[data-set="day"] { opacity: 1; }
+
+/* the beams in two halves, each turning about its pair of heads (the painting's lenses sit at 20% / 80%, 10% down):
+   a cue's aim, always outwards, and under it a slow sweep of a degree */
+.bt-aim[data-side="l"] { clip-path: inset(0 50% 0 0); transform-origin: 20.1% 10%; rotate: var(--bt-aim, 2deg); }
+.bt-aim[data-side="r"] { clip-path: inset(0 0 0 50%); transform-origin: 79.9% 10%; rotate: calc(-1 * var(--bt-aim, 2deg)); }
+.bt-aim[data-side="l"] .bt-sweep { transform-origin: 20.1% 10%; }
+.bt-aim[data-side="r"] .bt-sweep { transform-origin: 79.9% 10%; }
+.bt-pin[data-act="music"] .bt-aim[data-side="l"] { rotate: 7.5deg; }
+.bt-pin[data-act="music"] .bt-aim[data-side="r"] { rotate: -7.5deg; }
+
+/* haze hanging in the beams, behind the lift */
+.bt-haze { position: absolute; inset: 0; }
+.bt-haze span {
+  position: absolute;
+  left: -20%;
+  width: 140%;
+  height: 34%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, var(--bt-haze), transparent);
+}
+.bt-haze span:first-child { top: 40%; }
+.bt-haze span:last-child { top: 60%; height: 28%; opacity: 0.8; }
+
+/* paper confetti: each piece falls the stage's height (cqh) with a slow drift, tumbling as it goes */
+.bt-confetti span {
+  position: absolute;
+  top: 0;
+  width: 13px;
+  height: 100%;
+  opacity: 0;
+}
+.bt-confetti i {
+  display: block;
+  width: 13px;
+  height: 8px;
+  border-radius: 1.5px;
+  background: linear-gradient(115deg, var(--c), color-mix(in srgb, var(--c) 70%, #000));
+}
+
+/* the stage meets the room: the floor runs down into it; over the top a curtain of the room's dark that
+   rises as the stage arrives (bts.tsx drives its opacity), so the overture never ends on an edge */
+.bt-fade {
+  background: linear-gradient(to top, var(--bt-ground), color-mix(in srgb, var(--bt-ground) 72%, transparent) 8%, transparent 26%);
+}
+.bt-curtain {
+  background: linear-gradient(var(--bt-ground) 0, var(--bt-ground) 6%, color-mix(in srgb, var(--bt-ground) 70%, transparent) 20%, transparent 46%);
+}
+/* a cue's lighting change: the stage (never the lift) dips and comes back up */
+.bt-dip {
+  background: rgb(var(--bt-shade));
+  opacity: 0;
+}
+
+/* ───────── the LED wall ─────────
+   The painting's wall spans about 13–87% across and 29–67% down; the lit
+   text sits inside its face, as dots: a mask the size of one LED pitch. */
+.bt-led {
+  --bt-pitch: 4px;
+  position: absolute;
+  left: 14.4%;
+  right: 14.4%;
+  top: 33.5%;
+  bottom: 34.5%;
+  overflow: hidden;
+  -webkit-mask: radial-gradient(circle, #000 calc(var(--bt-pitch) * 0.36), transparent calc(var(--bt-pitch) * 0.46)) 0 0 / var(--bt-pitch) var(--bt-pitch);
+  mask: radial-gradient(circle, #000 calc(var(--bt-pitch) * 0.36), transparent calc(var(--bt-pitch) * 0.46)) 0 0 / var(--bt-pitch) var(--bt-pitch);
+}
+.bt-led-line,
+.bt-led-boot { position: absolute; inset: 0; }
+.bt-led-run {
+  position: absolute;
+  left: 0;
+  top: 27%;
+  display: flex;
+  width: max-content;
+  translate: 0 -50%;
+  font: 800 calc(var(--bt-art-w) * 0.084) / 1 "Unbounded", system-ui, sans-serif;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  color: var(--bt-led);
+  /* the bloom around lit LEDs, which the dot mask turns into a halo of dimmer dots */
+  text-shadow: 0 0 0.06em var(--bt-led-bloom), 0 0 0.18em var(--bt-led-bloom);
+}
+.bt-led-seq { display: flex; }
+.bt-led-seq > span { display: inline-flex; align-items: center; }
+.bt-led-seq [lang="ko"] { font-family: system-ui, sans-serif; font-weight: 900; }
+.bt-led-seq i {
+  font-style: normal;
+  font-size: 0.42em;
+  margin-inline: 0.7em;
+  opacity: 0.75;
+}
+.bt-led-song .bt-led-run {
+  top: 15%;
+  font-size: calc(var(--bt-art-w) * 0.05);
+}
+.bt-meter {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* ───────── the lift ───────── */
+.bt-lift-member,
+.bt-lift-record { position: absolute; inset: 0; }
+/* the cutouts: one rule for all. Bottom-anchored on the lift, side edges
+   feathered so no shoulder ends in a straight cut, and the waist melts into
+   the floor well above the stage's bottom edge. Nudges live in FRAMING. */
+.bt-figures {
+  position: absolute;
+  inset: 0;
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(var(--bt-fade-to) - var(--bt-fade-len)), transparent var(--bt-fade-to));
+  mask-image: linear-gradient(to bottom, #000 calc(var(--bt-fade-to) - var(--bt-fade-len)), transparent var(--bt-fade-to));
+}
+.bt-figure {
+  position: absolute;
+  left: 50%;
+  bottom: var(--bt-fig-bottom);
+  height: calc(var(--bt-fig-h) * var(--fs, 1));
+  width: auto;
+  max-width: none;
+  transform: translateX(-50%);
+  transform-origin: 50% 38%;
+  opacity: 0;
+  translate: 0 5%;
+  scale: 1.045;
+  pointer-events: none;
+  user-select: none;
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 13%, #000 87%, transparent);
+  mask-image: linear-gradient(to right, transparent, #000 13%, #000 87%, transparent);
+}
+.bt-figure[data-state="on"] { opacity: 1; translate: 0 0; scale: 1; }
+/* the current photo is a hover target (it holds the line-up), only while act one is on */
+.bt-pin[data-act="lineup"] .bt-figure[data-state="on"] { pointer-events: auto; }
+.bt-figure[data-state="off"] { opacity: 0; translate: 0 2.5%; scale: 0.99; }
+
+.bt-lift-disc {
+  position: absolute;
+  left: 50%;
+  top: var(--bt-disc-y);
+  width: var(--bt-disc);
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  cursor: pointer;
+}
+.bt-pin[data-act="music"] .bt-lift-disc { pointer-events: auto; }
+/* a contact shadow where the record stands on the lift */
+.bt-lift-disc::after {
+  content: "";
+  position: absolute;
+  left: 14%;
+  right: 14%;
+  top: 99%;
+  height: 7%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgb(0 0 0 / 0.55), transparent);
+}
+
+/* ───────── records ───────── */
+.bt-vinyl {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+}
+.bt-vinyl-disc,
+.bt-vinyl-disc > svg { display: block; width: 100%; height: 100%; }
+/* on the stage the record stands on the glossy floor, and the floor shows it */
+.bt-lift-vinyl { -webkit-box-reflect: below 3px linear-gradient(transparent 62%, rgb(255 255 255 / 0.13)); }
+.bt-vinyl-black { fill: #0a0710; }
+.bt-vinyl-rim { fill: none; stroke: #2a2238; stroke-width: 0.8; }
+.bt-vinyl-groove { fill: none; stroke: #3b3250; stroke-width: 0.55; }
+.bt-vinyl-runout { fill: none; stroke: #1c1628; stroke-width: 6; }
+.bt-vinyl-label-edge { fill: none; stroke: rgb(0 0 0 / 0.5); stroke-width: 1.2; }
+.bt-vinyl-tick { stroke: rgb(255 255 255 / 0.85); stroke-width: 1.6; stroke-linecap: round; }
+.bt-vinyl-hole { fill: #d8d0e6; stroke: #0a0710; stroke-width: 1; }
+/* the light along the grooves: two opposite wedges that stay put while the disc turns */
+.bt-vinyl-sheen {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  background: conic-gradient(from -42deg, transparent 0deg, rgb(255 255 255 / 0.13) 24deg, transparent 52deg 180deg, rgb(255 255 255 / 0.09) 204deg, transparent 232deg);
+  -webkit-mask-image: radial-gradient(circle closest-side, transparent 41%, #000 43%, #000 96%, transparent 99%);
+  mask-image: radial-gradient(circle closest-side, transparent 41%, #000 43%, #000 96%, transparent 99%);
+}
+
+.bt-play {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  translate: -50% -50%;
+  display: grid;
+  place-items: center;
+  width: 23%;
+  min-width: 64px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--bt-soft);
+  color: var(--bt-on-accent);
+  cursor: pointer;
+  /* a dark ring where the button meets the label, never a glow */
+  box-shadow: 0 0 0 5px rgb(10 7 16 / 0.88);
+  transition: scale var(--dur-short) var(--ease);
+}
+.bt-play svg { fill: currentColor; width: 38%; height: 38%; translate: 4% 0; }
+.bt-lift-disc[data-playing] .bt-play svg { translate: 0 0; }
+.bt-play:hover { scale: 1.05; }
+.bt-play:active { scale: 0.96; }
+
+/* ───────── the acts: type on the stage ───────── */
+.bt-acts {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  color: var(--bt-stage-ink);
+}
+.bt-act {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) min(44cqw, 620px) minmax(0, 1fr);
+  grid-template-rows: 1fr auto;
+  column-gap: clamp(16px, 2vw, 32px);
+  padding: clamp(72px, 10cqh, 112px) clamp(20px, 3.6vw, 64px) clamp(40px, 8cqh, 88px);
+}
+.bt-act > * { pointer-events: none; }
+.bt-act[data-live] > * { pointer-events: auto; }
+/* a shade of the stage's own dark under the type at either side (never over the lift) */
+.bt-act::before,
+.bt-act::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 34%;
+  pointer-events: none;
+  z-index: -1;
+  /* it rises behind the type only, and lets go at the stage's edge with the floor: the truss and its heads
+     stay lit, and neither the curtain's edge nor the floor's meets a band of shade */
+  -webkit-mask-image: linear-gradient(transparent 6%, #000 44%, #000 94%, transparent);
+  mask-image: linear-gradient(transparent 6%, #000 44%, #000 94%, transparent);
+}
+.bt-act::before { left: 0; background: linear-gradient(90deg, rgb(var(--bt-shade) / 0.62), rgb(var(--bt-shade) / 0.38) 55%, transparent); }
+.bt-act::after { right: 0; background: linear-gradient(270deg, rgb(var(--bt-shade) / 0.62), rgb(var(--bt-shade) / 0.38) 55%, transparent); }
+
+/* act one: the cue at the left */
+.bt-cue {
+  grid-column: 1;
+  grid-row: 1 / 3;
+  align-self: end;
+  container-type: inline-size;
+  max-width: 420px;
+}
+.bt-cue-no {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 0;
+  font: 800 clamp(15px, 1.2vw, 18px) / 1 "Unbounded", system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+  color: var(--bt-stage-soft);
+}
+.bt-cue-of { color: var(--bt-stage-muted); font-weight: 600; opacity: 0.8; }
+.bt-name {
+  margin: 14px 0 0;
+  font-size: min(104px, calc(132cqw / var(--bt-len)));
+  line-height: 0.9;
+  color: var(--bt-stage-ink);
+}
+.bt-role {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  margin: 16px 0 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--bt-stage-soft);
+}
+.bt-hangul { font-family: system-ui, sans-serif; font-weight: 700; letter-spacing: 0.06em; color: var(--bt-stage-ink); }
+.bt-line {
+  margin: 22px 0 0;
+  max-width: 34ch;
+  padding-top: 20px;
+  border-top: 1px solid var(--bt-stage-line);
+  font-size: clamp(17px, 1.3vw, 20px);
+  line-height: 1.5;
+  color: var(--bt-stage-ink);
+  text-wrap: pretty;
+}
+
+/* the cue sheet at the right: numbered, ruled, the current cue's rule running out with the clock */
+.bt-sheet {
+  grid-column: 3;
+  grid-row: 1 / 3;
+  align-self: end;
+  justify-self: end;
+  width: min(100%, 300px);
+}
+.bt-sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--bt-stage-line);
+}
+.bt-sheet-head .bt-eyebrow,
+.bt-np-head,
+.bt-setlist-head .bt-eyebrow { color: var(--bt-stage-soft); }
+.bt-hold {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--bt-stage-line);
+  border-radius: 999px;
+  background: rgb(var(--bt-shade) / 0.4);
+  color: var(--bt-stage-ink);
+  font: 600 13px/1 "Onest", system-ui, sans-serif;
+  cursor: pointer;
+  transition: border-color var(--dur-micro) var(--ease), background-color var(--dur-micro) var(--ease);
+}
+.bt-hold svg { fill: currentColor; }
+.bt-hold:hover { border-color: var(--bt-stage-soft); }
+.bt-hold:focus-visible { outline: 2px solid var(--bt-stage-ink); outline-offset: 2px; }
+.bt-cues { display: grid; }
+.bt-tab {
+  position: relative;
+  display: grid;
+  grid-template-columns: 32px 2.2em 1fr;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 6px 0;
+  border: 0;
+  background: none;
+  color: var(--bt-stage-muted);
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: color var(--dur-short) var(--ease);
+}
+.bt-tab::before {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  height: 1px;
+  background: var(--bt-stage-line);
+}
+.bt-tab-face {
+  position: relative;
+  width: 32px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #2a1652;
+  opacity: 0.62;
+  filter: saturate(0.5);
+}
+.bt-tab-face img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.bt-tab-no {
+  font: 700 13px/1 "Unbounded", system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+.bt-tab-name { font: 600 16px/1.1 "Unbounded", system-ui, sans-serif; letter-spacing: -0.01em; white-space: nowrap; }
+.bt-tab-rule {
+  position: absolute;
+  inset: auto 0 0;
+  height: 2px;
+  background: var(--bt-stage-ink);
+  transform-origin: left;
+  transform: scaleX(0);
+  opacity: 0;
+}
+.bt-tab-ring { display: none; }
+.bt-tab:hover { color: var(--bt-stage-ink); }
+.bt-tab:hover .bt-tab-face { opacity: 0.9; filter: none; }
+.bt-tab[aria-selected="true"] { color: var(--bt-stage-ink); }
+.bt-tab[aria-selected="true"] .bt-tab-face { opacity: 1; filter: none; box-shadow: 0 0 0 2px var(--bt-stage-ink); }
+.bt-tab[aria-selected="true"] .bt-tab-no { color: var(--bt-stage-soft); }
+.bt-tab[aria-selected="true"] .bt-tab-rule { opacity: 1; }
+/* the clock: the current cue's rule runs out over one cue, paused with everything else while the line-up is held;
+   with no clock (reduced motion) it is simply lit */
+.bt-pin { --bt-cue: 6400ms; }
+/* (longhands, so a hold's play-state is never reset by a more specific shorthand) */
+.bt-cues[data-auto] .bt-tab[aria-selected="true"] .bt-tab-rule { animation-name: bt-cue-run; animation-duration: var(--bt-cue); animation-timing-function: linear; animation-fill-mode: forwards; }
+.bt-cues:not([data-auto]) .bt-tab[aria-selected="true"] .bt-tab-rule { transform: none; }
+.bt-pin[data-hold] .bt-tab-rule,
+.bt-pin[data-hold] .bt-tab-ring circle { animation-play-state: paused; }
+.bt-tab:focus-visible { outline: none; }
+.bt-tab:focus-visible .bt-tab-name { text-decoration: underline; text-underline-offset: 5px; text-decoration-thickness: 2px; }
+.bt-tab:focus-visible .bt-tab-face { box-shadow: 0 0 0 2px var(--bt-stage-ink), 0 0 0 4px rgb(var(--bt-shade)); }
+
+/* act two: now playing at the left, the setlist at the right */
+.bt-np {
+  grid-column: 1;
+  grid-row: 1 / 3;
+  align-self: end;
+  max-width: 420px;
+}
+.bt-np-head { display: inline-flex; align-items: center; gap: 10px; }
+.bt-tally {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--bt-stage-line);
+  box-shadow: inset 0 0 0 1px var(--bt-stage-soft);
+}
+.bt-np[data-playing] .bt-tally { background: var(--bt-stage-soft); }
+.bt-np-title {
+  margin: 16px 0 0;
+  font-size: clamp(36px, 4.2vw, 68px);
+  line-height: 0.95;
+  color: var(--bt-stage-ink);
+  text-wrap: balance;
+}
+.bt-np-meta { margin: 12px 0 0; color: var(--bt-stage-muted); font-size: 17px; }
+.bt-np-bar {
+  position: relative;
+  height: 2px;
+  margin-top: 24px;
+  background: var(--bt-stage-line);
+  overflow: hidden;
+}
+.bt-np-fill {
+  position: absolute;
+  inset: 0;
+  background: var(--bt-stage-ink);
+  transform-origin: left;
+  transform: scaleX(0);
+}
+.bt-np-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 18px;
+  margin-top: 18px;
+}
+.bt-np-play {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--bt-stage-ink);
+  color: #160a29;
+  cursor: pointer;
+  transition: scale var(--dur-short) var(--ease);
+}
+.bt-np-play svg { fill: currentColor; width: 22px; height: 22px; }
+.bt-np-play:hover { scale: 1.05; }
+.bt-np-play:active { scale: 0.96; }
+.bt-np-play:focus-visible { outline: 2px solid var(--bt-stage-ink); outline-offset: 4px; }
+.bt-time {
+  font: 600 14px/1 "Unbounded", system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  color: var(--bt-stage-muted);
+}
+.bt-apple {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  margin-left: auto;
+  color: var(--bt-stage-ink);
+  font-weight: 600;
+  font-size: 15px;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-decoration-color: var(--bt-stage-line);
+  text-underline-offset: 6px;
+  transition: text-decoration-color var(--dur-micro) var(--ease);
+}
+.bt-apple-arrow { display: inline-block; color: var(--bt-stage-soft); transition: transform var(--dur-short) var(--ease); }
+.bt-apple:hover { text-decoration-color: var(--bt-stage-soft); }
+.bt-apple:hover .bt-apple-arrow { transform: translate(2px, -2px); }
+.bt-apple:focus-visible { outline: 2px solid var(--bt-stage-ink); outline-offset: 3px; border-radius: 4px; }
+.bt-fail { margin: 12px 0 0; color: var(--bt-stage-soft); font-size: 15px; }
+
+.bt-setlist {
+  grid-column: 3;
+  grid-row: 1 / 3;
+  align-self: end;
+  justify-self: end;
+  width: min(100%, 330px);
+}
+.bt-setlist-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  margin: 0;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--bt-stage-line);
+}
+.bt-setlist-head span + span { font-size: 13px; color: var(--bt-stage-muted); }
+.bt-tracks { list-style: none; margin: 0; padding: 0; display: grid; }
+.bt-track {
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  width: 100%;
+  min-height: 44px;
+  padding: 13px 0 11px;
+  border: 0;
+  background: none;
+  color: var(--bt-stage-ink);
+  text-align: left;
+  cursor: pointer;
+}
+.bt-track::before {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  height: 1px;
+  background: var(--bt-stage-line);
+}
+.bt-track-no {
+  flex: none;
+  width: 2em;
+  font: 700 13px/1 "Unbounded", system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+  color: var(--bt-stage-muted);
+  transition: color var(--dur-micro) var(--ease);
+}
+.bt-track-title { flex: 1; min-width: 0; font-weight: 600; font-size: 16px; line-height: 1.25; }
+.bt-track-year { font-size: 14px; line-height: 1.25; color: var(--bt-stage-muted); font-variant-numeric: tabular-nums; }
+.bt-track-eq { flex: none; align-self: center; fill: var(--bt-stage-soft); opacity: 0; }
+.bt-track-eq rect { transform-box: fill-box; transform-origin: bottom; }
+.bt-track::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background: var(--bt-stage-ink);
+  transform: scaleX(0);
+  transform-origin: left;
+}
+.bt-track[aria-pressed="true"]::after { transform: none; }
+.bt-track[aria-pressed="true"] .bt-track-no,
+.bt-track:hover .bt-track-no { color: var(--bt-stage-soft); }
+.bt-pin[data-playing] .bt-track[aria-pressed="true"] .bt-track-eq { opacity: 1; }
+.bt-track:focus-visible { outline: 2px solid var(--bt-stage-ink); outline-offset: 2px; border-radius: 4px; }
+
+/* ───────── phones and narrow screens: the type below the lift ───────── */
+@media (max-width: 899px) {
+  .bt-stage {
+    --bt-fig-bottom: 30%;
+    --bt-fig-h: 62%;
+    --bt-fade-to: 69%;
+    --bt-fade-len: 17%;
+    --bt-disc: min(62cqw, 33cqh);
+    --bt-disc-y: 26%;
+  }
+  .bt-led { --bt-pitch: 3px; }
+  .bt-act {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: 1fr auto auto;
+    align-content: end;
+    row-gap: 18px;
+    padding: 0 16px max(32px, 4.6cqh);
+  }
+  .bt-act::before {
+    inset: auto 0 0;
+    width: auto;
+    height: 52%;
+    background: linear-gradient(to top, rgb(var(--bt-shade) / 0.78), rgb(var(--bt-shade) / 0.5) 60%, transparent);
+    -webkit-mask-image: linear-gradient(to top, transparent, #000 4%);
+    mask-image: linear-gradient(to top, transparent, #000 4%);
+  }
+  .bt-act::after { display: none; }
+  .bt-cue,
+  .bt-np { grid-column: 1; grid-row: 2; max-width: none; }
+  .bt-sheet,
+  .bt-setlist { grid-column: 1; grid-row: 3; justify-self: stretch; width: auto; }
+  .bt-name { margin-top: 8px; font-size: min(64px, calc(128cqw / var(--bt-len)), 12cqh); }
+  .bt-line { margin-top: 14px; padding-top: 14px; font-size: 16px; max-width: 40ch; }
+  .bt-role { margin-top: 10px; font-size: 15px; }
+  /* the cue sheet becomes a row of faces, the clock a ring around the current one */
+  .bt-sheet-head { display: none; }
+  .bt-cues { grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+  .bt-tab {
+    display: flex;
+    justify-content: center;
+    min-height: 0;
+    padding: 4px 0;
+  }
+  .bt-tab::before,
+  .bt-tab-no,
+  .bt-tab-name { display: none; }
+  .bt-tab-face { width: min(100%, 46px); }
+  .bt-tab-rule { display: none; }
+  .bt-tab-ring {
+    display: block;
+    position: absolute;
+    top: 4px;
+    left: 50%;
+    width: min(100%, 46px);
+    aspect-ratio: 1;
+    translate: -50% 0;
+    scale: 1.16;
+    rotate: -90deg;
+    overflow: visible;
+    pointer-events: none;
+    opacity: 0;
+  }
+  .bt-tab-ring circle { fill: none; stroke: var(--bt-stage-ink); stroke-width: 1.6; stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: 1; }
+  .bt-tab[aria-selected="true"] .bt-tab-ring { opacity: 1; }
+  .bt-cues[data-auto] .bt-tab[aria-selected="true"] .bt-tab-ring circle { animation-name: bt-cue-ring; animation-duration: var(--bt-cue); animation-timing-function: linear; animation-fill-mode: forwards; }
+  .bt-cues:not([data-auto]) .bt-tab[aria-selected="true"] .bt-tab-ring circle { stroke-dashoffset: 0; }
+  .bt-tab[aria-selected="true"] .bt-tab-face { box-shadow: none; }
+  .bt-np-title { margin-top: 10px; font-size: min(44px, 11cqw); }
+  .bt-np-meta { margin-top: 6px; font-size: 15px; }
+  .bt-np-bar { margin-top: 14px; }
+  .bt-np-row { margin-top: 10px; }
+  .bt-np-play { width: 46px; height: 46px; }
+  .bt-setlist-head { display: none; }
+  .bt-tracks { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(4, auto); grid-auto-flow: column; column-gap: 16px; }
+  .bt-track { min-height: 40px; padding: 10px 0 8px; gap: 10px; }
+  .bt-track-title { font-size: 14px; }
+  .bt-track-year { display: none; }
+  .bt-track-no { width: 1.8em; font-size: 12px; }
+}
+@media (max-width: 899px) and (min-width: 600px) {
+  .bt-act { padding-inline: clamp(24px, 6vw, 48px); }
+  .bt-cues { max-width: 460px; }
+}
+
+/* ───────── the shelf: a crate of records ───────── */
+.bt-eras {
+  position: relative;
+  padding-top: clamp(72px, 9vw, 128px);
+}
+.bt-eras-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: 12px 32px;
+}
+.bt-h3-lg {
+  margin: 0;
+  font-size: clamp(32px, 4vw, 56px);
+  line-height: 1;
+  color: var(--bt-ink);
+}
+.bt-eras-sub { margin: 0; color: var(--bt-muted); font-size: 17px; max-width: 40ch; }
+
+.bt-crate {
+  --S: clamp(196px, 25vw, 340px);
+  position: relative;
+  height: calc(var(--S) * 1.5);
+  margin-top: clamp(8px, 2vw, 24px);
+  overflow-x: clip;
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+}
+/* a pool of light on the floor where the front sleeve stands */
+.bt-crate::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 6%;
+  width: calc(var(--S) * 3.4);
+  height: 96%;
+  translate: -50% 0;
+  background: radial-gradient(50% 46% at 50% 46%, rgb(124 62 226 / 0.26), transparent);
+  pointer-events: none;
+}
+.bt-crate-row {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  position: absolute;
+  left: 50%;
+  top: 14%;
+  width: var(--S);
+  aspect-ratio: 1;
+  translate: -50% 0;
+}
+.bt-era {
+  position: absolute;
+  inset: 0;
+  transition: opacity 600ms var(--ease);
+}
+.bt-era-hit {
+  position: absolute;
+  inset: 0;
+  display: block;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  pointer-events: none;
+  perspective: calc(var(--S) * 5);
+  -webkit-tap-highlight-color: transparent;
+}
+.bt-era-hit:focus-visible { outline: none; }
+.bt-era-obj {
+  position: absolute;
+  inset: 0;
+  transform: translateX(calc(var(--x) * var(--S))) translateZ(calc(var(--z) * var(--S))) rotateY(var(--ry));
+  -webkit-box-reflect: below 4px linear-gradient(transparent 68%, rgb(0 0 0 / 0.2));
+  pointer-events: auto;
+}
+.bt-era-sleeve {
+  position: absolute;
+  inset: 0;
+  border-radius: 3px;
+  overflow: hidden;
+  background: var(--tone);
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.18), 0 22px 40px -18px rgb(0 0 0 / 0.75), 10px 0 18px -8px rgb(0 0 0 / 0.55);
+}
+.bt-era-sleeve img { display: block; width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+/* board sheen, ring wear, and the shade a sleeve takes when it is turned away from the light */
+.bt-era-sleeve::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 50% 50%, transparent 41%, rgb(255 255 255 / 0.06) 42%, transparent 44%),
+    linear-gradient(125deg, rgb(255 255 255 / 0.16), transparent 34%, transparent 70%, rgb(0 0 0 / 0.18)),
+    rgb(8 4 16 / var(--shade, 0));
+  pointer-events: none;
+}
+.bt-era:not([data-front]) .bt-era-sleeve { --shade: 0.38; }
+.bt-era-disc {
+  position: absolute;
+  inset: 2.5%;
+  transform: translateX(0);
+}
+.bt-era-spin { display: block; width: 100%; height: 100%; rotate: 0deg; }
+.bt-era-spin .bt-vinyl { filter: drop-shadow(0 8px 14px rgb(0 0 0 / 0.5)); }
+.bt-era[data-open] .bt-era-disc { transform: translateX(56%); }
+/* pulled along the sleeve's floor, a record rolls by its travel over its radius: 0.56 × 2 rad ≈ 64° */
+.bt-era[data-open] .bt-era-spin { rotate: 64deg; }
+.bt-era[data-open] .bt-era-sleeve { translate: 0 -1.5%; box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.18), 0 34px 54px -20px rgb(0 0 0 / 0.8), 14px 0 22px -8px rgb(0 0 0 / 0.6); }
+.bt-era-hit:focus-visible .bt-era-sleeve { outline: 2px solid var(--bt-ink); outline-offset: 5px; }
+
+.bt-era-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 16px clamp(16px, 3vw, 40px);
+}
+.bt-era-text { min-width: 0; }
+.bt-era-year {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  margin: 0;
+  font: 700 18px/1 "Unbounded", system-ui, sans-serif;
+  color: var(--bt-soft);
+}
+.bt-era-count { font-size: 13px; font-weight: 600; color: var(--bt-muted); font-variant-numeric: tabular-nums; }
+.bt-era-title { margin: 10px 0 0; font-size: clamp(26px, 3vw, 44px); line-height: 1; color: var(--bt-ink); text-wrap: balance; }
+.bt-era-track { margin: 10px 0 0; color: var(--bt-muted); font-size: 16px; }
+.bt-era-track span { color: var(--bt-ink); font-weight: 600; margin-left: 6px; }
+.bt-era-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.bt-era-pull,
+.bt-era-play {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: 999px;
+  font: 600 15px/1 "Onest", system-ui, sans-serif;
+  cursor: pointer;
+  transition: background-color var(--dur-micro) var(--ease), border-color var(--dur-micro) var(--ease), scale var(--dur-short) var(--ease);
+}
+.bt-era-pull { border: 1px solid var(--bt-line-strong); background: none; color: var(--bt-ink); }
+.bt-era-pull:hover { border-color: var(--bt-soft); }
+.bt-era-play { border: 0; background: var(--bt-soft); color: var(--bt-on-accent); }
+.bt-era-play svg { fill: currentColor; }
+.bt-era-play:active,
+.bt-era-pull:active { scale: 0.97; }
+.bt-era-step {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--bt-line-strong);
+  border-radius: 50%;
+  background: none;
+  color: var(--bt-ink);
+  cursor: pointer;
+  transition: border-color var(--dur-micro) var(--ease), opacity var(--dur-micro) var(--ease);
+}
+.bt-era-step svg { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.bt-era-step:hover:not(:disabled) { border-color: var(--bt-soft); }
+.bt-era-step:disabled { opacity: 0.35; cursor: default; }
+.bt-era-pull:focus-visible,
+.bt-era-play:focus-visible,
+.bt-era-step:focus-visible { outline: 2px solid var(--bt-ink); outline-offset: 3px; }
+@media (max-width: 719px) {
+  .bt-crate { --S: min(52vw, 220px); height: calc(var(--S) * 1.62); }
+  .bt-era-card { grid-template-columns: auto minmax(0, 1fr) auto; text-align: center; }
+  .bt-era-year { justify-content: center; }
+  .bt-era-actions { grid-column: 1 / -1; grid-row: 2; justify-content: center; }
+}
+
+/* the way out: the last stretch settles into the page's own ground for the finale */
 .bt::after {
   content: "";
   position: absolute;
@@ -918,66 +1088,117 @@ html[data-mode="day"] .bt-art img[data-set="day"] { opacity: 1; }
 
 /* ───────── motion ───────── */
 @media (prefers-reduced-motion: no-preference) {
-  .bt-figures > .bt-figure { transition: opacity 800ms var(--bt-ease), translate 900ms var(--bt-ease); }
-  .bt-swap { animation: bt-rise 560ms var(--bt-ease) both; }
-  .bt-screen-name span { animation: bt-flicker 700ms steps(6) both; }
-  .bt-player[data-playing] .bt-disc-spin { animation: bt-spin 3.6s linear infinite; }
-  .bt-disc-spin { animation: bt-spin 3.6s linear infinite paused; }
-  /* a mirror turns the other way */
-  .bt-reflect .bt-disc-spin { animation-direction: reverse; }
-  .bt-track::after { transition: transform 520ms var(--bt-ease); }
-  .bt-player[data-playing] .bt-live { animation: bt-breathe 2.4s ease-in-out infinite; }
-  .bt-player[data-playing] .bt-track[aria-pressed="true"] .bt-track-eq rect { animation: bt-bar 900ms ease-in-out infinite alternate; }
+  /* a cue: the member rises on the lift and settles, then the camera leans in for the rest of it */
+  .bt-figure {
+    transition: opacity 380ms var(--ease-in), translate 520ms var(--ease-in), scale 520ms var(--ease-in);
+  }
+  .bt-figure[data-state="on"] {
+    transition: opacity 900ms var(--ease) 440ms, translate 1300ms var(--ease) 440ms, scale 1700ms var(--ease) 440ms;
+  }
+  .bt-dip { animation: bt-dip 1300ms var(--ease-io) both; }
+  .bt-figure[data-state] { animation-name: bt-lean; animation-duration: calc(var(--bt-cue) + 1600ms); animation-timing-function: linear; animation-fill-mode: both; }
+  .bt-pin[data-hold] .bt-figure { animation-play-state: paused; }
+  .bt-cue-in { animation: bt-rise 760ms var(--ease) 180ms both; }
+  .bt-cue-in .bt-line { animation: bt-rise 760ms var(--ease) 300ms both; }
+  .bt-led-boot { animation: bt-boot 640ms steps(10, end) both; }
+  .bt-led-run { animation: bt-marquee var(--dur) linear infinite; }
+  .bt-aim { transition: rotate 1600ms var(--ease-io); }
+  .bt-sweep { animation: bt-sweep 17.9s var(--ease-io) -4.3s infinite alternate; }
+  .bt-aim[data-side="r"] .bt-sweep { animation-direction: alternate-reverse; }
+  .bt-haze span:first-child { animation: bt-haze 23.1s ease-in-out -6s infinite alternate; }
+  .bt-haze span:last-child { animation: bt-haze 17.9s ease-in-out -11s infinite alternate-reverse; }
+  .bt-confetti span { animation-name: bt-fall-a; animation-timing-function: linear; animation-iteration-count: infinite; }
+  .bt-confetti span[data-fall="b"] { animation-name: bt-fall-b; }
+  .bt-confetti span[data-fall="c"] { animation-name: bt-fall-c; }
+  .bt-confetti i { animation-name: bt-tumble-a; animation-timing-function: linear; animation-iteration-count: infinite; }
+  .bt-confetti i[data-tumble="b"] { animation-name: bt-tumble-b; }
+  .bt-confetti i[data-tumble="c"] { animation-name: bt-tumble-c; }
+  .bt-tab-face,
+  .bt-tab-rule { transition: opacity var(--dur-short) var(--ease), filter var(--dur-short) var(--ease); }
+  /* the record on the lift turns while the song plays and stops where it is when you pause it, the way a
+     record does. (It rises still: any turn running on it while the stage scrolls cost a frame in three at 4x.) */
+  .bt-lift .bt-vinyl-disc { animation: bt-spin 1.8s linear infinite paused; }
+  .bt-lift-disc[data-playing] .bt-vinyl-disc { animation-play-state: running; }
+  .bt-era-spin[data-on-air] .bt-vinyl-disc { animation: bt-spin 1.8s linear infinite; }
+  .bt-track::after { transition: transform 520ms var(--ease); }
+  .bt-pin[data-playing] .bt-track[aria-pressed="true"] .bt-track-eq rect { animation: bt-bar 900ms ease-in-out infinite alternate; }
   .bt-track-eq rect:nth-child(2) { animation-delay: -300ms !important; }
   .bt-track-eq rect:nth-child(3) { animation-delay: -600ms !important; }
 
   .bt-house-beam > span { transition: opacity var(--dur-in) var(--ease) calc(var(--i) * 120ms); }
-  .bt-sweep { animation: bt-sweep 17.9s var(--ease-io) -4.3s infinite alternate; }
-  .bt-sweep[data-side="r"] { animation-direction: alternate-reverse; animation-name: bt-sweep-r; }
-  .bt-haze span:first-child { animation: bt-haze 23.1s ease-in-out -6s infinite alternate; }
-  .bt-haze span:last-child { animation: bt-haze 17.9s ease-in-out -11s infinite alternate-reverse; }
-  .bt-confetti span { animation: bt-fall var(--dur) linear var(--delay) infinite; }
-  .bt-confetti i { animation: bt-flip var(--flip) ease-in-out infinite alternate; }
+  .bt-js:not(.bt-in) .bt-enter { opacity: 0; translate: 0 var(--rise); }
+  .bt-js .bt-enter { transition: opacity var(--dur-in) var(--ease) 120ms, translate 900ms var(--ease) 120ms; }
 
-  .bt-js:not(.bt-in) .bt-enter,
-  .bt-js:not(.bt-in) .bt-show { opacity: 0; translate: 0 28px; }
-  .bt-js .bt-enter,
-  .bt-js .bt-show { transition: opacity 700ms ease 120ms, translate 900ms var(--bt-ease) 120ms; }
+  /* the crate: sleeves glide to their places; a record comes out after its sleeve has lifted, and goes home first */
+  .bt-era-obj { transition: transform 900ms var(--ease); }
+  .bt-era-sleeve { transition: translate 700ms var(--ease), box-shadow 700ms var(--ease); }
+  .bt-era-sleeve::after { transition: background-color 700ms var(--ease); }
+  .bt-era-disc { transition: transform 560ms var(--ease-io); }
+  .bt-era-spin { transition: rotate 560ms var(--ease-io); }
+  .bt-era[data-open] .bt-era-disc { transition: transform 1050ms var(--ease) var(--bt-delay, 220ms); }
+  .bt-era[data-open] .bt-era-spin { transition: rotate 1050ms var(--ease) var(--bt-delay, 220ms); }
+  .bt-crate[data-switching] { --bt-delay: 620ms; }
+  .bt-era-text { animation: bt-rise 560ms var(--ease) both; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .bt-record-slot, .bt-sleeve { transition: none; }
-  .bt-era:hover .bt-record-slot { rotate: 0deg; }
+  .bt-figure { transition: opacity 400ms linear; translate: none; scale: none; }
+  .bt-figure[data-state="off"] { translate: none; scale: none; }
+  .bt-act,
+  .bt-lift-member,
+  .bt-lift-record,
+  .bt-led-line { transition: opacity 400ms linear; }
 }
 
 @keyframes bt-rise { from { opacity: 0; translate: 0 14px; } to { opacity: 1; translate: 0 0; } }
-@keyframes bt-flicker {
-  0% { opacity: 0; } 30% { opacity: 0.7; } 45% { opacity: 0.15; } 70% { opacity: 1; } 100% { opacity: 1; }
+/* the slow push on a member through their cue: a 2.4% lean in (on `transform`, with the centring, so the entrance can own `scale`) */
+@keyframes bt-lean {
+  from { transform: translateX(-50%) scale(1); }
+  to { transform: translateX(-50%) scale(1.024); }
 }
-@keyframes bt-breathe { 50% { opacity: 0.6; } }
+/* an LED wall changing content: columns light up left to right */
+@keyframes bt-boot {
+  from { clip-path: inset(0 100% 0 0); }
+  to { clip-path: inset(0 0 0 0); }
+}
+@keyframes bt-marquee { to { transform: translateX(-50%); } }
+@keyframes bt-cue-run { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes bt-cue-ring { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@keyframes bt-dip { 0% { opacity: 0; } 30% { opacity: 0.5; } 100% { opacity: 0; } }
 @keyframes bt-spin { to { rotate: 360deg; } }
-/* the left pair swings out and in; the right pair mirrors it */
-@keyframes bt-sweep { from { rotate: 1.6deg; } to { rotate: -1.4deg; } }
-@keyframes bt-sweep-r { from { rotate: 1.4deg; } to { rotate: -1.6deg; } }
+@keyframes bt-sweep { from { rotate: 0.9deg; } to { rotate: -0.9deg; } }
 @keyframes bt-haze { from { transform: translateX(-7%); } to { transform: translateX(7%); } }
-@keyframes bt-fall {
-  0% { opacity: 0; transform: translate(0, 0); }
-  8%, 88% { opacity: 0.85; }
-  100% { opacity: 0; transform: translate(var(--drift), 108cqh); }
+/* the column is the stage's height: from just above the top to just below the floor */
+@keyframes bt-fall-a {
+  0% { opacity: 0; transform: translate3d(0, -4%, 0); }
+  8%, 88% { opacity: 0.9; }
+  100% { opacity: 0; transform: translate3d(-44px, 102%, 0); }
 }
-@keyframes bt-flip {
-  from { transform: rotate(-35deg) scaleX(1); }
-  to { transform: rotate(40deg) scaleX(0.25); }
+@keyframes bt-fall-b {
+  0% { opacity: 0; transform: translate3d(0, -4%, 0); }
+  8%, 88% { opacity: 0.9; }
+  100% { opacity: 0; transform: translate3d(26px, 102%, 0); }
 }
+@keyframes bt-fall-c {
+  0% { opacity: 0; transform: translate3d(0, -4%, 0); }
+  8%, 88% { opacity: 0.9; }
+  100% { opacity: 0; transform: translate3d(58px, 102%, 0); }
+}
+@keyframes bt-tumble-a { from { transform: rotate3d(0.6, 1, 0.2, 0deg); } to { transform: rotate3d(0.6, 1, 0.2, 360deg); } }
+@keyframes bt-tumble-b { from { transform: rotate3d(-0.8, 1, 0.4, 0deg); } to { transform: rotate3d(-0.8, 1, 0.4, 360deg); } }
+@keyframes bt-tumble-c { from { transform: rotate3d(0.2, 1, 0.5, 0deg); } to { transform: rotate3d(0.2, 1, 0.5, 360deg); } }
 @keyframes bt-bar { from { scale: 1 0.35; } to { scale: 1 1; } }
 
+/* off screen, the stage's loops stop (the page's own pause only sees the whole, tall section) */
+.bt-pin[data-off] *,
+.bt-pin[data-off] *::before,
+.bt-pin[data-off] *::after { animation-play-state: paused !important; }
+
 /* ───────── Day: an open-air stage on a lilac afternoon ─────────
-   Pale lilac ground, deep purple ink, violet accents. The arena roof
-   becomes sky, the beams fade to sun-catching haze, the ocean of
-   light sticks turns to waving silhouettes in the sun. */
+   Pale lilac room, deep purple ink, violet accents; the painted stage turns
+   to a sunset sky over the open roof, and its type keeps a light ink on
+   the paint with the shade under it. */
 html[data-mode="day"] .bt {
   --bt-ground: #f5f0ff;
-  --bt-ground-2: #ece3fe;
-  --bt-panel: #ffffff;
   --bt-ink: #22104a;
   --bt-soft: #5a2bb8;
   --bt-muted: #4b3a6d;
@@ -986,43 +1207,40 @@ html[data-mode="day"] .bt {
   --bt-line: rgb(90 43 184 / 0.2);
   --bt-line-strong: rgb(90 43 184 / 0.36);
 
+  --bt-shade: 34 16 74;
+
   --bt-house: #ffffff;
   --bt-house-line: rgb(74 47 130 / 0.28);
   --bt-house-beam: rgb(255 255 255 / 0.85);
-
-  --bt-riser-0: #ffffff;
-  --bt-riser-1: #e6dafd;
-  --bt-face-0: #d4c3f8;
-  --bt-face-1: #bfa8ee;
-  --bt-pool: rgb(255 255 255 / 0.75);
-  --bt-haze: rgb(255 255 255 / 0.4);
-  --bt-confetti-light: #ffffff;
-
-  --bt-stage: #d9cbfa;
-  --bt-led-text: #2a1652;
-  --bt-floor-1: #9f83de;
   --bt-fix: #2e1a57;
   --bt-fix-ring: #7a5cc0;
 
-  --bt-eq-top: #8b5cf6;
-  --bt-eq-bottom: #3b1d82;
-  --bt-eq-idle: rgb(90 43 184 / 0.18);
+  --bt-stage: #d9cbfa;
+  --bt-haze: rgb(255 255 255 / 0.22);
+  --bt-confetti-light: #ffffff;
 
-  background:
-    radial-gradient(90% 50% at 50% 0%, rgb(196 168 255 / 0.5), transparent 70%),
-    linear-gradient(var(--bt-ground), var(--bt-ground-2) 45%, var(--bt-ground));
+  --bt-led: #fdfaff;
+  --bt-led-bloom: rgb(200 160 255 / 0.85);
+  --bt-eq-top: #ffffff;
+  --bt-eq-bottom: #b58cff;
+  --bt-eq-idle: rgb(240 230 255 / 0.34);
 }
-html[data-mode="day"] .bt-stage { box-shadow: 0 0 0 1px var(--bt-line), 0 40px 80px -44px rgb(90 43 184 / 0.55); }
-html[data-mode="day"] .bt-position { background: #ffffff; }
-html[data-mode="day"] .bt-tab-face { background: radial-gradient(circle at 50% 30%, #ffffff, #dccdfb); }
-html[data-mode="day"] .bt-tab[aria-selected="true"] .bt-tab-face { box-shadow: 0 0 0 3px var(--bt-ground), 0 0 0 5px var(--bt-soft); }
-html[data-mode="day"] .bt-lineup[data-auto] .bt-tab[aria-selected="true"] .bt-tab-face { box-shadow: 0 0 0 3px var(--bt-ground), 0 0 0 5px rgb(90 43 184 / 0.25); }
-@media (min-width: 1024px) {
-  html[data-mode="day"] .bt-lineup { background: rgb(255 255 255 / 0.7); }
-  html[data-mode="day"] .bt-tab[aria-selected="true"] .bt-tab-face,
-  html[data-mode="day"] .bt-lineup[data-auto] .bt-tab[aria-selected="true"] .bt-tab-face { box-shadow: 0 0 0 3px var(--bt-soft), 0 0 0 5px rgb(255 255 255 / 0.35); }
+/* by day the floor only meets the pale room in its last few percent, or it reads as fog */
+html[data-mode="day"] .bt-fade {
+  background: linear-gradient(
+    to top,
+    var(--bt-ground),
+    color-mix(in srgb, var(--bt-ground) 78%, transparent) 2%,
+    color-mix(in srgb, var(--bt-ground) 40%, transparent) 5%,
+    color-mix(in srgb, var(--bt-ground) 12%, transparent) 9%,
+    transparent 13%
+  );
 }
-html[data-mode="day"] .bt-disc::after { background: radial-gradient(closest-side, rgb(42 22 82 / 0.4), transparent); }
-html[data-mode="day"] .bt-live { box-shadow: none; }
-html[data-mode="day"] .bt-sleeve { box-shadow: 0 1px 0 rgb(255 255 255 / 0.3) inset, 0 18px 30px -14px rgb(42 22 82 / 0.5), 0 0 0 1px rgb(42 22 82 / 0.12); }
-html[data-mode="day"] .bt-node::after { box-shadow: 0 0 0 4px var(--bt-ground), 0 0 10px rgb(124 58 237 / 0.5); }
+@media (min-width: 900px) {
+  html[data-mode="day"] .bt-stage { --bt-fade-to: 91%; --bt-fade-len: 24%; }
+}
+html[data-mode="day"] .bt-crate::before { background: radial-gradient(50% 46% at 50% 46%, rgb(255 255 255 / 0.85), transparent); }
+html[data-mode="day"] .bt-era-sleeve { box-shadow: inset 0 0 0 1px rgb(42 22 82 / 0.12), 0 22px 36px -18px rgb(42 22 82 / 0.5); }
+html[data-mode="day"] .bt-era[data-open] .bt-era-sleeve { box-shadow: inset 0 0 0 1px rgb(42 22 82 / 0.12), 0 34px 50px -20px rgb(42 22 82 / 0.55); }
+html[data-mode="day"] .bt-era:not([data-front]) .bt-era-sleeve { --shade: 0.22; }
+html[data-mode="day"] .bt-era-obj { -webkit-box-reflect: below 4px linear-gradient(transparent 70%, rgb(255 255 255 / 0.34)); }

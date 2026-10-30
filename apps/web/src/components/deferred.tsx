@@ -1,6 +1,7 @@
 import { startTransition, useEffect, useLayoutEffect, useRef, useState, type ComponentType } from "react";
 
 import { revealWithin } from "@/components/site";
+import { atRest } from "@/lib/scroll-loop";
 
 /**
  * Below-the-fold sections ship as their own chunks. Each one is a placeholder
@@ -8,6 +9,13 @@ import { revealWithin } from "@/components/site";
  * comes within a couple of screens of the viewport, then the real section
  * mounts in its place. The chunks themselves are fetched on idle after load,
  * so mounting never waits on the network in practice.
+ *
+ * A mount is one long task however React slices it (its commit and the
+ * layout of a few hundred new boxes), so it is best done while nobody is
+ * scrolling: while the visitor rests with a section within SOON of the
+ * viewport, it mounts in an idle moment, one section per moment. Only a
+ * visitor who never stops meets the placeholder at the usual two screens,
+ * and it mounts there as it always did.
  *
  * Anything that jumps (an #anchor link, the ⌘K palette, a deep link, a reload
  * that restores the scroll position) first mounts every deferred section above
@@ -22,6 +30,18 @@ type Entry = {
 const entries = new Set<Entry>();
 const preloads: (() => Promise<unknown>)[] = [];
 let mountEverything = false;
+
+/** How near a section has to be for a mount at rest. */
+const SOON = "300% 0px";
+/** Resolves once every chunk has been fetched (or tried): mounts at rest never wait on the network. */
+let warmed: Promise<unknown> = new Promise(() => {});
+/** Mounts at rest, one at a time, each once the visitor is at rest and the page idle. */
+let calm: Promise<unknown> = Promise.resolve();
+function atRestInTurn(fn: () => Promise<void> | undefined) {
+  // (a mount that never commits, say its chunk failed, holds the line for 3 s at most)
+  const turn = () => Promise.race([fn(), new Promise((r) => window.setTimeout(r, 3000))]);
+  calm = calm.then(() => warmed).then(atRest).then(turn).catch(() => {});
+}
 
 /** Mount every deferred section that sits above `target` (or all of them). */
 export function mountBefore(target?: Element | null): Promise<void> {
@@ -122,9 +142,11 @@ if (typeof window !== "undefined") {
   });
 
   // fetch every chunk once the page has settled, so mounting is instant
+  let ready = () => {};
+  warmed = new Promise<void>((r) => (ready = r));
   const warm = () => {
     const idle = window.requestIdleCallback ?? ((cb: () => void, _o?: IdleRequestOptions) => window.setTimeout(cb, 200));
-    idle(() => preloads.forEach((p) => void p().catch(() => {})), { timeout: 4000 });
+    idle(() => void Promise.all(preloads.map((p) => p().catch(() => {}))).then(ready), { timeout: 4000 });
   };
   if (document.readyState === "complete") window.setTimeout(warm, 1200);
   else window.addEventListener("load", () => window.setTimeout(warm, 1200), { once: true });
@@ -183,22 +205,43 @@ export function deferred(
       };
     }, []);
 
-    // mount on approach
+    // mount on approach: at rest while it is near, or as it comes within `margin`
     useEffect(() => {
       if (on) return;
       const el = ph.current;
       if (!el) return;
-      const io = new IntersectionObserver(
+      let near = false;
+      let queued = false;
+      // time-sliced, so a section mounting mid-scroll never blocks a frame for long
+      const mount = () => {
+        io.disconnect();
+        soon.disconnect();
+        if (committed.current) return committed.current;
+        committed.current = new Promise<void>((res) => (done.current = res));
+        startTransition(() => setOn(true));
+        return committed.current;
+      };
+      const io = new IntersectionObserver(([e]) => e.isIntersecting && void mount(), { rootMargin: margin });
+      const soon = new IntersectionObserver(
         ([e]) => {
-          if (!e.isIntersecting) return;
-          io.disconnect();
-          // time-sliced, so a section mounting mid-scroll never blocks a frame for long
-          startTransition(() => setOn(true));
+          near = e.isIntersecting;
+          if (!near || queued) return;
+          queued = true;
+          // the next in line waits for its own moment, after this one has committed
+          atRestInTurn(() => {
+            queued = false;
+            return near ? mount() : undefined;
+          });
         },
-        { rootMargin: margin },
+        { rootMargin: SOON },
       );
       io.observe(el);
-      return () => io.disconnect();
+      soon.observe(el);
+      return () => {
+        io.disconnect();
+        soon.disconnect();
+        near = false;
+      };
     }, [on]);
 
     // wanted but the chunk isn't here yet

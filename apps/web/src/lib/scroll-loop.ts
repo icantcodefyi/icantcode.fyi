@@ -285,6 +285,79 @@ export function watchScroll(fn: (y: number, dy: number) => void): () => void {
   };
 }
 
+/* ── rest ──
+ * Work nothing on screen waits for (a section mounting ahead, WebGL coming up, the other mode's
+ * plates) is one long task however it is cut, and on a scroll's frames it costs frames. So it waits
+ * until the visitor has stopped: no scroll anywhere on the page for QUIET ms, then an idle moment
+ * with still no scroll. */
+
+const QUIET = 250; // ms
+let scrolledAt = -Infinity;
+/** the page's scroll speed, px/s, smoothed over a few events */
+let pace = 0;
+let paceY = 0;
+if (typeof window !== "undefined") {
+  // capture: an inner scroller (a carousel) counts too
+  window.addEventListener(
+    "scroll",
+    (ev) => {
+      const now = performance.now();
+      if (ev.target === document) {
+        // read before any frame callback has written a style, so this never flushes anything
+        const y = window.scrollY;
+        const dt = Math.max(1, now - scrolledAt);
+        pace = dt > QUIET ? 0 : pace * 0.6 + ((Math.abs(y - paceY) * 1000) / dt) * 0.4;
+        paceY = y;
+      }
+      scrolledAt = now;
+    },
+    { passive: true, capture: true },
+  );
+}
+
+/** How fast the page is scrolling, px/s (0 at rest). */
+export function scrollPace() {
+  return resting() ? 0 : pace;
+}
+
+const onIdle = (fn: () => void) =>
+  window.requestIdleCallback ? window.requestIdleCallback(fn, { timeout: 1000 }) : window.setTimeout(fn, 1);
+
+/** No scroll for the last QUIET ms. */
+export function resting() {
+  return performance.now() - scrolledAt >= QUIET;
+}
+
+/** Resolves once the visitor is at rest and the main thread is idle, in a task of its own. */
+export function atRest(): Promise<void> {
+  return new Promise((resolve) => {
+    const check = () => {
+      const wait = QUIET - (performance.now() - scrolledAt);
+      if (wait > 0) window.setTimeout(check, wait);
+      else onIdle(() => (resting() ? resolve() : check()));
+    };
+    check();
+  });
+}
+
+/* Chrome (macOS at least) spends ~20 ms, once per page, on the first hover update after the mouse has
+ * moved over it: native work in the frame after the next layout or scroll. On a page that has settled
+ * there is no layout at rest, so it lands on the first frame of the visitor's first scroll. One tiny
+ * layout once the visitor rests (an empty box, added, then removed) brings it forward to a still moment. */
+if (typeof window !== "undefined") {
+  window.addEventListener(
+    "pointermove",
+    () =>
+      void atRest().then(() => {
+        const box = document.createElement("i");
+        box.style.cssText = "position:absolute;width:0;height:0";
+        document.body.append(box);
+        requestAnimationFrame(() => window.setTimeout(() => box.remove(), 0));
+      }),
+    { once: true, passive: true },
+  );
+}
+
 /**
  * subscribe() as a hook. The callbacks may change every render; the
  * subscription stays put for the life of the element.

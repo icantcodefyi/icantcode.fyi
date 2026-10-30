@@ -3,7 +3,7 @@ import { CommandPalette } from "@/components/command-palette";
 import { deferred, useInitialHash } from "@/components/deferred";
 import { Hero } from "@/components/hero";
 import { ModeDock } from "@/components/mode-dock";
-import { useOffscreenPause, useReveal } from "@/components/site";
+import { useOffscreenPause, useReveal, useSkipAway } from "@/components/site";
 import { Finale } from "@/sections/finale";
 import { SiteFooter } from "@/sections/footer";
 import { Gates } from "@/sections/gates";
@@ -47,9 +47,10 @@ export default function Home() {
   useReveal();
   useInitialHash();
   useOffscreenPause(root);
+  useSkipAway(root);
 
   return (
-    <div ref={root} className="relative overflow-x-clip">
+    <div ref={root} data-page className="relative overflow-x-clip">
       <CommandPalette />
       <ModeDock />
 

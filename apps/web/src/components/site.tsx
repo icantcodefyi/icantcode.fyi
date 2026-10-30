@@ -174,6 +174,116 @@ export function useOffscreenPause(root: React.RefObject<HTMLElement | null>) {
   }, [root]);
 }
 
+/* ── Sections far from view are skipped ──
+ * A top-level section more than two screens from view gets
+ * `content-visibility: auto`, with its last laid-out height as its intrinsic
+ * size, so the browser skips its style, layout, paint and compositing (it
+ * skips past 150% of a screen): its layers leave every frame's layerize and
+ * its loops every frame's style pass. Before it comes within two screens the
+ * skip is lifted again, so a section is never on screen with the
+ * containment `auto` brings (that snaps its paint offset to whole pixels,
+ * and text in a section at a fractional offset would move a pixel).
+ * Heights come from each section's own layouts (never a forced one) and a
+ * skipped section keeps the one it last rendered at, so the page's length and
+ * every jump stay exact; a resize that changes section heights (the width,
+ * or the height on a desktop, not a phone's URL bar) lifts every skip until
+ * it has settled.
+ * Left out: the dock (fixed), the seams (their art hangs over their
+ * neighbours) and a section while a deferred block inside it hasn't mounted
+ * (its observer would be blind). An observer inside a skipped section sees
+ * nothing intersect, so anything watching from more than 150% of a screen
+ * away watches the section instead (depth/gl.ts). */
+
+const FAR = "200% 0px";
+
+export function useSkipAway(root: React.RefObject<HTMLElement | null>) {
+  useEffect(() => {
+    const host = root.current;
+    if (!host || !CSS.supports("content-visibility", "auto")) return;
+    const skippable = (el: Element): el is HTMLElement =>
+      el instanceof HTMLElement && !el.hasAttribute("data-ph") && !el.classList.contains("mode-dock") && !el.classList.contains("seam");
+    const watched = new WeakSet<Element>();
+    const far = new Set<HTMLElement>();
+    let lifted = false;
+    const set = (el: HTMLElement) => {
+      const v = far.has(el) && !lifted ? "auto" : "";
+      if (el.style.contentVisibility !== v) el.style.contentVisibility = v;
+    };
+    const away = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          const el = e.target as HTMLElement;
+          if (e.isIntersecting) far.delete(el);
+          else far.add(el);
+          set(el);
+        }
+      },
+      { rootMargin: FAR },
+    );
+    // heights from the sections' own layouts; a skipped section reports the size it already has
+    const sized = new ResizeObserver((entries) => {
+      for (const e of entries) {
+        const el = e.target as HTMLElement;
+        if (!el.isConnected) continue;
+        // (the content box: the intrinsic size is what the padding goes around)
+        const h = e.contentBoxSize[0]?.blockSize ?? e.contentRect.height;
+        const cis = `auto ${+h.toFixed(2)}px`;
+        if (el.style.containIntrinsicSize !== cis) el.style.containIntrinsicSize = cis;
+        if (watched.has(el) || el.querySelector("[data-ph]")) continue;
+        watched.add(el);
+        away.observe(el);
+      }
+    });
+    const watch = (el: Element) => skippable(el) && sized.observe(el);
+    for (const el of host.children) watch(el);
+    // deferred sections swap their placeholder for the real element
+    const mo = new MutationObserver((records) => {
+      for (const r of records) {
+        for (const n of r.removedNodes) {
+          if (!(n instanceof HTMLElement)) continue;
+          sized.unobserve(n);
+          away.unobserve(n);
+          far.delete(n);
+        }
+        for (const n of r.addedNodes) if (n instanceof Element) watch(n);
+      }
+    });
+    mo.observe(host, { childList: true });
+
+    // what section heights follow: the width, and on a desktop the height (svh/lvh); not a phone's URL bar
+    const touch = window.matchMedia("(pointer: coarse)");
+    let w = window.innerWidth;
+    let h = window.innerHeight;
+    let settle = 0;
+    const resized = () => {
+      const moved = window.innerWidth !== w || (!touch.matches && window.innerHeight !== h);
+      w = window.innerWidth;
+      h = window.innerHeight;
+      if (!moved) return;
+      lifted = true;
+      for (const el of far) set(el);
+      window.clearTimeout(settle);
+      settle = window.setTimeout(() => {
+        lifted = false;
+        for (const el of far) set(el);
+      }, 300);
+    };
+    window.addEventListener("resize", resized);
+    return () => {
+      away.disconnect();
+      sized.disconnect();
+      mo.disconnect();
+      window.removeEventListener("resize", resized);
+      window.clearTimeout(settle);
+      for (const el of host.children) {
+        if (!(el instanceof HTMLElement)) continue;
+        el.style.contentVisibility = "";
+        el.style.containIntrinsicSize = "";
+      }
+    };
+  }, [root]);
+}
+
 /* ── A photograph that arrives as a two-tone Bayer dither and resolves ── */
 
 const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];

@@ -489,7 +489,8 @@ export function createGL(stage: HTMLElement, spec: StageSpec, runs: Group[], rig
   });
   measure();
   nearIO.observe(stage);
-  farIO.observe(stage);
+  // (its section: a section skipped while far (useSkipAway) reports nothing inside it as intersecting)
+  farIO.observe(stage.closest("[data-page] > *") ?? stage);
   seeIO.observe(stage);
 
   return {

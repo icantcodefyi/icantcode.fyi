@@ -425,7 +425,8 @@ body {
    where a section's height follows the width or the height of the screen,
    so does its box. ── */
 .defer-ph { display: block; height: var(--ph-h, 100vh); }
-.defer-ph[data-ph="hackathons"] { --ph-h: 3140px; }
+/* Hackathons: wins grouped by year; phones stack the map over the list, 1024–1279 sets each prize under its words */
+.defer-ph[data-ph="hackathons"] { --ph-h: 3460px; }
 .defer-ph[data-ph="teyvat"] { --ph-h: 1470px; }
 /* Valorant: the text column wraps taller as phones get wider (steeply to 430, then gently), and fills the screen on desktop */
 .defer-ph[data-ph="valorant"] { --ph-h: min(772px + 163vw, 1360px + 22.5vw); }
@@ -435,7 +436,7 @@ body {
 .defer-ph[data-ph="bts"] { --ph-h: calc(230svh + 1160px); }
 .defer-ph[data-ph="guestbook"] { --ph-h: 960px; }
 @media (min-width: 640px) {
-  .defer-ph[data-ph="hackathons"] { --ph-h: 2830px; }
+  .defer-ph[data-ph="hackathons"] { --ph-h: calc(2090px + 150vw); }
   .defer-ph[data-ph="teyvat"] { --ph-h: 1520px; }
   .defer-ph[data-ph="valorant"] { --ph-h: calc(1062px + 33vw); }
   .defer-ph[data-ph="anime"] { --ph-h: 3676px; }
@@ -445,27 +446,22 @@ body {
   .defer-ph[data-ph="anime"] { --ph-h: min(300vw + 94px, 2626px); }
 }
 @media (min-width: 768px) {
-  .defer-ph[data-ph="hackathons"] { --ph-h: 2440px; }
+  .defer-ph[data-ph="hackathons"] { --ph-h: 2720px; }
   .defer-ph[data-ph="teyvat"] { --ph-h: 1630px; }
 }
 @media (min-width: 1024px) {
-  .defer-ph[data-ph="hackathons"] { --ph-h: calc(4790px - 212vw); }
+  .defer-ph[data-ph="hackathons"] { --ph-h: 2860px; }
   .defer-ph[data-ph="teyvat"] { --ph-h: 1000px; }
   .defer-ph[data-ph="valorant"] { --ph-h: clamp(800px, 100vh, 966px); }
   .defer-ph[data-ph="bts"] { --ph-h: calc(230svh + min(90vw + 331px, 1610px)); }
   .defer-ph[data-ph="guestbook"] { --ph-h: 640px; }
 }
-/* the list wraps the event names below 1100 (the dock's gutter), then unwraps them one by one */
-@media (min-width: 1100px) {
-  .defer-ph[data-ph="hackathons"] { --ph-h: max(4512px - 195vw, 2946px - 60vw); }
-}
 @media (min-width: 1264px) {
   .defer-ph[data-ph="anime"] { --ph-h: min(74.6vw + 216px, 1219px); }
 }
 @media (min-width: 1280px) {
-  /* the map and the list both shrink a little as the screen widens */
-  .defer-ph[data-ph="hackathons"] { --ph-h: calc(3017px - 65.6vw); }
+  .defer-ph[data-ph="hackathons"] { --ph-h: 2330px; }
 }
 @media (min-width: 1800px) {
-  .defer-ph[data-ph="hackathons"] { --ph-h: 1825px; }
+  .defer-ph[data-ph="hackathons"] { --ph-h: 2100px; }
 }

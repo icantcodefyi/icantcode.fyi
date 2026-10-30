@@ -77,6 +77,15 @@ export function useReveal() {
 
 const targetOf = (a: Animation) => (a.effect as KeyframeEffect | null)?.target ?? null;
 
+// A loop that starts in a section the browser is skipping (see useSkipAway) sends no animationstart,
+// and isn't even made until something asks for the box's style.
+let holdWithin: ((box: Element) => void) | null = null;
+
+/** `box` was just shown, and its section may be skipped: once idle, its loops are held if the section is off. */
+export function holdNewLoops(box: Element | null) {
+  if (box) holdWithin?.(box);
+}
+
 export function useOffscreenPause(root: React.RefObject<HTMLElement | null>) {
   useEffect(() => {
     const host = root.current;
@@ -153,6 +162,15 @@ export function useOffscreenPause(root: React.RefObject<HTMLElement | null>) {
       idle(flushStarts, { timeout: 1000 });
     };
     host.addEventListener("animationstart", started, true);
+    const within = (box: Element) =>
+      idle(
+        () => {
+          // (the box's own lookup makes its animations: a whole-page one would leave a skipped section out)
+          if (box.isConnected && box.closest("[data-off]")) hold(box.getAnimations({ subtree: true }).filter((a) => !held.has(a) && isLoop(a)));
+        },
+        { timeout: 1000 },
+      );
+    holdWithin = within;
     const watch = () => {
       for (const el of host.children) io.observe(el);
     };
@@ -170,6 +188,7 @@ export function useOffscreenPause(root: React.RefObject<HTMLElement | null>) {
       io.disconnect();
       mo.disconnect();
       host.removeEventListener("animationstart", started, true);
+      if (holdWithin === within) holdWithin = null;
     };
   }, [root]);
 }

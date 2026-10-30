@@ -3,6 +3,7 @@ import type { Mode } from "./hero/petal-field";
 import type { HeroScene, PlateImages } from "./hero/scene";
 import { SkyToggle } from "./hero/sky-toggle";
 import { driveStage, type Stage } from "./hero/stage";
+import { holdNewLoops } from "@/components/site";
 import { art, HERO_ART } from "@/lib/art";
 import { setMode, useMode } from "@/lib/mode";
 import { atRest } from "@/lib/scroll-loop";
@@ -157,6 +158,10 @@ export function Hero() {
       window.clearTimeout(t);
     };
   }, []);
+  // (a deep link far down skips the hero before then, and its stars' twinkle would tick every frame)
+  useEffect(() => {
+    if (dayOk) holdNewLoops(root.current?.querySelector(".hero-toggle") ?? null);
+  }, [dayOk]);
 
   // In night mode the day plates only make a first switch seamless, so nothing
   // of them loads before the visitor's first scroll (and then once they rest).

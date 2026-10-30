@@ -7,7 +7,7 @@ import { STRENGTH } from "@/lib/depth/camera";
 import type { PlateSpec, StageSpec } from "@/lib/depth/types";
 import type { Mode } from "@/lib/mode";
 import { clamp01, DAMP, damp, smooth } from "@/lib/motion";
-import { useScrollFrame } from "@/lib/scroll-loop";
+import { atRest, useScrollFrame } from "@/lib/scroll-loop";
 import { useSetlist, type Setlist } from "./bts/audio";
 import { cutout, MEMBERS } from "./bts/data";
 import { Eras } from "./bts/eras";
@@ -167,7 +167,8 @@ function Wall({ index, set, nameRef, songRef }: { index: number; set: Setlist; n
    tumbles: every keyframe is a constant, so all of it runs on the compositor. The columns keep to the
    outer fifths and drift outwards, so no piece ever shows through the photo's feathered edges or behind
    the record, and they are spent by mid-stage, above the type (bts.css; on phones the photo spans the
-   stage, so they wait for act two). */
+   stage, so they wait for act two). The fall and the tumble stay on two boxes: on one, at rest, the
+   main thread wakes a quarter more often for them. */
 const rand = (seed: number) => {
   let s = seed;
   return () => {
@@ -193,6 +194,160 @@ const CONFETTI = (() => {
     };
   });
 })();
+
+/* ───────── the loops, held out of view ─────────
+   Every loop on the stage runs on the compositor, but one that runs still costs each main frame a
+   restyle of its box while the page scrolls, and off screen it has nothing painted to run with, so it
+   ticks the main thread every frame. So each one holds while its own part of the stage is out of view
+   ([data-still] on the pin, read by bts.css), and with the whole stage out of view so does everything
+   else that turns on it. Where the parts are follows from the scroll position alone: the stage is
+   sticky, so its top is the run's top, clamped, and the parts' boxes in it are measured once per layout.
+   Compared every frame, written only when it changes. They are all held until the first frame places
+   them, so the page's own pause never sees one running and never takes it over (a script's pause or
+   play outranks the CSS for good). Below 900 px the confetti sits out act one behind the photo (bts.css
+   fades it out), so it holds then too, once the fade is done. */
+
+const PARTS = [
+  // the part, its box on the stage, and the share of that box (top, bottom) where its loop shows
+  { id: "confetti", sel: ".bt-confetti", from: 0, to: 0.52 }, // spent where its mask ends
+  { id: "wall", sel: ".bt-led", from: 0, to: 1 },
+  { id: "beams", sel: ".bt-art-beams", from: 0.08, to: 0.88 }, // the painting's beams, with room for their turn
+  { id: "haze", sel: ".bt-haze", from: 0.4, to: 0.88 },
+] as const;
+const STILL = [...PARTS.map((p) => p.id), "stage"].join(" ");
+/** how far out of view (share of the screen's height) a part starts moving again, so it is moving as it shows */
+const AHEAD = 0.1;
+/** bts.css: below this the confetti is hidden through act one, fading out over VEIL_MS */
+const NARROW = "(max-width: 899px)";
+const VEIL_MS = 600;
+
+function useStill(run: RefObject<HTMLDivElement | null>, pin: RefObject<HTMLDivElement | null>) {
+  const s = useRef({
+    still: STILL,
+    h: 0,
+    parts: [] as { id: string; top: number; bottom: number }[],
+    seen: new Set<string>(),
+    music: false,
+    narrow: false,
+    veiled: false,
+    timer: 0,
+  }).current;
+
+  const apply = useCallback(() => {
+    const out: string[] = PARTS.filter((p) => !s.seen.has(p.id) || (p.id === "confetti" && s.veiled)).map((p) => p.id);
+    if (!s.seen.has("stage")) out.push("stage");
+    const still = out.join(" ");
+    if (still === s.still) return;
+    s.still = still;
+    pin.current?.setAttribute("data-still", still);
+  }, [s, pin]);
+
+  /** the confetti hides at once, but holds only once it has faded */
+  const veil = useCallback(
+    (now: boolean) => {
+      const on = s.narrow && !s.music;
+      window.clearTimeout(s.timer);
+      if (!on || now) {
+        s.veiled = on;
+        apply();
+      } else
+        s.timer = window.setTimeout(() => {
+          s.veiled = true;
+          apply();
+        }, VEIL_MS);
+    },
+    [s, apply],
+  );
+
+  useEffect(() => {
+    const mq = window.matchMedia(NARROW);
+    s.narrow = mq.matches;
+    veil(true);
+    const onChange = () => {
+      s.narrow = mq.matches;
+      veil(false);
+    };
+    mq.addEventListener("change", onChange);
+    return () => {
+      mq.removeEventListener("change", onChange);
+      window.clearTimeout(s.timer);
+    };
+  }, [s, veil]);
+
+  useScrollFrame(
+    run,
+    (f) => {
+      // sticky at the top: below the run's top it rides with it, and the run's end pushes it off
+      const runTop = f.top - f.y;
+      const top = runTop > 0 ? runTop : Math.min(0, runTop + f.h - s.h);
+      const ahead = AHEAD * f.vh;
+      const shows = (a: number, b: number) => top + b > -ahead && top + a < f.vh + ahead;
+      s.seen.clear();
+      if (shows(0, s.h)) s.seen.add("stage");
+      for (const p of s.parts) if (shows(p.top, p.bottom)) s.seen.add(p.id);
+      apply();
+    },
+    {
+      onMeasure: () => {
+        const el = pin.current;
+        if (!el) return;
+        const at = el.getBoundingClientRect().top;
+        s.h = el.offsetHeight;
+        s.parts = PARTS.map(({ id, sel, from, to }) => {
+          const r = el.querySelector(sel)?.getBoundingClientRect();
+          return r ? { id, top: r.top - at + from * r.height, bottom: r.top - at + to * r.height } : { id, top: 0, bottom: s.h };
+        });
+      },
+      onActive: (on) => {
+        if (on) return;
+        s.seen.clear();
+        apply();
+      },
+    },
+  );
+
+  /** the run has crossed into act two (or back) */
+  return useCallback(
+    (music: boolean) => {
+      s.music = music;
+      veil(false);
+    },
+    [s, veil],
+  );
+}
+
+/* ───────── the lettering, looked up ahead ─────────
+   The LED wall's lettering needs a ✦ that no font on the page has, in two faces (the names' and the
+   Hangul's), and the system's search for one is most of the world's first layout: about 120 ms at 4x CPU,
+   mid-scroll, as the world mounts two screens ahead. So once the chunk is here and the visitor rests,
+   the same searches run on a copy of the lettering nobody sees, in the stage's own classes at the
+   screen's own size (the Hangul's search is size-dependent), one face per idle moment, and the mount
+   finds them done. Nothing is left behind. */
+
+const LOOKUPS = [
+  // the names' face and the songs' size of it
+  `<div class="bt-led-run"><span class="bt-led-seq"><span><i>✦</i></span></span></div><div class="bt-led-line bt-led-song"><div class="bt-led-run"><span class="bt-led-seq"><span><i>✦</i></span></span></div></div>`,
+  // the Hangul's face
+  `<div class="bt-led-run"><span class="bt-led-seq"><span lang="ko">김<i>✦</i></span></span></div>`,
+];
+
+async function lookAhead() {
+  await document.fonts?.ready;
+  for (const html of LOOKUPS) {
+    await atRest();
+    // the world is here: its own layout has done it
+    if (document.querySelector("#bts .bt-pin")) return;
+    const box = document.createElement("div");
+    box.setAttribute("aria-hidden", "true");
+    box.style.cssText = "position:fixed;inset:0;overflow:hidden;visibility:hidden;pointer-events:none;contain:strict";
+    box.innerHTML = `<div class="bt"><div class="bt-pin"><div class="bt-stage">${html}</div></div></div>`;
+    for (const r of box.querySelectorAll<HTMLElement>(".bt-led-run")) r.style.animation = "none";
+    document.body.append(box);
+    void box.offsetWidth;
+    box.remove();
+  }
+}
+if (typeof document !== "undefined") void lookAhead();
 
 /* ───────── house lights ─────────
    The threshold into the hall: the dark of the doorway, one hairline truss
@@ -354,7 +509,11 @@ export function BtsWorld() {
   const day = dayBack && dayBeams && dayMid && dayFront;
   const { set: setHold } = cues;
 
-  const toAct = useRun(runRef, els, (_music, past) => setHold("act", past));
+  const toMusic = useStill(runRef, els.pin);
+  const toAct = useRun(runRef, els, (music, past) => {
+    setHold("act", past);
+    toMusic(music);
+  });
 
   // the moving heads ride the kick drum while a preview plays
   const { draw } = set;
@@ -389,18 +548,11 @@ export function BtsWorld() {
     return () => io.disconnect();
   }, []);
 
-  // the stage: the line-up runs while it is mostly on screen; its loops stop when it is off
+  // the stage: the line-up waits until it has arrived (most of it on screen)
   useEffect(() => {
     const el = els.pin.current;
     if (!el) return;
-    const io = new IntersectionObserver(
-      ([e]) => {
-        // the line-up waits until the stage has arrived (most of it on screen)
-        setHold("offscreen", e.intersectionRatio < 0.8);
-        el.toggleAttribute("data-off", !e.isIntersecting);
-      },
-      { threshold: [0, 0.8] },
-    );
+    const io = new IntersectionObserver(([e]) => setHold("offscreen", e.intersectionRatio < 0.8), { threshold: [0, 0.8] });
     io.observe(el);
     return () => io.disconnect();
   }, [setHold, els.pin]);
@@ -433,6 +585,7 @@ export function BtsWorld() {
           ref={els.pin}
           className="bt-pin"
           data-act="lineup"
+          data-still={STILL}
           data-playing={set.playing || undefined}
           style={{ "--bt-aim": `${member.aim}deg` } as CSSProperties}
         >
@@ -443,8 +596,8 @@ export function BtsWorld() {
             <Layer d={D.rig} className="bt-plate bt-plate-beams">
               <Arena plate="beams" day={day} />
               <div className="bt-haze">
-                <span />
-                <span />
+                <span className="bt-haze-band" />
+                <span className="bt-haze-band" />
               </div>
             </Layer>
             <Layer d={D.rig} className="bt-plate">
@@ -452,8 +605,13 @@ export function BtsWorld() {
             </Layer>
             <Layer d={D.confetti} className="bt-confetti">
               {CONFETTI.map((c, i) => (
-                <span key={i} data-fall={c.fall} style={{ left: `${c.x}%`, animationDuration: `${c.dur}s`, animationDelay: `${c.delay}s`, "--c": c.color } as CSSProperties}>
-                  <i data-tumble={c.tumble} style={{ animationDuration: `${c.flip}s` }} />
+                <span
+                  key={i}
+                  className="bt-paper"
+                  data-fall={c.fall}
+                  style={{ left: `${c.x}%`, animationDuration: `${c.dur}s`, animationDelay: `${c.delay}s`, "--c": c.color } as CSSProperties}
+                >
+                  <i className="bt-tumble" data-tumble={c.tumble} style={{ animationDuration: `${c.flip}s` }} />
                 </span>
               ))}
             </Layer>

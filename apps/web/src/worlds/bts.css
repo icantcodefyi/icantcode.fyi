@@ -283,7 +283,7 @@ html[data-mode="day"] .bt-art img[data-set="day"] { opacity: 1; }
 
 /* haze hanging in the beams, behind the lift */
 .bt-haze { position: absolute; inset: 0; }
-.bt-haze span {
+.bt-haze-band {
   position: absolute;
   left: -20%;
   width: 140%;
@@ -291,18 +291,18 @@ html[data-mode="day"] .bt-art img[data-set="day"] { opacity: 1; }
   border-radius: 50%;
   background: radial-gradient(closest-side, var(--bt-haze), transparent);
 }
-.bt-haze span:first-child { top: 40%; }
-.bt-haze span:last-child { top: 60%; height: 28%; opacity: 0.8; }
+.bt-haze-band:first-child { top: 40%; }
+.bt-haze-band:last-child { top: 60%; height: 28%; opacity: 0.8; }
 
 /* paper confetti: each piece falls the stage's height (cqh) with a slow drift, tumbling as it goes */
-.bt-confetti span {
+.bt-paper {
   position: absolute;
   top: 0;
   width: 13px;
   height: 100%;
   opacity: 0;
 }
-.bt-confetti i {
+.bt-tumble {
   display: block;
   width: 13px;
   height: 8px;
@@ -1137,14 +1137,14 @@ html[data-mode="day"] .bt-art img[data-set="day"] { opacity: 1; }
   .bt-aim { transition: rotate 1600ms var(--ease-io); }
   .bt-sweep { animation: bt-sweep 17.9s var(--ease-io) -4.3s infinite alternate; }
   .bt-aim[data-side="r"] .bt-sweep { animation-direction: alternate-reverse; }
-  .bt-haze span:first-child { animation: bt-haze 23.1s ease-in-out -6s infinite alternate; }
-  .bt-haze span:last-child { animation: bt-haze 17.9s ease-in-out -11s infinite alternate-reverse; }
-  .bt-confetti span { animation-name: bt-fall-a; animation-timing-function: linear; animation-iteration-count: infinite; }
-  .bt-confetti span[data-fall="b"] { animation-name: bt-fall-b; }
-  .bt-confetti span[data-fall="c"] { animation-name: bt-fall-c; }
-  .bt-confetti i { animation-name: bt-tumble-a; animation-timing-function: linear; animation-iteration-count: infinite; }
-  .bt-confetti i[data-tumble="b"] { animation-name: bt-tumble-b; }
-  .bt-confetti i[data-tumble="c"] { animation-name: bt-tumble-c; }
+  .bt-haze-band:first-child { animation: bt-haze 23.1s ease-in-out -6s infinite alternate; }
+  .bt-haze-band:last-child { animation: bt-haze 17.9s ease-in-out -11s infinite alternate-reverse; }
+  .bt-paper { animation-name: bt-fall-a; animation-timing-function: linear; animation-iteration-count: infinite; }
+  .bt-paper[data-fall="b"] { animation-name: bt-fall-b; }
+  .bt-paper[data-fall="c"] { animation-name: bt-fall-c; }
+  .bt-tumble { animation-name: bt-tumble-a; animation-timing-function: linear; animation-iteration-count: infinite; }
+  .bt-tumble[data-tumble="b"] { animation-name: bt-tumble-b; }
+  .bt-tumble[data-tumble="c"] { animation-name: bt-tumble-c; }
   .bt-tab-face,
   .bt-tab-rule { transition: opacity var(--dur-short) var(--ease), filter var(--dur-short) var(--ease); }
   /* the record on the lift turns while the song plays and stops where it is when you pause it, the way a
@@ -1220,10 +1220,20 @@ html[data-mode="day"] .bt-art img[data-set="day"] { opacity: 1; }
 @keyframes bt-tumble-c { from { transform: rotate3d(0.2, 1, 0.5, 0deg); } to { transform: rotate3d(0.2, 1, 0.5, 360deg); } }
 @keyframes bt-bar { from { scale: 1 0.35; } to { scale: 1 1; } }
 
-/* off screen, the stage's loops stop (the page's own pause only sees the whole, tall section) */
-.bt-pin[data-off] *,
-.bt-pin[data-off] *::before,
-.bt-pin[data-off] *::after { animation-play-state: paused !important; }
+/* Each of the stage's loops holds while its part of the stage is out of view, and with the whole stage out
+   so does everything that turns on it (bts.tsx, useStill; the page's own pause only sees the whole, tall
+   section). The wall's line that isn't lit runs no lettering: the member's name through act two, the song
+   through act one. Every selector ends on the loop's own box: a change restyles those few boxes and
+   nothing else on the stage or the page. */
+.bt-pin[data-still~="confetti"] .bt-paper,
+.bt-pin[data-still~="confetti"] .bt-tumble,
+.bt-pin[data-still~="wall"] .bt-led-run,
+.bt-pin[data-still~="beams"] .bt-sweep,
+.bt-pin[data-still~="haze"] .bt-haze-band,
+.bt-pin[data-still~="stage"] .bt-vinyl-disc,
+.bt-pin[data-still~="stage"] .bt-track-eq rect,
+.bt-pin[data-act="music"] .bt-led-name .bt-led-run,
+.bt-pin[data-act="lineup"] .bt-led-song .bt-led-run { animation-play-state: paused !important; }
 
 /* ───────── Day: an open-air stage on a lilac afternoon ─────────
    Pale lilac room, deep purple ink, violet accents; the painted stage turns

@@ -101,12 +101,14 @@ export function LedMeter({ set }: { set: Setlist }) {
         g.stroke();
       }
     };
+    // Measured only where the observer reports, after a layout (its first report comes with the first
+    // layout after mounting): read here on mount it would force the new world's whole first layout early,
+    // inside the mount's own task.
     const ro = new ResizeObserver(() => {
       size();
       if (last) paint(last);
     });
     ro.observe(c);
-    size();
     const off = draw((f) => paint(f.levels));
     return () => {
       ro.disconnect();

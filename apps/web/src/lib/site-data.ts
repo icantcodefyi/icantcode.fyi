@@ -63,23 +63,40 @@ export const WORK: Work[] = [
 
 export const EARLIER = ["autodiagram", "elafda", "aurastake", "doblar", "getaresume", "Annu's poems"];
 
-export const WINS = [
-  { event: "The Better Hack", built: "AI agent for local SEO", venue: "WeWork Pune", prize: "2nd prize" },
-  { event: "EthIndia 2024", built: "Drag-and-drop smart contract builder", venue: "Bengaluru", prize: "Polkadot track" },
-  { event: "Unfold 2024", built: "Autonomous on-chain AI agent", venue: "Bengaluru", prize: "Nethermind track" },
-  { event: "WebGranth", built: "One place to learn frameworks", venue: "CDGI Indore", prize: "1st prize" },
-  { event: "Hakxite", built: "AI tool for deaf and mute users", venue: "Indore", prize: "1st prize" },
-  { event: "HackVSIT 5.0", built: "CSV to dashboard analyser", venue: "VSIT Delhi", prize: "3rd prize" },
-  { event: "HackHive", built: "AI agent that drives websites", venue: "DAVV Indore", prize: "1st prize" },
-  { event: "Udaymitsav '24", built: "Micro-blogging platform", venue: "IIT Jammu", prize: "1st in track" },
-  { event: "Genesis 1.0", built: "Web3-native game", venue: "SRM Chennai", prize: "Berachain track" },
-  { event: "Syntax Error X", built: "Manga platform with AI tagging", venue: "IIT Roorkee", prize: "Manga track" },
-  { event: "Version Beta", built: "Blockchain finance companion", venue: "MANIT Bhopal", prize: "3rd place" },
-  { event: "EthIndia 2023", built: "My first flight to Bengaluru", venue: "Bengaluru", prize: "Sponsor tracks" },
-  { event: "Hackistica '23", built: "LeetCode Chrome extension", venue: "IIT Indore", prize: "First ever win" },
-] as const;
+export interface Win {
+  /** as the organisers write it */
+  event: string;
+  built: string;
+  /** a city named here is where the map pins it */
+  venue: string;
+  prize: string;
+  /** when it was held (the organiser's event page); left out where no source dates it */
+  year?: number;
+  month?: string;
+  /** held online: the venue is the host's city, or where ani took part from */
+  online?: boolean;
+}
 
-export const HOSTED = [
-  { event: "Imagine Hackathon", built: "Main organiser, all tech and on-site ops", venue: "Mumbai", prize: "Organiser" },
-  { event: "HackWave 2024", built: "My college's first hackathon, 500+ sign-ups", venue: "CDGI Indore", prize: "Organiser" },
-] as const;
+/** Hackathon wins, newest first. */
+export const WINS: readonly Win[] = [
+  { event: "The Better Hack", built: "AI agent for local SEO", venue: "WeWork Pune", prize: "2nd prize", year: 2025, month: "Feb" },
+  { event: "ETHIndia 2024", built: "Drag-and-drop smart contract builder", venue: "Bengaluru", prize: "Polkadot track", year: 2024, month: "Dec" },
+  { event: "Unfold 2024", built: "Autonomous on-chain AI agent", venue: "Bengaluru", prize: "Nethermind track", year: 2024, month: "Dec" },
+  { event: "HackVSIT 5.0", built: "CSV to dashboard analyser", venue: "VSIT Delhi", prize: "3rd prize", year: 2024, month: "Apr" },
+  { event: "Hakxite", built: "AI tool for deaf and mute users", venue: "Indore", prize: "1st prize", year: 2024, month: "Mar", online: true },
+  { event: "HackHive", built: "AI agent that drives websites", venue: "DAVV Indore", prize: "1st prize", year: 2024, month: "Mar" },
+  { event: "Udyamitsav'24", built: "Micro-blogging platform", venue: "IIT Jammu", prize: "1st in track", year: 2024, month: "Feb", online: true },
+  { event: "Genesis 1.0", built: "Web3-native game", venue: "SRM Chennai", prize: "Berachain track", year: 2024, month: "Jan" },
+  { event: "ETHIndia 2023", built: "My first flight to Bengaluru", venue: "Bengaluru", prize: "Sponsor tracks", year: 2023, month: "Dec" },
+  { event: "Version Beta", built: "Blockchain finance companion", venue: "MANIT Bhopal", prize: "3rd prize", year: 2023, month: "Nov" },
+  { event: "Syntax Error X", built: "Manga platform with AI tagging", venue: "IIT Roorkee", prize: "Manga track", year: 2023, month: "Oct" },
+  { event: "Hackistica '23", built: "LeetCode Chrome extension", venue: "IIT Indore", prize: "First ever win", year: 2023, month: "Jan", online: true },
+  // no public record dates it yet: listed apart until it has a year
+  { event: "WebGranth", built: "One place to learn frameworks", venue: "CDGI Indore", prize: "1st prize" },
+];
+
+/** Hackathons ani organised (not wins). */
+export const HOSTED: readonly Win[] = [
+  { event: "<Imagine> Hackathon", built: "Main organiser, all tech and on-site ops", venue: "Mumbai", prize: "Organiser", year: 2025, month: "Jan" },
+  { event: "HackWave 2024", built: "My college's first hackathon, 500+ sign-ups", venue: "CDGI Indore", prize: "Organiser", year: 2024 },
+];

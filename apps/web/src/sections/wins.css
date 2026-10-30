@@ -63,6 +63,10 @@ html:not([data-mode="day"]) .ws-bg {
   .ws-hover-copy { display: none; }
   .ws-touch-copy { display: inline; }
 }
+/* below 1024 the map sits above the list, out of sight of a hovered row: no promise of it */
+@media (max-width: 1023px) {
+  .ws-hover-copy, .ws-touch-copy { display: none; }
+}
 .ws-stats {
   display: flex;
   flex-wrap: wrap;
@@ -109,27 +113,25 @@ html:not([data-mode="day"]) .ws-bg {
   .ws-stage { width: min(100%, 720px); }
 }
 
+/* the count is drawn (wins.tsx Numeral): Unbounded ExtraBold outlines, sized in em of this font-size */
 .ws-numeral {
   position: absolute;
   left: -1%;
   top: 2%;
   z-index: 0;
-  font: 800 34cqw/0.8 "Unbounded", system-ui, sans-serif;
-  letter-spacing: -0.07em;
-  color: var(--pink);
-  text-shadow: 0.8cqw 1.1cqw 0 var(--blush-ink);
+  font-size: 34cqw;
   pointer-events: none;
   user-select: none;
   /* clipped along its foot only: the entrance rises out of it */
   clip-path: inset(-50% -50% 0 -50%);
 }
 .ws-numeral > span { display: block; }
-.ws-numeral-ghost {
-  z-index: 4;
-  color: transparent;
-  -webkit-text-stroke: 1.5px rgb(42 11 25 / 0.5);
-  text-shadow: none;
-}
+.ws-numeral svg { display: block; height: 0.8em; overflow: visible; }
+.ws-numeral-fill { fill: var(--pink); }
+/* the old text-shadow, 0.8cqw 1.1cqw at 34cqw, in the numeral's units */
+.ws-numeral-shadow { fill: var(--blush-ink); transform: translate(23.5px, 32.4px); }
+.ws-numeral-ghost { z-index: 4; }
+.ws-numeral-line path { fill: none; stroke: rgb(42 11 25 / 0.5); stroke-width: 1.5px; vector-effect: non-scaling-stroke; }
 .ws-map-wrap {
   position: absolute;
   right: -2.5%;
@@ -212,21 +214,27 @@ html:not([data-mode="day"]) .ws-glints svg { filter: drop-shadow(0 0 6px rgb(255
   color: var(--blush-muted);
 }
 
+/* phones: the numeral and the girl share the top, the map stands below the numeral's foot (Kashmir clears it) */
 @media (max-width: 767px) {
-  .ws-stage { aspect-ratio: 1 / 1.22; }
-  .ws-map-wrap { width: 104%; right: -2%; top: auto; bottom: 0; }
-  .ws-girl { left: auto; right: -8%; top: -2%; bottom: auto; height: 50%; }
-  .ws-glints { left: auto; right: 0; top: 0; width: 50%; height: 50%; }
+  .ws-stage { aspect-ratio: 1 / 1.36; }
+  .ws-map-wrap { width: 98%; right: -2%; top: auto; bottom: 0; }
+  .ws-girl { left: auto; right: -8%; top: -2%; bottom: auto; height: 46%; }
+  .ws-glints { left: auto; right: 0; top: 0; width: 50%; height: 46%; }
   .ws-flake { --fall: 36cqw; }
-  .ws-numeral { font-size: 36cqw; }
+  .ws-numeral { top: 1%; }
   .ws-map .wm-label { font-size: 21px; stroke-width: 6px; }
   .ws-map .wm-grid text, .ws-map .wm-scale text, .ws-tropic, .ws-sea { font-size: 18px; }
   .ws-compass, .ws-tropic { display: none; }
+  /* the numeral and the girl stand clear of the map here: the whole graticule shows, the parallels unlabelled */
+  .ws-grid-lines { mask: none; }
+  .ws-map .wm-grid text.ws-grid-west { display: inline; }
+  .ws-map .wm-grid text.ws-lat { display: none; }
 }
 
 /* ── map polish over site.css ── */
 .ws-map .wm-grid line { opacity: 0.18; }
 .ws-map .wm-grid text { font-size: 13px; opacity: 0.75; }
+.ws-map .wm-grid .ws-grid-west { display: none; }
 .ws-map .wm-land-fine { opacity: 0.12; }
 .ws-map .wm-land { opacity: 0.42; }
 .ws-map .wm-coast { stroke-width: 1.6; opacity: 1; }
@@ -265,7 +273,9 @@ html:not([data-mode="day"]) .ws-pin-glow { display: inline; }
 .ws-compass-pink { fill: var(--pink); stroke: var(--blush-ink); stroke-width: 0.8; stroke-linejoin: round; }
 .ws-compass text { font: 800 13px "Unbounded", sans-serif; fill: var(--blush-ink); }
 
-/* ── rows ── */
+/* ── the list: wins by year, newest first, then the ones organised ──
+ * One row at most is active (wins.tsx): hovered, else keyboard-focused, else tapped. It lifts to a white
+ * card in place and its city lights on the map; nothing else in the list moves. */
 .ws-list ol { display: grid; gap: 2px; }
 /* the prize pills keep clear of the corner the mode dock rests in (about 86px wide at the right margin) */
 @media (min-width: 640px) and (max-width: 1023px) {
@@ -274,6 +284,48 @@ html:not([data-mode="day"]) .ws-pin-glow { display: inline; }
 @media (min-width: 1024px) {
   .ws-head, .ws-body { padding-right: 92px; }
 }
+.ws-year + .ws-year { margin-top: 36px; }
+.ws-year-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 0 10px 8px;
+  font: 800 clamp(20px, 1rem + 0.45vw, 24px)/1 "Unbounded", system-ui, sans-serif;
+  letter-spacing: -0.02em;
+  color: #a3124f;
+}
+/* a hairline runs from the year to its count */
+.ws-year-head::after {
+  content: "";
+  order: 1;
+  flex: 1;
+  height: 1.5px;
+  background: currentColor;
+  opacity: 0.3;
+}
+.ws-year-count {
+  order: 2;
+  font: 500 16px/1 "Onest", system-ui, sans-serif;
+  letter-spacing: 0;
+  color: var(--blush-muted);
+}
+.ws-year[data-undated] .ws-year-n { font: italic 600 16px/1 "Onest", system-ui, sans-serif; letter-spacing: 0; color: var(--blush-muted); }
+
+.ws-list li { position: relative; }
+/* hairlines between rows, inset to the text, gone on either side of the active card */
+.ws-list li + li::before {
+  content: "";
+  position: absolute;
+  top: -1.5px;
+  left: 10px;
+  right: 10px;
+  height: 1px;
+  background: rgb(42 11 25 / 0.12);
+  transition: opacity 200ms;
+}
+.ws-list li:has(> [data-on])::before,
+.ws-list li:has(> [data-on]) + li::before { opacity: 0; }
+
 .ws-row {
   display: grid;
   grid-template-columns: 34px minmax(0, 1fr) auto;
@@ -288,33 +340,27 @@ html:not([data-mode="day"]) .ws-pin-glow { display: inline; }
   padding: 12px 10px;
   text-align: left;
   border-radius: 18px;
-  border-bottom: 1px solid rgb(42 11 25 / 0.12);
   transition:
-    background-color 200ms,
-    transform 300ms var(--ease),
+    background-color 200ms var(--ease),
     box-shadow 300ms var(--ease);
 }
 @media (min-width: 768px) and (max-width: 1023px), (min-width: 1700px) {
   .ws-row {
-    grid-template-columns: 34px minmax(0, 1fr) 150px 160px;
+    grid-template-columns: 34px minmax(0, 1fr) 170px 160px;
     grid-template-areas:
       "m e v p"
       "m b v p";
   }
+  /* a column of its own: the place, and the date under it */
+  .ws-venue .ws-when { flex-basis: 100%; padding-left: 17px; }
+  .ws-venue .ws-when::before { content: none; }
 }
-.wins-row.ws-row:hover,
-.wins-row.ws-row:focus-visible,
 .ws-row[data-on] {
-  padding-inline: 10px;
   background: rgb(255 255 255 / 0.6);
   box-shadow: 0 10px 24px -16px rgb(42 11 25 / 0.5);
-  border-bottom-color: transparent;
 }
-.ws-row:hover,
-.ws-row:focus-visible { transform: translateX(6px); }
 .ws-medal { grid-area: m; width: 34px; height: auto; align-self: center; transition: transform 400ms var(--ease); }
-.ws-row:hover .ws-medal,
-.ws-row:focus-visible .ws-medal { transform: rotate(-10deg) scale(1.08); }
+.ws-row[data-on] .ws-medal { transform: rotate(-10deg) scale(1.08); }
 .ws-event {
   grid-area: e;
   font: 600 clamp(17px, 1.05rem + 0.2vw, 19px)/1.25 "Unbounded", system-ui, sans-serif;
@@ -323,15 +369,16 @@ html:not([data-mode="day"]) .ws-pin-glow { display: inline; }
 .ws-built { grid-area: b; font-size: 16px; line-height: 1.4; }
 .ws-venue {
   grid-area: v;
-  display: inline-flex;
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 6px;
+  gap: 2px 6px;
   font-size: 16px;
   color: var(--blush-muted);
 }
 .ws-venue svg { flex: none; width: 11px; height: 15px; fill: currentColor; }
 .ws-venue svg circle { fill: var(--blush); }
-.ws-row:hover .ws-venue svg,
+.ws-when::before { content: "·"; margin-right: 6px; }
 .ws-row[data-on] .ws-venue svg { color: #a3124f; }
 .ws-prize {
   grid-area: p;
@@ -350,12 +397,13 @@ html:not([data-mode="day"]) .ws-pin-glow { display: inline; }
 .ws-prize-silver { background: #f1edf2; box-shadow: inset 0 0 0 1.5px #7d6f80, 0 2px 0 #7d6f80; }
 .ws-prize-bronze { background: #f0b58e; box-shadow: inset 0 0 0 1.5px #8a4321, 0 2px 0 #8a4321; }
 .ws-sub {
-  margin: 48px 0 8px 10px;
+  margin: 56px 10px 8px;
   font: 800 clamp(22px, 1.2rem + 0.6vw, 30px)/1.1 "Unbounded", system-ui, sans-serif;
   letter-spacing: -0.02em;
   color: #a3124f;
 }
-@media (max-width: 639px) {
+/* phones, and the narrow list column beside the map at 1024 to 1279: the prize goes under the words */
+@media (max-width: 639px), (min-width: 1024px) and (max-width: 1279px) {
   .ws-row {
     grid-template-columns: 34px minmax(0, 1fr);
     grid-template-areas: "m e" "m b" "m v" "m p";
@@ -363,9 +411,8 @@ html:not([data-mode="day"]) .ws-pin-glow { display: inline; }
   .ws-prize { justify-self: start; margin-top: 6px; }
 }
 @media (max-width: 767px) {
-  .ws-prize { font-size: 16px; padding: 4px 10px 5px; }
-  .ws-row { column-gap: 12px; padding: 12px 4px; }
-  .wins-row.ws-row:hover, .ws-row[data-on] { padding-inline: 4px; }
+  .ws-prize { padding: 4px 10px 5px; }
+  .ws-row { column-gap: 12px; }
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -405,6 +452,6 @@ html:not([data-mode="day"]) .ws-pin-glow { display: inline; }
   html[data-mode="day"] .ws-flake { --peak: 0.55; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .ws-row, .ws-medal { transition: none; }
-  .ws-row:hover, .ws-row:focus-visible { transform: none; }
+  .ws-medal { transition: none; }
+  .ws-row[data-on] .ws-medal { transform: none; }
 }

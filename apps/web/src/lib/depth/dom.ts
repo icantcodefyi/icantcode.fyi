@@ -8,7 +8,8 @@ import type { CameraSpec } from "./types";
  * `translate` and `scale` properties (never `transform`, so a layer's own
  * transforms, hover states and [data-reveal] entrances compose with it),
  * written only when they change, and `will-change` only while its stage is
- * within half a screen.
+ * within half a screen. A plate the GL backend draws instead (hidden under
+ * the stage's [data-depth], depth-stage.css) isn't written while it is.
  */
 
 interface Layer {
@@ -21,9 +22,14 @@ interface Layer {
   oy: number;
   translate: string;
   scale: string;
+  /** a plate the GL backend can draw in its place */
+  gl: boolean;
   /** its breath on the compositor, while the rig rests */
   drift?: Animation;
 }
+
+/** depth-stage.css: what [data-depth] hides once the GL backend draws it. */
+const GL_PLATE = '.depth-plate[data-backend="gl"]';
 
 /** The camera of one frame, after the layers are placed: what the GL backend draws from. */
 export interface View {
@@ -141,6 +147,7 @@ export function createRig(id: string, spec?: CameraSpec): Rig {
   /** last frame's inputs, to tell when only the breath is left */
   const prev = { s: Number.NaN, mx: 0, my: 0, y: 0 };
   let out: Sink | null = null;
+  let stageEl: HTMLElement | null = null;
   const view: View = { e: { x: 0, y: 0, z: 0 }, lens, pin: 0, y: 0, dt: 0, t: 0, paced: false };
 
   const remeasureReach = () => {
@@ -184,7 +191,10 @@ export function createRig(id: string, spec?: CameraSpec): Rig {
     }
     const e = eyeFor(cam, lens, { mx: f.mx, my: f.my, t: tick / BREATH_HZ, idle: held, z, s });
     const pin = viewOffset(cam, s, e);
+    // an attribute, not a style: reading it never flushes anything
+    const glOn = !!stageEl?.hasAttribute("data-depth");
     for (const l of layers) {
+      if (l.gl && glOn) continue;
       const p = place(l.d, e, lens, l.ox - lens.vx, l.oy - cy, pin);
       const translate = `${p.x.toFixed(2)}px ${p.y.toFixed(2)}px`;
       const scale = p.s.toFixed(5);
@@ -307,7 +317,7 @@ export function createRig(id: string, spec?: CameraSpec): Rig {
 
   return {
     add(el, d, span) {
-      const l: Layer = { el, d, span: span ? [d, ...span] : undefined, ox: 0, oy: 0, translate: "", scale: "" };
+      const l: Layer = { el, d, span: span ? [d, ...span] : undefined, ox: 0, oy: 0, translate: "", scale: "", gl: el.matches(GL_PLATE) };
       layers.add(l);
       remeasureReach();
       if (attached) origin(l);
@@ -326,6 +336,7 @@ export function createRig(id: string, spec?: CameraSpec): Rig {
     attach(stage, track) {
       if (reducedMotion()) return () => {};
       attached = true;
+      stageEl = stage;
       const off = subscribe({
         el: track ?? stage,
         breath: cam.breath > 0,
@@ -347,7 +358,8 @@ export function createRig(id: string, spec?: CameraSpec): Rig {
       out = s;
     },
     wake() {
-      if (!drift) return;
+      // the plates GL stopped drawing show again where they are now, written on the next frame
+      for (const l of layers) if (l.gl) l.translate = l.scale = "";
       land();
       kick();
     },

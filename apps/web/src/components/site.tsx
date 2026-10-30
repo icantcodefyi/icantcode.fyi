@@ -70,7 +70,10 @@ export function useReveal() {
  * Cheap at the crossings, which land mid-scroll: one look at the page's
  * animations per crossing, whether each is a loop is asked once per
  * animation, and every play state is read before anything is paused or
- * played (each change dirties style, and the next read would flush it). */
+ * played (each change dirties style, and the next read would flush it).
+ * [data-off] is for scripts (and audits) only: no stylesheet may select on
+ * it. A rule like `[data-off] *` makes every crossing restyle the whole
+ * section, mid-scroll; a world that wants its own hold uses its own hook. */
 
 const targetOf = (a: Animation) => (a.effect as KeyframeEffect | null)?.target ?? null;
 

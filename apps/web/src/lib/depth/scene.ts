@@ -16,7 +16,7 @@ import type { AmbientSpec, Mode, PlateSpec } from "./types";
  * depth-tested against it, so the plates nearer than them cover them.
  *
  * Everything comes up in small steps, one per frame and each in a task of
- * its own (the hero's pattern, commit 0d0ba16): each context, each grid,
+ * its own, each when `calm` lets it (the hero's pattern): each context, each grid,
  * each plate's upload; images decode off the main thread from Blobs, and
  * shaders link in parallel. Nothing renders until the stage swaps it in.
  */
@@ -80,7 +80,7 @@ const FLATTEN = 0.6; // s
 const MODE_FADE = 1.1; // s (--dur-scene)
 
 /** Resolves just after the next frame is drawn, in a task of its own, so a step never adds to a frame's own work. */
-const frameOnce = () => new Promise<void>((r) => requestAnimationFrame(() => setTimeout(r, 0)));
+const nextFrame = () => new Promise<void>((r) => requestAnimationFrame(() => setTimeout(r, 0)));
 
 /** `url` as a Blob (decoded on the image decoder's thread, not the main one). The <img>s have already cached it. */
 const blob = (url: string) =>
@@ -115,8 +115,13 @@ interface Group {
   h: number;
 }
 
-export async function createDepthScene(defs: SceneGroup[], opts: { id: string; mode: Mode; dpr: number }): Promise<DepthScene> {
+export async function createDepthScene(
+  defs: SceneGroup[],
+  opts: { id: string; mode: Mode; dpr: number; calm?: () => Promise<void> },
+): Promise<DepthScene> {
   let disposed = false;
+  // between steps, whatever the stage waits on (the visitor at rest), so no step lands on a scroll's frames
+  const frameOnce = () => nextFrame().then(opts.calm);
   const make = (canvas: HTMLCanvasElement) => {
     const r = new WebGLRenderer({
       canvas,

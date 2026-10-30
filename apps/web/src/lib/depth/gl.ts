@@ -1,7 +1,7 @@
 import { art } from "@/lib/art";
 import { firstScroll } from "@/lib/day-art";
 import type { Mode } from "@/lib/mode";
-import { kick } from "@/lib/scroll-loop";
+import { atRest, kick, resting, scrollPace } from "@/lib/scroll-loop";
 import { acquire, allowed, enlist, nudge, release, spend, type Entry } from "./budget";
 import { OFFSET_CAP } from "./camera";
 import type { Rig, Sink } from "./dom";
@@ -14,9 +14,12 @@ import type { AmbientSpec, PlateSpec, StageSpec } from "./types";
  * when a stage first comes near.
  *
  *   idle     the <img>s, on the DOM camera
- *   near     (1 screen away, after the visitor's first scroll, in idle
- *            time) contexts from the budget, a canvas per group of plates,
- *            the current mode's plates uploaded in small steps
+ *   near     (1 screen away, after the visitor's first scroll, once they
+ *            are at rest) contexts from the budget, a canvas per group of
+ *            plates, the current mode's plates uploaded in small steps
+ *            (each waits while the page scrolls). A visitor who reads on
+ *            without stopping (on screen SHOWN_MS, scrolling slower than
+ *            READING px/s) gets it then, the steps at frame pace
  *   swap     on the next frame the plates draw flat, exactly where the
  *            <img>s are, and [data-depth] hides the <img>s in that same
  *            frame; the relief then eases in over --dur-arrive
@@ -112,11 +115,9 @@ type State = "idle" | "loading" | "ready" | "live" | "leaving" | "off";
 type Reason = "far" | "evict" | "spent" | "lost" | "fail" | "dispose";
 
 const FLATTEN_MS = 700;
-
-/** Resolves in idle time (or after a second at the latest). */
-function idle() {
-  return new Promise<void>((r) => (window.requestIdleCallback ? window.requestIdleCallback(() => r(), { timeout: 1000 }) : window.setTimeout(r, 1)));
-}
+/** On screen this long, to a visitor scrolling slower than READING px/s, a stage comes up without a rest. */
+const SHOWN_MS = 800;
+const READING = 600;
 
 function loaded(img: HTMLImageElement) {
   if (img.complete) return Promise.resolve(img.naturalWidth > 0);
@@ -161,6 +162,24 @@ export function createGL(stage: HTMLElement, spec: StageSpec, runs: Group[], rig
   // wakes whatever waits on a day <img> or for a teardown
   let poke = () => {};
   const poked = () => new Promise<void>((r) => (poke = r));
+  // since when the stage has been on screen (0: it isn't)
+  let shownAt = 0;
+  const reading = () => shownAt > 0 && performance.now() - shownAt >= SHOWN_MS && scrollPace() < READING;
+  /** What the bring-up waits on between its steps: the visitor at rest, or reading on with the stage in view. */
+  const calm = () =>
+    resting() || reading()
+      ? Promise.resolve()
+      : new Promise<void>((resolve) => {
+          let done = false;
+          const go = () => {
+            if (done) return;
+            done = true;
+            resolve();
+          };
+          void atRest().then(go);
+          const look = () => (done ? undefined : reading() ? go() : window.setTimeout(look, 100));
+          look();
+        });
 
   function distance() {
     const top = docY - window.scrollY;
@@ -353,13 +372,13 @@ export function createGL(stage: HTMLElement, spec: StageSpec, runs: Group[], rig
   }
 
   /**
-   * The other mode's plates go up too, in idle time once these are in (its
+   * The other mode's plates go up too, at rest once these are in (its
    * <img>s are already there or come with useDayArt), and both stay while
    * the stage is near: a switch is then a crossfade on the reliefs, never a
    * step back to the <img>s.
    */
   async function other(g: number) {
-    await idle();
+    await atRest();
     const s = scene;
     const m: Mode = mode === "day" ? "night" : "day";
     if (!s || g !== gen || s.has(m)) return;
@@ -371,9 +390,9 @@ export function createGL(stage: HTMLElement, spec: StageSpec, runs: Group[], rig
     if (state !== "idle" || !near || !allowed()) return;
     state = "loading";
     const g = ++gen;
-    // nothing of this loads while the page itself is still loading
+    // nothing of this loads while the page itself is still loading, nor on a scroll's frames
     await firstScroll();
-    await idle();
+    await calm();
     if (g !== gen) return;
     groups = merge(runs, stage);
     wraps = groups.map((gr) => slots[gr.slot]);
@@ -391,7 +410,7 @@ export function createGL(stage: HTMLElement, spec: StageSpec, runs: Group[], rig
       const cvs = (canvases = wraps.map((w) => w.appendChild(document.createElement("canvas"))));
       const s = await createDepthScene(
         groups.map((gr, i) => ({ canvas: cvs[i], plates: gr.plates, ambient: gr.ambient })),
-        { id: spec.id, mode, dpr },
+        { id: spec.id, mode, dpr, calm },
       );
       const onLost = () => {
         if (scene !== s) return;
@@ -466,6 +485,7 @@ export function createGL(stage: HTMLElement, spec: StageSpec, runs: Group[], rig
   );
   const seeIO = new IntersectionObserver(([e]) => {
     visible = e.isIntersecting;
+    shownAt = visible ? performance.now() : 0;
     if (visible) {
       kick();
       void approach();

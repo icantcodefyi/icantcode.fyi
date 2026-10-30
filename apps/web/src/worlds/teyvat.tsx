@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import type { CSSProperties, KeyboardEvent, ReactNode } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
+import type { CSSProperties, KeyboardEvent, ReactNode, RefObject } from "react";
+import { flushSync } from "react-dom";
 
 import { DepthStage, useDepthLayer } from "@/components/depth-stage";
 import { art, halfSet, TEYVAT_VISTA } from "@/lib/art";
@@ -124,6 +125,180 @@ const SKY = (() => {
 })();
 
 /**
+ * Static SVG goes in as markup. The astrolabe and the night sky are ~900
+ * elements that never change, so the HTML parser builds them in one go
+ * instead of React creating, tracking and diffing each one. The elements and
+ * attributes are the ones React rendered, so they draw exactly as before.
+ */
+function tag(name: string, attrs: Record<string, string | number | undefined>, body = "") {
+  let s = `<${name}`;
+  for (const [k, v] of Object.entries(attrs)) if (v !== undefined) s += ` ${k}="${v}"`;
+  return `${s}>${body}</${name}>`;
+}
+/** made once: React 19 sets innerHTML again whenever this object is a new one */
+const markup = (html: string) => ({ __html: html });
+const NO_MARKUP = markup("");
+
+const REDUCE = "(prefers-reduced-motion: reduce)";
+const onReduce = (cb: () => void) => {
+  const m = window.matchMedia(REDUCE);
+  m.addEventListener("change", cb);
+  return () => m.removeEventListener("change", cb);
+};
+/** Reduced motion: nothing twinkles, so every star stays in its drawing. */
+function useStill() {
+  return useSyncExternalStore(onReduce, () => window.matchMedia(REDUCE).matches, () => false);
+}
+
+/**
+ * The twinkling stars are HTML boxes of their own over the drawings, each
+ * holding just its star, so the twinkle runs on the compositor. (An
+ * animation of an SVG child runs on the main thread: it restyles, relays out
+ * and repaints the page on every frame.) Layout puts boxes, and the corners
+ * drawings start from, on whole pixels of its grid, and an animated box keeps
+ * no fraction of one, so each box sits on whole pixels of the frame its
+ * drawing is laid on and shows the drawing's own coordinates at the drawing's
+ * own scale (its viewBox): the star lands where it always was. The star in it keeps a pixel clear of its
+ * edges.
+ */
+type Glint = { x: number; y: number; k: number; d: string };
+
+let gridSeen: [number, number] | null = null;
+/**
+ * The pixel grid layout snaps to, in CSS px. Device pixels, except in
+ * Chromium on macOS: it lays out in CSS px (times the zoom) and leaves the
+ * screen's scale to the compositor, so there is no layout unit as fine as
+ * 1/64 of a device pixel, and a box that wide measures 0.
+ */
+function grid() {
+  const dpr = window.devicePixelRatio || 1;
+  if (gridSeen?.[0] === dpr) return gridSeen[1];
+  let g = 1 / dpr;
+  if (dpr !== 1 && navigator.vendor === "Google Inc.") {
+    const probe = document.createElement("i");
+    probe.style.cssText = `position:absolute;left:0;top:0;width:${1.01 / 64 / dpr}px;height:0;visibility:hidden`;
+    document.body.appendChild(probe);
+    if (!probe.getBoundingClientRect().width) g = Math.max(1, Math.round(dpr)) / dpr;
+    probe.remove();
+  }
+  gridSeen = [dpr, g];
+  return g;
+}
+
+/** `v` rounded to the grid `g`, as layout rounds a box's edge */
+const snap = (v: number, g: number) => Math.round(Math.round((v / g) * 64) / 64) * g;
+
+/**
+ * Lay `box` over the grid pixels around (cx, cy) ± k of its frame (CSS px)
+ * and return that rect. `ox, oy`: where the box's container starts in that
+ * frame, if not on its origin.
+ */
+function fit(box: HTMLElement, cx: number, cy: number, k: number, g: number, ox = 0, oy = 0) {
+  const l = (Math.floor((cx - k) / g) - 1) * g;
+  const t = (Math.floor((cy - k) / g) - 1) * g;
+  const w = (Math.ceil((cx + k) / g) + 1) * g - l;
+  const h = (Math.ceil((cy + k) / g) + 1) * g - t;
+  // a hair past the edge, away from zero, so layout's 1/64 units can't truncate it onto the pixel before
+  const px = (n: number) => `${(n + (n < 0 ? -g : g) / 256).toFixed(6)}px`;
+  const s = box.style;
+  s.left = px(l - ox);
+  s.top = px(t - oy);
+  s.width = px(w);
+  s.height = px(h);
+  (box.firstElementChild as HTMLElement).style.transformOrigin = `${(cx - l).toFixed(5)}px ${(cy - t).toFixed(5)}px`;
+  return { l, t, w, h };
+}
+
+/** Watch `el`'s size in device pixels (a zoom changes those, not its CSS size). */
+function watchSize(el: globalThis.Element, cb: (r: DOMRectReadOnly) => void) {
+  const ro = new ResizeObserver(([e]) => cb(e.contentRect));
+  try {
+    ro.observe(el, { box: "device-pixel-content-box" });
+  } catch {
+    ro.observe(el);
+  }
+  return () => ro.disconnect();
+}
+
+function GlintBoxes({ glints, shape }: { glints: readonly Glint[]; shape: (g: Glint) => ReactNode }) {
+  return glints.map((g, i) => (
+    <span key={i} className="tv-glint">
+      <span className="tv-twinkle" style={{ "--d": g.d } as CSSProperties}>
+        <svg preserveAspectRatio="none" focusable="false">
+          {shape(g)}
+        </svg>
+      </span>
+    </span>
+  ));
+}
+
+/** the night sky's stars that hold still; under reduced motion, every one of them, in the order they always had */
+const skyStar = (s: (typeof SKY)[number]) => tag("circle", { cx: `${s.x}%`, cy: `${s.y}%`, r: s.r });
+const SKY_HTML = markup(
+  SKY.filter((s) => !s.twinkle)
+    .map(skyStar)
+    .join(""),
+);
+const SKY_STILL_HTML = markup(SKY.map(skyStar).join(""));
+
+/**
+ * The sky's twinkling stars, x and y in % of the sky, r in px. On desktop the
+ * vista clips the sky, and them with it, to the right of a slanted line.
+ */
+const SKY_GLINTS = SKY.filter((s) => s.twinkle).map((s) => ({ x: s.x, y: s.y, k: s.r, d: `${s.d}s` }));
+
+/**
+ * The sky's glints, just over its still stars. The sky is drawn at its size
+ * as laid out, from its corner rounded to the grid of the page, so the boxes
+ * are laid out from that: once its size is known, and again whenever the
+ * page's height changes (something above may have moved it).
+ */
+function SkyGlints({ sky }: { sky: RefObject<SVGSVGElement | null> }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const el = sky.current;
+    const host = ref.current;
+    if (!el || !host) return;
+    let last = "";
+    const place = () => {
+      const r = el.getBoundingClientRect();
+      if (!r.width || !r.height) return;
+      const g = grid();
+      const x0 = r.left + window.scrollX;
+      const y0 = r.top + window.scrollY;
+      const sx = snap(x0, g);
+      const sy = snap(y0, g);
+      const key = `${x0} ${y0} ${r.width} ${r.height} ${g}`;
+      if (key === last) return;
+      last = key;
+      SKY_GLINTS.forEach((s, i) => {
+        const box = host.children[i] as HTMLElement | undefined;
+        const svg = box?.querySelector("svg");
+        const c = svg?.firstElementChild;
+        if (!box || !svg || !c) return;
+        const x = (s.x / 100) * r.width;
+        const y = (s.y / 100) * r.height;
+        const b = fit(box, sx + x, sy + y, s.k, g, x0, y0);
+        svg.setAttribute("viewBox", `${b.l - sx} ${b.t - sy} ${b.w} ${b.h}`);
+        c.setAttribute("cx", String(x));
+        c.setAttribute("cy", String(y));
+      });
+    };
+    const offSky = watchSize(el, place);
+    const offPage = watchSize(document.documentElement, place);
+    return () => {
+      offSky();
+      offPage();
+    };
+  }, [sky]);
+  return (
+    <div ref={ref} className="tv-sky-glints" aria-hidden="true">
+      <GlintBoxes glints={SKY_GLINTS} shape={(g) => <circle r={g.k} />} />
+    </div>
+  );
+}
+
+/**
  * The game's own element symbols (the official icons, as on the Genshin
  * Impact wiki: public/lobby/gi/elements), drawn as masks so CSS tints each
  * in its element's colour in both modes.
@@ -172,143 +347,240 @@ function spark(x: number, y: number, r: number) {
   return `M${x} ${y - r} L${x + k} ${y - k} L${x + r} ${y} L${x + k} ${y + k} L${x} ${y + r} L${x - k} ${y + k} L${x - r} ${y} L${x - k} ${y - k} Z`;
 }
 
-function Ring({ r, w = 1, deep = false }: { r: number; w?: number; deep?: boolean }) {
-  return <circle cx="300" cy="300" r={r} stroke={GOLD} className={deep ? "tv-sd" : undefined} strokeWidth={w} />;
+const ring = (r: number, w: number, deep = false) =>
+  tag("circle", { cx: 300, cy: 300, r, stroke: GOLD, class: deep ? "tv-sd" : undefined, "stroke-width": w });
+
+const TICKS = Array.from({ length: 360 }, (_, i) => {
+  const major = i % 30 === 0;
+  const mid = !major && i % 5 === 0;
+  const [x1, y1] = polar(major ? 268 : mid ? 276 : 281, i);
+  const [x2, y2] = polar(287, i);
+  return tag("line", { x1, y1, x2, y2, stroke: GOLD, class: major || mid ? undefined : "tv-sd", "stroke-width": major ? 1.4 : mid ? 0.9 : 0.5 });
+}).join("");
+
+const PETALS = Array.from({ length: 36 }, (_, i) => {
+  const a = i * 10;
+  const [x1, y1] = polar(262, a - 5);
+  const [cx, cy] = polar(240, a);
+  const [x2, y2] = polar(262, a + 5);
+  const [ix, iy] = polar(254, a);
+  const [bx, by] = polar(259, a + 5);
+  return tag(
+    "g",
+    {},
+    tag("path", { d: `M${x1} ${y1} Q${cx} ${cy} ${x2} ${y2}`, stroke: GOLD, "stroke-width": "0.9" }) +
+      tag("path", { d: `M${x1} ${y1} Q${ix} ${iy} ${x2} ${y2}`, stroke: GOLD, class: "tv-sd", "stroke-width": "0.5" }) +
+      tag("circle", { cx: bx, cy: by, r: "1.1", fill: GOLD }),
+  );
+}).join("");
+
+const PINS = [0, 90, 180, 270]
+  .map((a) => {
+    const [x, y] = polar(297, a);
+    return tag(
+      "g",
+      {},
+      tag("circle", { cx: x, cy: y, r: "7", class: "tv-fbase", stroke: GOLD, "stroke-width": "1.25" }) +
+        tag("circle", { cx: x, cy: y, r: "3.5", stroke: GOLD, class: "tv-sd", "stroke-width": "0.75" }) +
+        tag("circle", { cx: x, cy: y, r: "1.4", fill: GOLD }),
+    );
+  })
+  .join("");
+
+const sparkPath = (g: Glint) => tag("path", { d: spark(g.x, g.y, g.k), fill: GOLD });
+
+/** the outer ring's four sparkles, between the ticks on the diagonals */
+const OUTER_GLINTS: Glint[] = [45, 135, 225, 315].map((a) => {
+  const [x, y] = polar(276, a);
+  return { x, y, k: 7, d: `${a / 60}s` };
+});
+const OUTER =
+  ring(297, 1.5) +
+  ring(293.5, 0.5, true) +
+  ring(287, 0.75) +
+  TICKS +
+  ring(265.5, 1) +
+  ring(262.5, 0.5, true) +
+  PETALS +
+  ring(236, 0.75, true) +
+  ring(232, 1.25) +
+  PINS;
+const OUTER_HTML = markup(OUTER);
+const OUTER_STILL_HTML = markup(OUTER + OUTER_GLINTS.map(sparkPath).join(""));
+
+/**
+ * The chart's bright stars twinkle. None of them touches anything else in the
+ * chart, so their glints can be drawn over it; in the drawing they keep their
+ * places at zero opacity, as without them the turning chart is rasterised a
+ * shade differently along its dotted ring.
+ */
+const CHART_GLINTS: Glint[] = CHART.flatMap((s, i) => (s.bright ? [{ x: s.x, y: s.y, k: 4.5, d: `${(i % 9) * 0.6}s` }] : []));
+const chartBack = (still: boolean) =>
+  tag(
+    "defs",
+    {},
+    CAST.map((c, i) => tag("path", { id: `tv-arc-${c.id}`, d: arc(QUADRANTS[i] > 90 && QUADRANTS[i] < 270 ? 221 : 211, QUADRANTS[i], 34) })).join(""),
+  ) +
+  tag("circle", { cx: 300, cy: 300, r: 226, stroke: GOLD, class: "tv-sd", "stroke-width": "0.5", "stroke-dasharray": "0.5 5", "stroke-linecap": "round" }) +
+  CHART.map((s) =>
+    s.bright
+      ? tag("path", { d: spark(s.x, s.y, 4.5), fill: GOLD, "fill-opacity": still ? undefined : 0 })
+      : tag("circle", { cx: s.x, cy: s.y, r: s.size, fill: GOLD, class: s.size > 1 ? undefined : "tv-fd" }),
+  ).join("");
+const CHART_BACK_HTML = markup(chartBack(false));
+const CHART_BACK_STILL_HTML = markup(chartBack(true));
+const CHART_FRONT_HTML = markup(
+    ring(124, 1.25) +
+    ring(120, 0.5, true) +
+    Array.from({ length: 72 }, (_, i) => {
+      const [x1, y1] = polar(i % 6 === 0 ? 112 : 116, i * 5);
+      const [x2, y2] = polar(120, i * 5);
+      return tag("line", { x1, y1, x2, y2, stroke: GOLD, class: i % 6 === 0 ? undefined : "tv-sd", "stroke-width": i % 6 === 0 ? 1 : 0.5 });
+    }).join("") +
+    ring(110, 0.5, true) +
+    Array.from({ length: 48 }, (_, i) => {
+      const [x, y] = polar(104, i * 7.5);
+      return tag("circle", { cx: x, cy: y, r: i % 4 === 0 ? 1.6 : 0.8, fill: GOLD, class: i % 4 === 0 ? undefined : "tv-fd" });
+    }).join("") +
+    ring(98, 0.75),
+);
+
+/**
+ * Glints in the astrolabe's frame: its box, turning with the drawing. A
+ * turning box starts on a whole pixel of the grid, and its drawing's 600 units
+ * span the box's width as laid out, fraction and all.
+ */
+function AstroGlints({ glints, className }: { glints: readonly Glint[]; className?: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const host = ref.current;
+    if (!host) return;
+    let last = "";
+    return watchSize(host, (r) => {
+      const g = grid();
+      // CSS px per unit of the drawing
+      const s = r.width / 600;
+      const key = `${s} ${g}`;
+      if (!s || key === last) return;
+      last = key;
+      glints.forEach((p, i) => {
+        const box = host.children[i] as HTMLElement | undefined;
+        const svg = box?.querySelector("svg");
+        if (!box || !svg) return;
+        const b = fit(box, p.x * s, p.y * s, p.k * s, g);
+        svg.setAttribute("viewBox", `${b.l / s} ${b.t / s} ${b.w / s} ${b.h / s}`);
+      });
+    });
+  }, [glints]);
+  return (
+    <div ref={ref} className={className ? `tv-astro-glints ${className}` : "tv-astro-glints"}>
+      <GlintBoxes glints={glints} shape={(g) => <path d={spark(g.x, g.y, g.k)} fill={GOLD} />} />
+    </div>
+  );
 }
 
-function Astrolabe({ active }: { active: number }) {
-  const ticks = Array.from({ length: 360 }, (_, i) => {
-    const major = i % 30 === 0;
-    const mid = !major && i % 5 === 0;
-    const [x1, y1] = polar(major ? 268 : mid ? 276 : 281, i);
-    const [x2, y2] = polar(287, i);
-    return (
-      <line
-        key={i}
-        x1={x1}
-        y1={y1}
-        x2={x2}
-        y2={y2}
-        stroke={GOLD}
-        className={major || mid ? undefined : "tv-sd"}
-        strokeWidth={major ? 1.4 : mid ? 0.9 : 0.5}
-      />
-    );
-  });
+/**
+ * The astrolabe's drawing is ~900 elements, most of the section, and nothing
+ * of it shows until the stage arrives (under reduced motion it is there from
+ * the start). So it is not part of the section's mount: the outer ring, the
+ * chart and the chart's front go in at the next idle moments, each styled and
+ * laid out there as its own short task, or with the stage, whichever comes
+ * first. The boxes that turn, and the glints, are there from the mount, so
+ * every clock is the same.
+ */
+function useDrawn(now: boolean, host: RefObject<HTMLElement | null>) {
+  const [drawn, setDrawn] = useState(now ? 3 : 0);
+  useEffect(() => {
+    if (now || drawn >= 3) return;
+    const fill = () => {
+      flushSync(() => setDrawn((n) => n + 1));
+      host.current?.getBoundingClientRect();
+    };
+    if (window.requestIdleCallback) {
+      const id = window.requestIdleCallback(fill, { timeout: 1000 });
+      return () => window.cancelIdleCallback(id);
+    }
+    const t = window.setTimeout(fill, 50);
+    return () => window.clearTimeout(t);
+  }, [now, drawn, host]);
+  return now ? 3 : drawn;
+}
 
-  const petals = Array.from({ length: 36 }, (_, i) => {
-    const a = i * 10;
-    const [x1, y1] = polar(262, a - 5);
-    const [cx, cy] = polar(240, a);
-    const [x2, y2] = polar(262, a + 5);
-    const [ix, iy] = polar(254, a);
-    const [bx, by] = polar(259, a + 5);
-    return (
-      <g key={i}>
-        <path d={`M${x1} ${y1} Q${cx} ${cy} ${x2} ${y2}`} stroke={GOLD} strokeWidth="0.9" />
-        <path d={`M${x1} ${y1} Q${ix} ${iy} ${x2} ${y2}`} stroke={GOLD} className="tv-sd" strokeWidth="0.5" />
-        <circle cx={bx} cy={by} r="1.1" fill={GOLD} />
-      </g>
-    );
-  });
+/** each character's constellation on the chart, with its name along its arc */
+const FIGURES_HTML = CAST.map((c, ci) =>
+  markup(
+    c.links
+      .map(([a, b]) =>
+        tag("line", {
+          x1: FIGURES[ci][a][0],
+          y1: FIGURES[ci][a][1],
+          x2: FIGURES[ci][b][0],
+          y2: FIGURES[ci][b][1],
+          stroke: GOLD,
+          "stroke-width": "0.75",
+          "stroke-opacity": "0.7",
+        }),
+      )
+      .join("") +
+    FIGURES[ci]
+      .map(([x, y]) =>
+        tag(
+          "g",
+          {},
+          tag("circle", { cx: x, cy: y, r: "4.4", stroke: GOLD, class: "tv-sd", "stroke-width": "0.5" }) +
+            tag("circle", { cx: x, cy: y, r: "1.9", fill: GOLD }),
+        ),
+      )
+      .join("") +
+    tag(
+      "text",
+      { class: "tv-figure-name", fill: GOLD },
+      tag("textPath", { href: `#tv-arc-${c.id}`, startOffset: "50%", "text-anchor": "middle" }, c.constellation),
+    ),
+  ),
+);
 
-  const inner = Array.from({ length: 72 }, (_, i) => {
-    const [x1, y1] = polar(i % 6 === 0 ? 112 : 116, i * 5);
-    const [x2, y2] = polar(120, i * 5);
-    return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke={GOLD} className={i % 6 === 0 ? undefined : "tv-sd"} strokeWidth={i % 6 === 0 ? 1 : 0.5} />;
-  });
-
-  const beads = Array.from({ length: 48 }, (_, i) => {
-    const [x, y] = polar(104, i * 7.5);
-    return <circle key={i} cx={x} cy={y} r={i % 4 === 0 ? 1.6 : 0.8} fill={GOLD} className={i % 4 === 0 ? undefined : "tv-fd"} />;
-  });
-
+/**
+ * The astrolabe. Its outer ring turns one way and the chart the other; the
+ * glints turn with them (the outer ring's in its box, under its opacity: they
+ * sit on its diagonal ticks; the chart's beside it on the same clock, each
+ * under the chart's opacity: they touch nothing in it).
+ */
+function Astrolabe({ active, staged }: { active: number; staged: boolean }) {
+  const still = useStill();
+  const ref = useRef<HTMLDivElement>(null);
+  const drawn = useDrawn(staged || still, ref);
   return (
-    <div className="tv-astro" aria-hidden="true">
-      <svg viewBox="0 0 600 600" className="tv-astro-outer" fill="none">
-        <Ring r={297} w={1.5} />
-        <Ring r={293.5} w={0.5} deep />
-        <Ring r={287} w={0.75} />
-        {ticks}
-        <Ring r={265.5} w={1} />
-        <Ring r={262.5} w={0.5} deep />
-        {petals}
-        <Ring r={236} w={0.75} deep />
-        <Ring r={232} w={1.25} />
-        {[0, 90, 180, 270].map((a) => {
-          const [x, y] = polar(297, a);
-          return (
-            <g key={a}>
-              <circle cx={x} cy={y} r="7" className="tv-fbase" stroke={GOLD} strokeWidth="1.25" />
-              <circle cx={x} cy={y} r="3.5" stroke={GOLD} className="tv-sd" strokeWidth="0.75" />
-              <circle cx={x} cy={y} r="1.4" fill={GOLD} />
-            </g>
-          );
-        })}
-        {[45, 135, 225, 315].map((a) => {
-          const [x, y] = polar(276, a);
-          return <path key={a} d={spark(x, y, 7)} fill={GOLD} className="tv-twinkle" style={{ "--d": `${a / 60}s` } as CSSProperties} />;
-        })}
-      </svg>
+    <div ref={ref} className="tv-astro" aria-hidden="true">
+      <div className="tv-astro-outer">
+        <svg viewBox="0 0 600 600" fill="none" dangerouslySetInnerHTML={drawn < 1 ? NO_MARKUP : still ? OUTER_STILL_HTML : OUTER_HTML} />
+        {still ? null : <AstroGlints glints={OUTER_GLINTS} />}
+      </div>
 
       <svg viewBox="0 0 600 600" className="tv-astro-chart" fill="none">
-        <defs>
-          {CAST.map((c, i) => (
-            <path key={c.id} id={`tv-arc-${c.id}`} d={arc(QUADRANTS[i] > 90 && QUADRANTS[i] < 270 ? 221 : 211, QUADRANTS[i], 34)} />
-          ))}
-        </defs>
-        <circle cx="300" cy="300" r="226" stroke={GOLD} className="tv-sd" strokeWidth="0.5" strokeDasharray="0.5 5" strokeLinecap="round" />
-        {CHART.map((s, i) =>
-          s.bright ? (
-            <path key={i} d={spark(s.x, s.y, 4.5)} fill={GOLD} className="tv-twinkle" style={{ "--d": `${(i % 9) * 0.6}s` } as CSSProperties} />
-          ) : (
-            <circle key={i} cx={s.x} cy={s.y} r={s.size} fill={GOLD} className={s.size > 1 ? undefined : "tv-fd"} />
-          ),
+        {drawn < 2 ? null : (
+          <>
+            <g dangerouslySetInnerHTML={still ? CHART_BACK_STILL_HTML : CHART_BACK_HTML} />
+            {CAST.map((c, ci) => (
+              <g key={c.id} className="tv-figure" data-on={ci === active || undefined} dangerouslySetInnerHTML={FIGURES_HTML[ci]} />
+            ))}
+          </>
         )}
-        {CAST.map((c, ci) => (
-          <g key={c.id} className="tv-figure" data-on={ci === active || undefined}>
-            {c.links.map(([a, b]) => (
-              <line
-                key={`${a}-${b}`}
-                x1={FIGURES[ci][a][0]}
-                y1={FIGURES[ci][a][1]}
-                x2={FIGURES[ci][b][0]}
-                y2={FIGURES[ci][b][1]}
-                stroke={GOLD}
-                strokeWidth="0.75"
-                strokeOpacity="0.7"
-              />
-            ))}
-            {FIGURES[ci].map(([x, y], i) => (
-              <g key={i}>
-                <circle cx={x} cy={y} r="4.4" stroke={GOLD} className="tv-sd" strokeWidth="0.5" />
-                <circle cx={x} cy={y} r="1.9" fill={GOLD} />
-              </g>
-            ))}
-            <text className="tv-figure-name" fill={GOLD}>
-              <textPath href={`#tv-arc-${c.id}`} startOffset="50%" textAnchor="middle">
-                {c.constellation}
-              </textPath>
-            </text>
-          </g>
-        ))}
-        <Ring r={124} w={1.25} />
-        <Ring r={120} w={0.5} deep />
-        {inner}
-        <Ring r={110} w={0.5} deep />
-        {beads}
-        <Ring r={98} w={0.75} />
+        {drawn < 3 ? null : <g dangerouslySetInnerHTML={CHART_FRONT_HTML} />}
       </svg>
+      {still ? null : <AstroGlints glints={CHART_GLINTS} className="tv-astro-chart-glints" />}
 
       <div className="tv-sigils">
-        {CAST.map((c, i) => (
-          <span
-            key={c.id}
-            className="tv-sigil"
-            data-on={i === active || undefined}
-            style={{ "--src": `url(/lobby/gi/${c.id}-constellation.webp)` } as CSSProperties}
-          />
-        ))}
+        {drawn < 3
+          ? null
+          : CAST.map((c, i) => (
+              <span
+                key={c.id}
+                className="tv-sigil"
+                data-on={i === active || undefined}
+                style={{ "--src": `url(/lobby/gi/${c.id}-constellation.webp)` } as CSSProperties}
+              />
+            ))}
       </div>
     </div>
   );
@@ -638,6 +910,8 @@ export function Teyvat() {
   const [staged, setStaged] = useState(false);
   const sectionRef = useRef<HTMLElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
+  const skyRef = useRef<SVGSVGElement>(null);
+  const still = useStill();
   const tabsRef = useRef<(HTMLButtonElement | null)[]>([]);
   const c = CAST[active];
   const home = homeOf(c.id);
@@ -751,18 +1025,14 @@ export function Teyvat() {
           <span className="tv-hair" />
         </div>
       ))}
-      <svg className="tv-sky" aria-hidden="true" preserveAspectRatio="none">
-        {SKY.map((s, i) => (
-          <circle
-            key={i}
-            cx={`${s.x}%`}
-            cy={`${s.y}%`}
-            r={s.r}
-            className={s.twinkle ? "tv-twinkle" : undefined}
-            style={{ "--d": `${s.d}s` } as CSSProperties}
-          />
-        ))}
-      </svg>
+      <svg
+        ref={skyRef}
+        className="tv-sky"
+        aria-hidden="true"
+        preserveAspectRatio="none"
+        dangerouslySetInnerHTML={still ? SKY_STILL_HTML : SKY_HTML}
+      />
+      {still ? null : <SkyGlints sky={skyRef} />}
       <div className="tv-edge tv-edge-top" aria-hidden="true">
         <span key={home} className="tv-locale">
           <Waypoint />
@@ -805,7 +1075,7 @@ export function Teyvat() {
             {ELEMENTS.map((el) => (
               <div key={el} className={`tv-glow tv-glow-${el}`} data-on={el === c.element || undefined} aria-hidden="true" />
             ))}
-            <Astrolabe active={active} />
+            <Astrolabe active={active} staged={staged} />
             <Particles key={c.element} element={c.element} far />
           </Layer>
           <Layer d={D.ghost} className="tv-ghosts">

@@ -156,7 +156,8 @@ html[data-mode="day"] .tv-plate > img[data-set="day"] { opacity: 1; }
       color-mix(in srgb, var(--tv-base) 92%, transparent)
     );
   }
-  .tv-world[data-vista] .tv-sky { clip-path: polygon(56% 0, 100% 0, 100% 100%, 42% 100%); }
+  /* the glints are clipped with the sky, not hidden: a hidden one can't twinkle on the compositor */
+  .tv-world[data-vista] :is(.tv-sky, .tv-sky-glints) { clip-path: polygon(56% 0, 100% 0, 100% 100%, 42% 100%); }
 }
 
 .tv-sky {
@@ -167,6 +168,26 @@ html[data-mode="day"] .tv-plate > img[data-set="day"] { opacity: 1; }
   z-index: -1;
   fill: #ffffff;
   opacity: 0.5;
+}
+/* its twinkling stars, each a box of its own over it (teyvat.tsx: SkyGlints), at the sky's opacity */
+.tv-sky-glints {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  fill: #ffffff;
+  pointer-events: none;
+}
+.tv-sky-glints > .tv-glint { opacity: 0.5; }
+
+/* a glint: one twinkling star in a box on whole pixels of the layout grid (teyvat.tsx: fit) */
+.tv-glint { position: absolute; }
+.tv-glint > .tv-twinkle,
+.tv-glint svg {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 .tv-edge {
@@ -315,18 +336,23 @@ html[data-mode="day"] .tv-plate > img[data-set="day"] { opacity: 1; }
 @media (max-width: 767px) {
   .tv-astro { width: 112vw; }
 }
-.tv-astro svg {
+.tv-astro-outer,
+.tv-astro-outer > svg,
+.tv-astro-chart,
+.tv-astro-glints {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-  overflow: visible;
 }
+.tv-astro-outer > svg,
+.tv-astro-chart { overflow: visible; }
 .tv-astro .tv-sd { stroke: var(--tv-line-deep); }
 .tv-astro .tv-fd { fill: var(--tv-line-deep); }
 .tv-astro .tv-fbase { fill: var(--tv-base); }
 .tv-astro-outer { opacity: 0.85; }
-.tv-astro-chart { opacity: 0.85; }
+.tv-astro-chart,
+.tv-astro-chart-glints > .tv-glint { opacity: 0.85; }
 
 .tv-figure { opacity: 0.5; }
 .tv-figure[data-on] { opacity: 1; }
@@ -661,9 +687,10 @@ html[data-mode="day"] .tv-world { --tv-mist: rgb(255 255 255 / 0.3); }
   .tv-scene[data-on] .tv-hair { animation: tv-field-in 1.3s var(--ease) 80ms both; }
 
   .tv-astro-outer { animation: tv-spin 240s linear infinite; }
-  .tv-astro-chart { animation: tv-spin 360s linear infinite reverse; }
+  .tv-astro-chart,
+  .tv-astro-chart-glints { animation: tv-spin 360s linear infinite reverse; }
 
-  .tv-twinkle { animation: tv-twinkle 4.2s ease-in-out var(--d, 0s) infinite; transform-box: fill-box; transform-origin: center; }
+  .tv-twinkle { animation: tv-twinkle 4.2s ease-in-out var(--d, 0s) infinite; }
 
   .tv-float { animation: tv-bob 7s ease-in-out infinite; }
 
@@ -863,6 +890,8 @@ html[data-mode="day"] .tv-sky {
   fill: var(--tv-line-deep);
   opacity: 0.45;
 }
+html[data-mode="day"] .tv-sky-glints { fill: var(--tv-line-deep); }
+html[data-mode="day"] .tv-sky-glints > .tv-glint { opacity: 0.45; }
 
 /* sun-haze behind the figure instead of an elemental glow */
 html[data-mode="day"] .tv-glow {
@@ -881,7 +910,8 @@ html[data-mode="day"] .tv-glow-pyro { --g: #ffb08a; }
 
 /* the astrolabe: gold engraving on parchment, ink for the fine work */
 html[data-mode="day"] .tv-astro-outer,
-html[data-mode="day"] .tv-astro-chart { opacity: 1; }
+html[data-mode="day"] .tv-astro-chart,
+html[data-mode="day"] .tv-astro-chart-glints > .tv-glint { opacity: 1; }
 html[data-mode="day"] .tv-astro .tv-fbase { fill: #fffaf0; }
 html[data-mode="day"] .tv-figure { opacity: 0.55; }
 html[data-mode="day"] .tv-figure[data-on] { opacity: 1; }

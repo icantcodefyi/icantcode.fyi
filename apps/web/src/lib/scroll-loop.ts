@@ -304,10 +304,12 @@ if (typeof window !== "undefined") {
     (ev) => {
       const now = performance.now();
       if (ev.target === document) {
-        // read before any frame callback has written a style, so this never flushes anything
+        // the read the loop's own scroll listener makes too: any style flush it costs is paid once
         const y = window.scrollY;
         const dt = Math.max(1, now - scrolledAt);
-        pace = dt > QUIET ? 0 : pace * 0.6 + ((Math.abs(y - paceY) * 1000) / dt) * 0.4;
+        const v = (Math.abs(y - paceY) * 1000) / dt;
+        // a burst's first event says nothing about its speed: unknown (a flick, until shown otherwise)
+        pace = dt > QUIET ? Infinity : pace === Infinity ? v : pace * 0.6 + v * 0.4;
         paceY = y;
       }
       scrolledAt = now;

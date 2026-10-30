@@ -17,9 +17,9 @@ import type { AmbientSpec, PlateSpec, StageSpec } from "./types";
  *   near     (1 screen away, after the visitor's first scroll, once they
  *            are at rest) contexts from the budget, a canvas per group of
  *            plates, the current mode's plates uploaded in small steps
- *            (each waits while the page scrolls). A visitor who reads on
- *            without stopping (on screen SHOWN_MS, scrolling slower than
- *            READING px/s) gets it then, the steps at frame pace
+ *            (each waits while the page scrolls fast). A visitor reading on
+ *            without stopping (slower than READING px/s) gets it as before,
+ *            the steps at frame pace; a flick past loads nothing mid-flick
  *   swap     on the next frame the plates draw flat, exactly where the
  *            <img>s are, and [data-depth] hides the <img>s in that same
  *            frame; the relief then eases in over --dur-arrive
@@ -115,8 +115,7 @@ type State = "idle" | "loading" | "ready" | "live" | "leaving" | "off";
 type Reason = "far" | "evict" | "spent" | "lost" | "fail" | "dispose";
 
 const FLATTEN_MS = 700;
-/** On screen this long, to a visitor scrolling slower than READING px/s, a stage comes up without a rest. */
-const SHOWN_MS = 800;
+/** Scrolling slower than this (px/s), the visitor is reading: a stage comes up without waiting for a rest. */
 const READING = 600;
 
 function loaded(img: HTMLImageElement) {
@@ -162,10 +161,8 @@ export function createGL(stage: HTMLElement, spec: StageSpec, runs: Group[], rig
   // wakes whatever waits on a day <img> or for a teardown
   let poke = () => {};
   const poked = () => new Promise<void>((r) => (poke = r));
-  // since when the stage has been on screen (0: it isn't)
-  let shownAt = 0;
-  const reading = () => shownAt > 0 && performance.now() - shownAt >= SHOWN_MS && scrollPace() < READING;
-  /** What the bring-up waits on between its steps: the visitor at rest, or reading on with the stage in view. */
+  const reading = () => scrollPace() < READING;
+  /** What the bring-up waits on between its steps: the visitor at rest, or reading on. */
   const calm = () =>
     resting() || reading()
       ? Promise.resolve()
@@ -485,7 +482,6 @@ export function createGL(stage: HTMLElement, spec: StageSpec, runs: Group[], rig
   );
   const seeIO = new IntersectionObserver(([e]) => {
     visible = e.isIntersecting;
-    shownAt = visible ? performance.now() : 0;
     if (visible) {
       kick();
       void approach();

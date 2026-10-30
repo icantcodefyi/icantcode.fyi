@@ -3,6 +3,7 @@ import type { NavigateFunction } from "react-router";
 
 import { mountBefore, scrollToSection } from "@/components/deferred";
 import { DUR, EASE, reducedMotion } from "@/lib/motion";
+import { holdRest } from "@/lib/scroll-loop";
 
 /**
  * The gates' portal (PLAN §7 G3). The card's ground grows from the card to
@@ -46,7 +47,8 @@ export function portal(e: MouseEvent<HTMLAnchorElement>, navigate: NavigateFunct
     return;
   }
   busy = true;
-  void open(card, id, keyboard, go).finally(() => {
+  // what waits for a still page (mounts ahead, WebGL) waits for the world's arrival too
+  void holdRest(open(card, id, keyboard, go)).finally(() => {
     busy = false;
   });
 }
@@ -70,12 +72,15 @@ async function open(card: HTMLElement, id: string, keyboard: boolean, go: () => 
     [{ clipPath: from, opacity: 0 }, { opacity: 1, offset: 0.22 }, { clipPath: "inset(0px 0px 0px 0px round 0px)", opacity: 1 }],
     { duration: DUR.portalIn, easing: EASE.in, fill: "forwards" },
   );
-  // the sections above the world mount while the wash grows, time-sliced so it keeps its frames
+  // the sections above the world mount once the wash covers the page: a mount's commit and layout are
+  // one long task however React slices it, and the clip-path grows on the main thread, so it would stall
+  // there (the wash just holds a moment longer); after a rest nearby they are mostly mounted already
+  await grow.finished;
   let mounted = Promise.resolve();
   startTransition(() => {
     mounted = mountBefore(document.getElementById(id));
   });
-  await Promise.all([grow.finished, mounted]);
+  await mounted;
 
   // jump under the wash; glide() keeps re-aiming while anything above settles
   go();

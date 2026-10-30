@@ -289,7 +289,8 @@ export function watchScroll(fn: (y: number, dy: number) => void): () => void {
  * Work nothing on screen waits for (a section mounting ahead, WebGL coming up, the other mode's
  * plates) is one long task however it is cut, and on a scroll's frames it costs frames. So it waits
  * until the visitor has stopped: no scroll anywhere on the page for QUIET ms, then an idle moment
- * with still no scroll. */
+ * with still no scroll. A transition the page plays on its own (a portal's jump and wash) holds it
+ * too, with holdRest(). */
 
 const QUIET = 250; // ms
 let scrolledAt = -Infinity;
@@ -323,16 +324,28 @@ export function scrollPace() {
 const onIdle = (fn: () => void) =>
   window.requestIdleCallback ? window.requestIdleCallback(fn, { timeout: 1000 }) : window.setTimeout(fn, 1);
 
-/** No scroll for the last QUIET ms. */
+/** No scroll for the last QUIET ms, and nothing holding the page. */
 export function resting() {
-  return performance.now() - scrolledAt >= QUIET;
+  return !holds && performance.now() - scrolledAt >= QUIET;
+}
+
+let holds = 0;
+/** Nothing waiting on atRest() runs until `p` settles, then QUIET ms on (as if it had been a scroll). */
+export function holdRest<T>(p: Promise<T>): Promise<T> {
+  holds++;
+  const done = () => {
+    holds--;
+    scrolledAt = Math.max(scrolledAt, performance.now());
+  };
+  p.then(done, done);
+  return p;
 }
 
 /** Resolves once the visitor is at rest and the main thread is idle, in a task of its own. */
 export function atRest(): Promise<void> {
   return new Promise((resolve) => {
     const check = () => {
-      const wait = QUIET - (performance.now() - scrolledAt);
+      const wait = holds ? QUIET : QUIET - (performance.now() - scrolledAt);
       if (wait > 0) window.setTimeout(check, wait);
       else onIdle(() => (resting() ? resolve() : check()));
     };

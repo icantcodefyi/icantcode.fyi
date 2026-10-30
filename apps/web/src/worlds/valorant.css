@@ -1153,13 +1153,36 @@ html[data-mode="day"] .vl-rail span { color: rgb(15 25 35 / 0.45); }
   .vl-js:not(.vl-in) .vl-bracket-bl { transform: scaleY(-1) translate(-24px, -24px); opacity: 0; }
   .vl-js:not(.vl-in) .vl-plate { transform: translateX(-120%); }
   .vl-js:not(.vl-in) .vl-map { opacity: 0; transform: translateX(-16px); }
-  .vl-js:not(.vl-in) .vl-hazard > div { transform: translateX(-100%); }
-  .vl-js:not(.vl-in) .vl-stage { clip-path: polygon(-30% 0, -4% 0, -30% 100%, -30% 100%); }
+  /* a class, not `> div`: a tag here would restyle every div in the section the moment it arrives */
+  .vl-js:not(.vl-in) .vl-hazard-run { transform: translateX(-100%); }
   .vl-js .vl-enter, .vl-js .vl-info, .vl-js .vl-tiles, .vl-js .vl-bracket, .vl-js .vl-plate, .vl-js .vl-map {
     transition: transform 700ms var(--vl-snap) 180ms, opacity 400ms ease 180ms;
   }
-  /* the stage arrives the way an agent does: behind the blade */
-  .vl-js .vl-stage { transition: clip-path 760ms var(--vl-ease); clip-path: polygon(-30% 0, 126% 0, 100% 100%, -30% 100%); }
+  /* The stage arrives the way an agent does: behind the blade. Until then the
+     section's ground covers it, and the cover is cut back along the blade's
+     line (the very edge a clip on the stage would sweep), rather than the stage
+     clipped to nothing: a stage clipped away is out of sight to every observer
+     in it, so its relief, its camera layers and its day art would only get
+     ready once it showed, mid-scroll, instead of a screen ahead. */
+  .vl-js .vl-stage { clip-path: polygon(-30% 0, 126% 0, 100% 100%, -30% 100%); }
+  .vl-js .vl-stage::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 6;
+    pointer-events: none;
+    background: #0b0b0d;
+    /* past the box above and below (on the same line), so a stage of fractional height has no half-covered pixel row */
+    clip-path: polygon(-1.4% -10%, 130% -10%, 130% 110%, -32.6% 110%);
+    transition: clip-path 760ms var(--vl-ease);
+  }
+  html[data-mode="day"] .vl-js .vl-stage::before { background: var(--vl-bone); }
+  /* once cut back to nothing it stops painting, so the stage at rest paints just what it did */
+  .vl-js.vl-in .vl-stage::before {
+    clip-path: polygon(128.6% -10%, 130% -10%, 130% 110%, 97.4% 110%);
+    visibility: hidden;
+    transition: clip-path 760ms var(--vl-ease), visibility 0s linear 760ms;
+  }
   .vl-js .vl-stage::after {
     content: "";
     position: absolute;
@@ -1169,7 +1192,7 @@ html[data-mode="day"] .vl-rail span { color: rgb(15 25 35 / 0.45); }
     background: var(--vl-ink);
     clip-path: polygon(-7% 0, -4% 0, -30% 100%, -33% 100%);
   }
-  /* the stage's own clip would cut a blade ahead of its edge: this one rides just inside it */
+  /* the cover would hide a blade ahead of its edge: this one rides just behind it */
   .vl-js.vl-in .vl-stage::after { animation: vl-blade-lead 760ms var(--vl-ease) both; }
 }
 @media (prefers-reduced-motion: reduce) {

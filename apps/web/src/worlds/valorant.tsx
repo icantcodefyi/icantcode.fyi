@@ -404,7 +404,7 @@ export function Valorant() {
       onKeyDown={onSectionKey}
     >
       <div className="vl-hazard" aria-hidden="true">
-        <div />
+        <div className="vl-hazard-run" />
       </div>
       {/* the left rail: a tick ladder down the column, its red mark on the pick */}
       <div className="vl-rail" aria-hidden="true" style={v({ "--at": (index + 0.5) / AGENTS.length })}>

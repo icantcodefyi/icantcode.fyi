@@ -10,6 +10,16 @@ import { eye, lens, NAME_DEPTH, PLATE, place, type Eye, type Lens, type PlateNam
  * Scrolling the hero's first screen dives the camera into the scene; the
  * stage itself is sticky (hero.css), so the browser holds it still while the
  * next section rises over it, and the scroll stays native.
+ *
+ * Every frame that writes a layer's transform re-layerizes the whole page
+ * (hero.css's will-change doesn't spare it), and the longer the page, the
+ * more that costs. So once the breath is all that moves (pointer and dive
+ * settled, the breath nearly in), it goes to the compositor, as the
+ * sections' does (lib/depth/dom.ts): each visible layer gets one animation
+ * sampled from the same breath for the next DRIFT_S, and the loop draws the
+ * scene from that same breath at the frame's time, so the name and the
+ * painting stay together. Any change takes the layers back from where the
+ * breath had got to, in the same frame.
  */
 
 export interface Stage {
@@ -54,6 +64,14 @@ export interface Shadow {
 const REST: Eye = { x: 0, y: 0, z: 0 };
 const PLATES: PlateName[] = ["sky", "char", "hill"];
 
+const DRIFT_S = 60;
+const DRIFT_STEP = 0.5; // s between samples: off the true curve by < 0.02 px
+const DRIFT_STEPS = Math.round(DRIFT_S / DRIFT_STEP);
+/** how far in the breath must be before it goes to the compositor */
+const DRIFT_FROM = 0.9;
+/** the breath's fade-in rate while the pointer rests (the loop's `idle`) */
+const BREATH_IN = 0.7;
+
 interface DepthLayer {
   el: HTMLElement;
   d: number;
@@ -62,6 +80,8 @@ interface DepthLayer {
   ox: number;
   oy: number;
   css: string;
+  /** its breath on the compositor, while the loop rests */
+  drift?: Animation;
 }
 
 const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
@@ -173,6 +193,7 @@ export function driveStage(root: HTMLElement, opts: { reduced: boolean; dims: Re
 
   /** Lens, plus each layer's resting scale and origin (inline transforms lifted to read the stylesheet's). */
   function measure() {
+    land();
     const sr = stage.getBoundingClientRect();
     L = lens(sr.width, sr.height);
     for (const l of all) l.el.style.transform = "";
@@ -195,9 +216,11 @@ export function driveStage(root: HTMLElement, opts: { reduced: boolean; dims: Re
   }
 
   function write(p: number) {
-    for (const l of all) {
-      const css = place(l.d, e, L, l.ox, l.oy, l.base);
-      if (css !== l.css) l.el.style.transform = l.css = css;
+    if (!drift) {
+      for (const l of all) {
+        const css = place(l.d, e, L, l.ox, l.oy, l.base);
+        if (css !== l.css) l.el.style.transform = l.css = css;
+      }
     }
     const o = (el: HTMLElement, v: number) => {
       const s = clamp01(v).toFixed(3);
@@ -218,6 +241,10 @@ export function driveStage(root: HTMLElement, opts: { reduced: boolean; dims: Re
   let raf = 0;
   let last = 0;
   let t = 0;
+  /** the breath's clock (s) */
+  let bt = 0;
+  /** the breath on the compositor: from document time `at` (ms) and breath time `bt`, for the pointer and dive it froze */
+  let drift: { at: number; bt: number; idle: number; mx: number; my: number; p: number } | null = null;
   let lastMove = -1e9;
   let visible = true;
   let pendingSwap = false;
@@ -234,16 +261,27 @@ export function driveStage(root: HTMLElement, opts: { reduced: boolean; dims: Re
     last = now;
     const dt = Math.min(0.05, raw);
     t += dt;
-    const kp = 1 - Math.exp(-dt * 4.5);
-    const ks = 1 - Math.exp(-dt * 10);
-    cur.mx += (goal.mx - cur.mx) * kp;
-    cur.my += (goal.my - cur.my) * kp;
-    cur.p += (goal.p - cur.p) * ks;
     // the breath fades in once the pointer has rested, and out as soon as it moves
     const still = !fine || now - lastMove > 1600;
-    cur.idle += ((still ? 1 : 0) - cur.idle) * (1 - Math.exp(-dt * (still ? 0.7 : 3)));
-    e = eye(cur.mx, cur.my, cur.p, cur.idle, t);
+    // (and before the plates take over: the painted layers they hide must not stay animated)
+    if (drift && (pendingSwap || !still || goal.mx !== drift.mx || goal.my !== drift.my || goal.p !== drift.p)) land(now);
+    if (drift) {
+      // the compositor has the layers: the scene follows the same breath, at this frame's time
+      const k = (now - drift.at) / 1000;
+      e = eye(cur.mx, cur.my, cur.p, idleAt(drift.idle, k), drift.bt + k);
+    } else {
+      const kp = 1 - Math.exp(-dt * 4.5);
+      const ks = 1 - Math.exp(-dt * 10);
+      cur.mx += (goal.mx - cur.mx) * kp;
+      cur.my += (goal.my - cur.my) * kp;
+      cur.p += (goal.p - cur.p) * ks;
+      cur.idle += ((still ? 1 : 0) - cur.idle) * (1 - Math.exp(-dt * (still ? BREATH_IN : 3)));
+      bt += dt;
+      e = eye(cur.mx, cur.my, cur.p, cur.idle, bt);
+    }
     write(cur.p);
+    // nothing left to move but the breath: hand it over
+    if (!drift && still && cur.idle >= DRIFT_FROM && !pendingSwap && !handBack && settled()) lift(now);
     if (scene && pendingSwap) {
       pendingSwap = false;
       depthOn = true;
@@ -273,6 +311,66 @@ export function driveStage(root: HTMLElement, opts: { reduced: boolean; dims: Re
     }
   }
 
+  /** The pointer and the dive have come to rest (snapped onto their goals once they are within a hair of them). */
+  function settled() {
+    if (Math.abs(goal.mx - cur.mx) > 1e-4 || Math.abs(goal.my - cur.my) > 1e-4 || Math.abs(goal.p - cur.p) > 1e-5) return false;
+    cur.mx = goal.mx;
+    cur.my = goal.my;
+    cur.p = goal.p;
+    return true;
+  }
+
+  /** The breath's weight `k` s after it was `w`, the pointer at rest: what the loop's `idle` does. */
+  const idleAt = (w: number, k: number) => 1 - (1 - w) * Math.exp(-BREATH_IN * k);
+
+  /** The next DRIFT_S of the breath, from document time `at`, as one animation per visible layer. */
+  function lift(at: number) {
+    drift = { at, bt, idle: cur.idle, mx: cur.mx, my: cur.my, p: cur.p };
+    animate(drift);
+  }
+
+  function animate(d: NonNullable<typeof drift>) {
+    const eyes = Array.from({ length: DRIFT_STEPS + 1 }, (_, i) => eye(d.mx, d.my, d.p, idleAt(d.idle, i * DRIFT_STEP), d.bt + i * DRIFT_STEP));
+    let first: Animation | undefined;
+    for (const l of all) {
+      l.drift?.cancel();
+      l.drift = undefined;
+      // a hidden layer (a plate the scene draws) would animate on the main thread, every frame
+      if (l.el.checkVisibility?.({ visibilityProperty: true }) === false) continue;
+      const a = l.el.animate(
+        eyes.map((x) => ({ transform: place(l.d, x, L, l.ox, l.oy, l.base) })),
+        { duration: DRIFT_S * 1000, fill: "forwards" },
+      );
+      a.startTime = d.at;
+      l.drift = a;
+      first ??= a;
+    }
+    // a minute on, the next minute from where this one ends
+    first?.addEventListener("finish", () => {
+      if (drift !== d) return;
+      drift = { ...d, at: d.at + DRIFT_S * 1000, bt: d.bt + DRIFT_S, idle: idleAt(d.idle, DRIFT_S) };
+      animate(drift);
+    });
+  }
+
+  /** Take the layers back from the compositor, where its breath had got to; the loop writes them again from there. */
+  function land(now = (document.timeline.currentTime as number | null) ?? performance.now()) {
+    const d = drift;
+    if (!d) return;
+    drift = null;
+    const k = Math.max(0, (now - d.at) / 1000);
+    bt = d.bt + k;
+    cur.idle = idleAt(d.idle, k);
+    for (const l of all) {
+      l.drift?.cancel();
+      l.drift = undefined;
+      l.css = "";
+    }
+    // written now, from the breath at this moment, so no frame shows the stylesheet's pose
+    e = eye(cur.mx, cur.my, cur.p, cur.idle, bt);
+    write(cur.p);
+  }
+
   const run = () => {
     const go = visible && !document.hidden && !opts.reduced;
     if (go && !raf) {
@@ -281,6 +379,8 @@ export function driveStage(root: HTMLElement, opts: { reduced: boolean; dims: Re
     } else if (!go && raf) {
       cancelAnimationFrame(raf);
       raf = 0;
+      // off screen, an animation has nothing to run on the compositor with
+      land();
     }
   };
 
@@ -354,6 +454,8 @@ export function driveStage(root: HTMLElement, opts: { reduced: boolean; dims: Re
     if (!depthOn) return;
     depthOn = false;
     root.removeAttribute("data-depth");
+    // the painted layers show again: they take the breath back from the loop
+    land();
     scene?.plates(false);
   }
 
@@ -378,6 +480,7 @@ export function driveStage(root: HTMLElement, opts: { reduced: boolean; dims: Re
     },
     dispose() {
       cancelAnimationFrame(raf);
+      for (const l of all) l.drift?.cancel();
       ro.disconnect();
       io.disconnect();
       window.removeEventListener("pointermove", onMove);

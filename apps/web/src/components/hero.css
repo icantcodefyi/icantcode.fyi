@@ -74,6 +74,8 @@
   height: 28svh;
   pointer-events: none;
   opacity: 0;
+  /* painted and rasterized from the start, so the first frame of the dive only composites it */
+  will-change: transform, opacity;
   transform-origin: 50% 100%;
   background: linear-gradient(
     to bottom,
@@ -140,6 +142,9 @@
 
 .hero-l-name {
   z-index: 3;
+  /* the dive fades the name (stage.ts): already its own layer, it fades on the compositor, so its glow
+     isn't rasterized again the first time it does */
+  will-change: transform, opacity;
 }
 .hero-l-char,
 .hero-canvas-char {

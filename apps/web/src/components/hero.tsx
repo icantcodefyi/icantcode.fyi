@@ -5,6 +5,7 @@ import { SkyToggle } from "./hero/sky-toggle";
 import { driveStage, type Stage } from "./hero/stage";
 import { art, HERO_ART } from "@/lib/art";
 import { setMode, useMode } from "@/lib/mode";
+import { atRest } from "@/lib/scroll-loop";
 import "./hero.css";
 
 const TWITTER = "https://twitter.com/icantcodefyi";
@@ -158,13 +159,17 @@ export function Hero() {
   }, []);
 
   // In night mode the day plates only make a first switch seamless, so nothing
-  // of them loads before the visitor's first scroll (and then in idle time).
+  // of them loads before the visitor's first scroll (and then once they rest).
   useEffect(() => {
     if (!dayOk || dayImgs) return;
-    const go = () => later(0, () => setDayImgs(true));
-    if (window.scrollY > 0) return go();
-    window.addEventListener("scroll", go, { once: true, passive: true });
-    return () => window.removeEventListener("scroll", go);
+    let alive = true;
+    const go = () => void atRest().then(() => alive && setDayImgs(true));
+    if (window.scrollY > 0) go();
+    else window.addEventListener("scroll", go, { once: true, passive: true });
+    return () => {
+      alive = false;
+      window.removeEventListener("scroll", go);
+    };
   }, [dayOk, dayImgs]);
 
   // The camera rig drives the DOM layers from the start; the WebGL scene (petals,

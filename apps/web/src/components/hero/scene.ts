@@ -13,6 +13,7 @@ import {
   shadowSource,
   TILE,
 } from "./plates";
+import { atRest, resting } from "@/lib/scroll-loop";
 import { EYE, type Eye, type Lens, type PlateName } from "./rig";
 import { createSkyLife } from "./sky-life";
 import type { Rect, Scrim, Shadow } from "./stage";
@@ -64,13 +65,17 @@ const RELIEF_IN = 1.4; // s
 const MODE_FADE = 1.1; // s, as the <img> crossfade
 
 /**
- * The scene comes up and loads in small steps, one per frame (each WebGL
- * context, each plate's geometry, her shadow, each upload), and its images
- * decode off the main thread, so no step holds up the hero's entrance or
- * the page on a slow phone.
+ * The scene comes up and loads in small steps, one per frame and none while
+ * the page scrolls (each WebGL context, each plate's geometry, her shadow,
+ * each upload), and its images decode off the main thread, so no step holds
+ * up the hero's entrance, the page on a slow phone or a scroll.
  */
-/** Resolves just after the next frame is drawn, in a task of its own, so a step never adds to a frame's own work. */
-const frameOnce = () => new Promise<void>((r) => requestAnimationFrame(() => setTimeout(r, 0)));
+/**
+ * Resolves just after the next frame is drawn, in a task of its own, so a step never adds to a frame's
+ * own work; while the page scrolls, once it rests, so no step lands on a scroll's frames.
+ */
+const frameOnce = () =>
+  new Promise<void>((r) => requestAnimationFrame(() => setTimeout(r, 0))).then(() => (resting() ? undefined : atRest()));
 
 /** `url` as a Blob: a Blob decodes on the image decoder's thread, an <img> on the main one. Already cached by the <img>s. */
 const blob = (url: string) =>

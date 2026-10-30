@@ -44,7 +44,7 @@ function Defs() {
   return (
     <svg aria-hidden="true" width="0" height="0" className="absolute">
       <defs>
-        {(["ink", "spot", "line"] as const).flatMap((c) =>
+        {(["ink", "spot"] as const).flatMap((c) =>
           Array.from({ length: TONE_STEPS }, (_, i) => {
             const rad = toneRadius(i);
             return (
@@ -78,7 +78,7 @@ function Defs() {
   );
 }
 
-function Tone({ corner, color, size, max = TONE_STEPS }: { corner: Corner; color: "ink" | "spot" | "line"; size: number; max?: number }) {
+function Tone({ corner, color, size, max = TONE_STEPS }: { corner: Corner; color: "ink" | "spot"; size: number; max?: number }) {
   const span = size * 1.42;
   const bw = span / TONE_STEPS;
   return (
@@ -626,11 +626,10 @@ const LETTERING_AT = 420;
  * printed.
  */
 function useEntrances(ref: React.RefObject<HTMLElement | null>, lay: Layout) {
-  const [phase, setPhase] = useState<"static" | "armed">("static");
+  // armed from the first render (the world only ever renders in the browser, on approach):
+  // arming it after the commit would style the whole new world twice
+  const [phase] = useState<"static" | "armed">(() => (typeof window === "undefined" || reducedMotion() ? "static" : "armed"));
   const printed = useRef(new Set<string>());
-  useLayoutEffect(() => {
-    if (!reducedMotion()) setPhase("armed");
-  }, []);
   useLayoutEffect(() => {
     const el = ref.current;
     if (!el || phase !== "armed") return;
@@ -681,6 +680,8 @@ function useEntrances(ref: React.RefObject<HTMLElement | null>, lay: Layout) {
         printed.current.add(p.dataset.panel ?? "title");
         p.style.setProperty("--d0", `${Math.round(d)}ms`);
         p.setAttribute("data-in", "");
+        // the page's furniture comes up with the splash (anime.css)
+        if (!p.dataset.panel) el.setAttribute("data-opened", "");
         later(ENTRANCE_MS + d, () => p.setAttribute("data-done", ""));
       });
       queue = [];
@@ -769,28 +770,153 @@ function useTrails(ref: React.RefObject<HTMLElement | null>) {
   );
 }
 
-/** The sheet's width before it can be measured: the same sums as .an-sheet in anime.css. */
+/**
+ * The sheet's width before it can be measured: the same sums as .an-sheet in
+ * anime.css, its padding stepping at the same media query, so the guess is
+ * the width (the ResizeObserver keeps it right after that).
+ */
 function guessWidth() {
   if (typeof window === "undefined") return 1280;
   const vw = document.documentElement.clientWidth || window.innerWidth;
-  const pad = vw >= 640 ? 32 : 14;
+  const pad = window.matchMedia("(min-width: 640px)").matches ? 32 : 14;
   return Math.min(1280, vw - 2 * pad);
 }
 
+/* ── the lettering, solved ahead ── */
+
 /** the balloons' and narration boxes' faces, which their sizes are measured in */
 const LETTERING_FACES = ["600 15px Onest", "500 13.5px Onest", '400 16px "Dela Gothic One"', '500 12.5px "Zen Kaku Gothic New"'];
-const SOLVED = new Map<string, Record<string, Solved>>();
+const facesReady = () => typeof document !== "undefined" && LETTERING_FACES.every((f) => document.fonts?.check(f));
+const facesLoaded = () => Promise.all(LETTERING_FACES.map((f) => document.fonts?.load(f)));
+/**
+ * The Japanese the world prints, by face: its glyphs come in subsets of their
+ * own, each a relayout of the whole page when it lands. Loaded with the solve
+ * (which measures the narration boxes' native titles in them), not mid-scroll.
+ */
+const GLYPHS: [string, string][] = [
+  ['500 12.5px "Zen Kaku Gothic New"', `${SHOWS.map((s) => s.native).join("")}${HASHIRA[0]}${COLOPHON.mark}`],
+  ['900 22px "Zen Kaku Gothic New"', "第七話・視聴リストつづく"],
+  ['400 100px "Dela Gothic One"', `${SHOWS.map((s) => s.sfx).join("")}ドン！`],
+];
+const glyphsLoaded = () => Promise.allSettled(GLYPHS.map(([f, text]) => document.fonts?.load(f, text)));
+
+/** A page's lettering: where each panel's goes, and the footnote's spot. */
+interface Lettering {
+  placed: Record<string, Solved>;
+  colophon: Spot;
+}
+type Solve = Generator<void, Record<string, Solved>, void>;
+
+/**
+ * The lettering per sheet width (and whether the faces had loaded), solved
+ * once a visit: a window resized back, or the world mounted again, never
+ * solves twice. SOLVING holds the solves still under way in idle time.
+ */
+const SOLVED = new Map<string, Lettering>();
+const SOLVING = new Map<string, { job: Solve; done: Promise<void> }>();
+const keyOf = (lay: Layout, fonts: number) => `${lay.w}:${fonts}`;
+
+/** The solve for a layout (anime/place.ts), as steps. */
+function solveSteps(lay: Layout): Solve {
+  const b = Object.fromEntries(lay.panels.map((p) => [p.id, p]));
+  // the splash is all lettering already, and the margins carry the page's own: nothing leans into them
+  const t = b.title;
+  const fixed: Rect[] = [{ x: t.x, y: t.y, w: t.w, h: Math.min(t.quad[2][1], t.quad[3][1]) }];
+  for (const p of lay.pages) {
+    if (lay.kind !== "strip") fixed.push(hashiraRect(p));
+    fixed.push(folioRect(p, lay), ...(p === lay.pages[lay.pages.length - 1] ? [tsuzukuRect(p, lay)] : []));
+  }
+  const strip = lay.kind === "strip";
+  // on a phone the lettering may lean into the sheet's 14px edge, never off the screen; on a page, never over the fold
+  const bounds = (n: number): [number, number] => {
+    if (strip) return [-10, lay.w + 10];
+    const p = lay.pages.find((g) => g.n === n) ?? lay.pages[0];
+    return [p.x + 6, p.x + p.w - 6];
+  };
+  const don = donAt(t, lay);
+  fixed.push({ x: t.x + don.x, y: t.y + don.y, w: don.w, h: don.h });
+  return solveAll(SHOWS, b, strip, { overscan: OVERSCAN, small: strip, cap: (s) => captionSize(s, lay), bounds }, fixed);
+}
+
+function store(key: string, lay: Layout, placed: Record<string, Solved>) {
+  if (SOLVED.size > 48) SOLVED.clear(); // a window dragged through every width
+  const boxes = Object.fromEntries(lay.panels.map((p) => [p.id, p])) as Record<PanelId, PanelBox>;
+  const res = { placed, colophon: colophonSpot(lay, placed, boxes) };
+  SOLVED.set(key, res);
+  return res;
+}
+
+/** A layout's lettering, now: solved before, or the rest of its solve run at once. */
+function lettering(lay: Layout, fonts: number): Lettering {
+  const key = keyOf(lay, fonts);
+  const hit = SOLVED.get(key);
+  if (hit) return hit;
+  const job = SOLVING.get(key)?.job ?? solveSteps(lay);
+  SOLVING.delete(key);
+  let r = job.next();
+  while (!r.done) r = job.next();
+  return store(key, lay, r.value);
+}
+
+const idle = (cb: (d: IdleDeadline) => void) => {
+  if (window.requestIdleCallback) return void window.requestIdleCallback(cb);
+  // Safari: a short slice every few frames
+  window.setTimeout(() => {
+    const end = performance.now() + 6;
+    cb({ didTimeout: false, timeRemaining: () => Math.max(0, end - performance.now()) });
+  }, 48);
+};
+
+/**
+ * Solve a layout's lettering in idle time, a few steps (anime/place.ts
+ * solveAll, a few ms each on a slow phone) at a time, so it never holds up a
+ * frame; settles once it is in SOLVED. If the world needs it first,
+ * lettering() finishes it.
+ */
+function solveIdle(lay: Layout, fonts: number): Promise<void> {
+  const key = keyOf(lay, fonts);
+  if (SOLVED.has(key)) return Promise.resolve();
+  const under = SOLVING.get(key);
+  if (under) return under.done;
+  const job = solveSteps(lay);
+  const done = new Promise<void>((settle) => {
+    const step = (d: IdleDeadline) => {
+      if (SOLVING.get(key)?.job !== job) return settle();
+      // a few steps a slice, even when the browser offers a long idle period, so a scroll that starts mid-slice never waits
+      const end = performance.now() + 8;
+      do {
+        const r = job.next();
+        if (r.done) {
+          SOLVING.delete(key);
+          store(key, lay, r.value);
+          return settle();
+        }
+      } while (d.timeRemaining() > 3 && performance.now() < end);
+      idle(step);
+    };
+    idle(step);
+  });
+  SOLVING.set(key, { job, done });
+  return done;
+}
+
+// This chunk arrives in idle time after load (components/deferred.tsx), long
+// before the world mounts on approach: load the faces and glyphs, then solve
+// the page for this width, so the mount (mid-scroll) does neither.
+if (typeof window !== "undefined") Promise.all([facesLoaded(), glyphsLoaded()]).then(() => solveIdle(layout(guessWidth()), 1), () => {});
 
 export function AnimeWorld() {
   const ref = useRef<HTMLElement>(null);
   const sheet = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(guessWidth);
   const lay = useMemo(() => layout(width), [width]);
+  const latest = useRef(lay);
+  latest.current = lay;
 
-  useLayoutEffect(() => {
+  // (no read of the width here: it would lay the whole new world out inside the commit)
+  useEffect(() => {
     const el = sheet.current;
     if (!el) return;
-    setWidth(el.clientWidth);
     const ro = new ResizeObserver(([e]) => setWidth(Math.round(e.contentRect.width)));
     ro.observe(el);
     return () => ro.disconnect();
@@ -802,42 +928,23 @@ export function AnimeWorld() {
 
   const boxes = Object.fromEntries(lay.panels.map((p) => [p.id, p])) as Record<PanelId, PanelBox>;
   if (showFaces) (window as unknown as { __an: unknown }).__an = { lay, placed: null };
-  // the balloons are fitted to their text as Onest sets it: solve again once the face has loaded (unless it already has)
-  const [fonts, setFonts] = useState(() => (typeof document !== "undefined" && LETTERING_FACES.every((f) => document.fonts?.check(f)) ? 1 : 0));
+  // the balloons are fitted to their text as Onest sets it: once the faces have loaded (unless they already had),
+  // solve again in idle time and only then letter the page again
+  const [fonts, setFonts] = useState(() => (facesReady() ? 1 : 0));
   useEffect(() => {
+    if (fonts) return;
     let alive = true;
-    Promise.all(LETTERING_FACES.map((f) => document.fonts?.load(f))).then(() => alive && setFonts(1), () => {});
+    facesLoaded()
+      .then(() => solveIdle(latest.current, 1))
+      .then(
+        () => alive && setFonts(1),
+        () => {},
+      );
     return () => {
       alive = false;
     };
-  }, []);
-  const placed = useMemo(() => {
-    // a width solved before (the window resized back, the world mounted again) is not solved twice
-    const key = `${lay.w}:${fonts}`;
-    const hit = SOLVED.get(key);
-    if (hit) return hit;
-    const b = Object.fromEntries(lay.panels.map((p) => [p.id, p]));
-    // the splash is all lettering already, and the margins carry the page's own: nothing leans into them
-    const t = b.title;
-    const fixed: Rect[] = [{ x: t.x, y: t.y, w: t.w, h: Math.min(t.quad[2][1], t.quad[3][1]) }];
-    for (const p of lay.pages) {
-      if (lay.kind !== "strip") fixed.push(hashiraRect(p));
-      fixed.push(folioRect(p, lay), ...(p === lay.pages[lay.pages.length - 1] ? [tsuzukuRect(p, lay)] : []));
-    }
-    const strip = lay.kind === "strip";
-    // on a phone the lettering may lean into the sheet's 14px edge, never off the screen; on a page, never over the fold
-    const bounds = (n: number): [number, number] => {
-      if (strip) return [-10, lay.w + 10];
-      const p = lay.pages.find((g) => g.n === n) ?? lay.pages[0];
-      return [p.x + 6, p.x + p.w - 6];
-    };
-    const don = donAt(t, lay);
-    fixed.push({ x: t.x + don.x, y: t.y + don.y, w: don.w, h: don.h });
-    const res = solveAll(SHOWS, b, strip, { overscan: OVERSCAN, small: strip, cap: (s) => captionSize(s, lay), bounds }, fixed);
-    if (SOLVED.size > 48) SOLVED.clear(); // a window dragged through every width
-    SOLVED.set(key, res);
-    return res;
-  }, [lay, fonts]);
+  }, [fonts]);
+  const { placed, colophon } = useMemo(() => lettering(lay, fonts), [lay, fonts]);
   if (showFaces) (window as unknown as { __an: { placed: unknown } }).__an.placed = placed;
 
   return (
@@ -869,7 +976,7 @@ export function AnimeWorld() {
                   <Panel key={show.id} show={show} box={boxes[show.id]} lay={lay} index={i + 1} at={placed[show.id]} />
                 ) : null,
               )}
-              {pi === lay.pages.length - 1 ? <Colophon at={colophonSpot(lay, placed, boxes)} /> : null}
+              {pi === lay.pages.length - 1 ? <Colophon at={colophon} /> : null}
             </div>
           ))}
         </div>

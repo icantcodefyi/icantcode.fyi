@@ -36,7 +36,6 @@ html[data-mode="day"] .an-world {
 
 .an-fill-ink { fill: var(--an-ink); }
 .an-fill-spot { fill: var(--an-spot); }
-.an-fill-line { fill: var(--an-rule); }
 
 /* paper grain: one small tile of turbulence, rasterised once and tiled */
 .an-world::before {
@@ -544,7 +543,16 @@ html[data-mode="day"] .an-title .an-tone + .an-tone { display: none; }
   /* ambient: the rumbling SFX tremble, two frames a beat, as anime letters them */
   [data-panel="sg"][data-done] .an-sfx,
   [data-panel="mob"][data-done] .an-sfx { animation: an-tremble 0.36s steps(1) infinite; }
-  .an-title .an-tone { animation: an-drift 10.3s var(--ease-io) infinite alternate; }
+  /* A transform that never stops counts, for Chrome, as reaching anywhere: everything painted after it
+     (the rest of the page, the next world too) would have to come up on layers of its own. Fenced to
+     well past its ink (≤ 0.43em beyond the box, outline and tilt), it reaches only that far. */
+  @supports (overflow-clip-margin: 1em) {
+    [data-panel="sg"][data-done] .an-sfx-hit,
+    [data-panel="mob"][data-done] .an-sfx-hit { overflow: clip; overflow-clip-margin: 0.75em; }
+  }
+  /* (the splash's tone is a top-right sheet: its drift carries that corner's flip in one transform, since
+     an animated translate beside a static transform can't run on the compositor and ticks the main thread) */
+  .an-title .an-tone-tr { animation: an-drift-tr 10.3s var(--ease-io) infinite alternate; }
 
   /* ── the entrance: each panel prints itself ── */
   [data-phase="armed"] .an-panel:not([data-in]) :is(.an-caption, .an-bubble, .an-sfx-hit) { opacity: 0; }
@@ -556,13 +564,15 @@ html[data-mode="day"] .an-title .an-tone + .an-tone { display: none; }
     -webkit-mask: none;
     mask: none;
   }
-  /* the page's furniture and marks come up with the first panel */
+  /* the page's furniture and marks come up with the first panel (data-opened: the splash has printed, anime.tsx;
+     a :has() on the splash restyled the whole world, ~900 elements, as it printed) */
   [data-phase="armed"] :is(.an-page > *, .an-register, .an-trim, .an-colophon) { opacity: 0; transition: opacity 0.9s var(--ease) 0.2s; }
-  [data-phase="armed"]:has(.an-title[data-in]) :is(.an-page > *, .an-register, .an-trim) { opacity: 1; }
-  [data-phase="armed"]:has(.an-title[data-in]) .an-colophon { opacity: 0.72; }
-  [data-phase="armed"]:has(.an-title[data-in]) .an-spine { opacity: 0.34; }
-  html[data-mode="day"] [data-phase="armed"]:has(.an-title[data-in]) .an-spine { opacity: 0.4; }
-  [data-phase="armed"]:has(.an-title[data-in]) .an-trim { opacity: 0.55; }
+  /* (.an-page's children by name, so opening the page restyles only them) */
+  [data-phase="armed"].an-world[data-opened] :is(.an-page > :where(.an-trim, .an-spine, .an-folio, .an-hashira, .an-tsuzuku), .an-register, .an-trim) { opacity: 1; }
+  [data-phase="armed"].an-world[data-opened] .an-colophon { opacity: 0.72; }
+  [data-phase="armed"].an-world[data-opened] .an-spine { opacity: 0.34; }
+  html[data-mode="day"] [data-phase="armed"].an-world[data-opened] .an-spine { opacity: 0.4; }
+  [data-phase="armed"].an-world[data-opened] .an-trim { opacity: 0.55; }
 
   /* the page turn: on a spread the right-hand leaf waits stood up on the spine, then falls open
      (anime.tsx TURN_MS), the light going off it as it lands */
@@ -720,7 +730,7 @@ html[data-mode="day"] .an-title .an-tone + .an-tone { display: none; }
   50% { transform: translate(0.5px, 0.7px); }
   75% { transform: translate(-0.7px, -0.4px); }
 }
-@keyframes an-drift {
-  from { translate: 0 0; }
-  to { translate: 6px 5px; }
+@keyframes an-drift-tr {
+  from { transform: translate(0, 0) scaleY(-1); }
+  to { transform: translate(6px, 5px) scaleY(-1); }
 }

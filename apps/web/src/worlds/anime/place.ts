@@ -164,15 +164,17 @@ export function facesIn(show: Show, box: PanelBox, overscan: number, place: Plac
 /**
  * One panel. `others`: faces of the neighbouring panels and the lettering
  * already placed on the page, in this panel's px, so a balloon leaning out
- * over the frame never lands on the next panel's faces or text.
+ * over the frame never lands on the next panel's faces or text. It pauses
+ * (yields) before each corner it tries, and inside each search, so the page
+ * can be solved a little at a time (solveAll).
  */
-export function solve(
+function* solve(
   show: Show,
   box: PanelBox,
   hint: Show["page"],
   o: Options,
   others: { faces: Rect[]; text: Rect[]; fixed: Rect[] },
-): Solved {
+): Generator<void, Solved, void> {
   const q = box.quad;
   const [b0, b1] = o.bounds(box.page);
   const [bx0, bx1] = [b0 - box.x, b1 - box.x];
@@ -245,6 +247,7 @@ export function solve(
   const bubbleMemo = [memo(), memo(), memo()];
   for (const { c, rect, capCost } of options) {
     if (best && capCost >= best.cost) continue;
+    yield;
 
     const placed: Rect[] = [grow(rect, 8, 8 + DRIFT.bubble - DRIFT.caption), ...others.text];
     // the balloon, near its hint; a narrower, taller one if the wide one has nowhere to go
@@ -253,7 +256,7 @@ export function solve(
       const bw = Math.min(hint.bubble.w, box.w * 0.9) * k;
       const bh = balloonHeight(show.line, bw, burst);
       const extra = k < 1 ? 40 + (1 - k) * 100 : 0;
-      const r = search(box, bw, bh, fromPos(hint.bubble, bw, bh, box), {
+      const r: Rect & { cost: number } = yield* search(box, bw, bh, fromPos(hint.bubble, bw, bh, box), {
         // only a spot that would beat the wider balloon is worth costing in full
         bound: bubble.cost - extra,
         memo: bubbleMemo[n],
@@ -285,7 +288,7 @@ export function solve(
       for (const p of trailText) c += (overlap(z, p) / area(z)) * 0.8;
       return c;
     };
-    const sfx = search(box, gw, gh, fromPos(hint.sfx, gw, gh, box), {
+    const sfx: Rect & { cost: number } = yield* search(box, gw, gh, fromPos(hint.sfx, gw, gh, box), {
       bound: best ? (best.cost - capCost - bubble.cost) / 0.6 : Infinity,
       faces: (r) => sfxFaces(grow(r, 4)) + trail(r),
       placed: placed.map((p) => grow(p, 6, 6 + DRIFT.sfx - DRIFT.caption)),
@@ -334,7 +337,8 @@ interface Memo {
 }
 const memo = (): Memo => ({ out: new Float64Array(CELLS).fill(Number.NaN), faces: new Float64Array(CELLS).fill(Number.NaN), tails: [] });
 
-function search(
+/** The cheapest spot on a grid over the panel; it pauses (yields) every few columns, so a slow phone does it a few ms at a time. */
+function* search(
   box: PanelBox,
   w: number,
   h: number,
@@ -353,7 +357,7 @@ function search(
     /** `out`, `faces` and `tail` as they came out last time on this grid */
     memo?: Memo;
   },
-): Rect & { cost: number } {
+): Generator<void, Rect & { cost: number }, void> {
   let best = hint;
   // a hair over a cost, so rounding never turns away the spot that has it
   const over = (c: number) => c + Math.abs(c) * 1e-9 + 1e-9;
@@ -405,6 +409,7 @@ function search(
   const seed = price(at(si, sj), si * (steps + 1) + sj, bestCost);
   if (seed < bestCost) bestCost = over(seed);
   for (let i = 0; i <= steps; i++) {
+    if (i % 9 === 8) yield;
     for (let j = 0; j <= steps; j++) {
       const r = at(i, j);
       const c = price(r, i * (steps + 1) + j, bestCost);
@@ -420,14 +425,19 @@ function search(
 
 const shift = (r: Rect, dx: number, dy: number): Rect => ({ x: r.x + dx, y: r.y + dy, w: r.w, h: r.h });
 
-/** Every panel of a layout, in reading order, each seeing what the ones before it placed. */
-export function solveAll(
+/**
+ * Every panel of a layout, in reading order, each seeing what the ones
+ * before it placed. A step at a time: each `next()` searches a few columns
+ * of one spot for one panel (a few ms on a slow phone), and the last
+ * returns the page.
+ */
+export function* solveAll(
   shows: Show[],
   boxes: Record<string, PanelBox>,
   strip: boolean,
   o: Options,
   fixed: Rect[] = [],
-): Record<string, Solved> {
+): Generator<void, Record<string, Solved>, void> {
   // faces and fixed lettering in page px
   const pageFaces = shows.flatMap((s) =>
     facesIn(s, boxes[s.id], o.overscan, strip ? s.strip : s.page).map((r) => shift(r, boxes[s.id].x, boxes[s.id].y)),
@@ -437,7 +447,7 @@ export function solveAll(
   for (const s of shows) {
     const b = boxes[s.id];
     const local = (r: Rect) => shift(r, -b.x, -b.y);
-    const res = solve(s, b, strip ? s.strip : s.page, o, { faces: pageFaces.map(local), text: text.map(local), fixed: fixed.map(local) });
+    const res = yield* solve(s, b, strip ? s.strip : s.page, o, { faces: pageFaces.map(local), text: text.map(local), fixed: fixed.map(local) });
     out[s.id] = res;
     for (const r of [res.cap.rect, res.bubble, res.sfx]) text.push(shift(grow(r, 4), b.x, b.y));
   }

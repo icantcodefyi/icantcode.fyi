@@ -1,2 +1,24 @@
-@import "@my-better-t-app/ui/globals.css";
-@import "./site.css";
+/* Plain on purpose: browser defaults, Apple's system fonts, one narrow column. */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  max-width: 720px;
+  margin: 40px auto;
+  padding: 0 16px;
+  line-height: 1.5;
+}
+h1, h2, h3 {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+th, td {
+  border: 1px solid #ccc;
+  padding: 4px 8px;
+  text-align: left;
+  vertical-align: top;
+}
+.scroll {
+  overflow-x: auto;
+}

@@ -15,8 +15,8 @@ const SHARE = {
   title: "icantcodefyi",
   description:
     "Self-taught product engineer from Indore, building at Supernova AI in Bengaluru. Thirteen hackathon wins and a lot of anime.",
-  image: "https://www.icantcode.fyi/og.jpg",
-  imageAlt: "Aniruddh Dubge in big pink letters beside an anime girl in a white hooded jacket, on a moonlit hill of flowers",
+  image: "https://www.icantcode.fyi/og.jpg?v=2",
+  imageAlt: "Aniruddh Dubge in black letters on white, with a one-line intro and icantcode.fyi",
 };
 
 const PERSON = {
